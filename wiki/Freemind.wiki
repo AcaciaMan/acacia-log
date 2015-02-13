@@ -1,0 +1,84 @@
+#summary Acacia Log Freemind map description
+#labels Featured
+
+https://acacia-log.googlecode.com/svn/wiki/AcaciaLog.png
+
+https://acacia-log.googlecode.com/svn/wiki/AcaciaLog.mm
+
+<p>AcaciaLog
+<ul><li>Parameters
+<ul><li>Command line
+<ul><li>-verbose
+
+</li>
+<li>-l
+<ul><li>list last modified log files
+
+</li>
+
+</ul>
+</li>
+<li>-i
+<ul><li>prints date interval log records
+
+</li>
+
+</ul>
+</li>
+<li>-from -to time
+
+</li>
+
+</ul>
+</li>
+<li>Properties
+<ul><li>acacialog.properties
+
+</li>
+<li>from Working directory
+
+</li>
+
+</ul>
+</li>
+<li>Ini file
+<ul><li>acacialog.ini
+
+</li>
+<li>path to ini file is in acacialog.properties
+
+</li>
+<li>contains sections describing log files
+
+</li>
+<li>g1; g2; g3 references to Regex groups
+
+</li>
+
+</ul>
+</li>
+
+</ul>
+</li>
+<li>Files
+<ul><li>WindowsUpdate.log
+
+</li>
+
+</ul>
+</li>
+<li>Date interval extract
+<ul><li>Uses binary search
+
+</li>
+<li>Date Regex scan
+
+</li>
+<li>Date Regex specified in acacialog.ini
+
+</li>
+
+</ul>
+</li>
+
+</ul>
