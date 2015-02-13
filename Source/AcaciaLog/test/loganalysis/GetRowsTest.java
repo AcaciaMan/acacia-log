@@ -63,8 +63,9 @@ public class GetRowsTest {
         Application app = (new ApplicationFactory()).getInstance();
         
         //2015-02-08	11:52:02:310
-        app.cmd.setFrom("2015-02-08T11:52:02.310Z");
-        app.cmd.setTo("2015-02-08T11:52:02.311Z");
+        //2015-01-30 17:02:36
+        app.cmd.setFrom("2015-01-30T17:02:36.310Z");
+        app.cmd.setTo("2015-01-31T11:52:02.311Z");
         
         GetRows instance = new GetRows();
         instance.getInterval();
