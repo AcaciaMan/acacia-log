@@ -158,6 +158,10 @@ public class GetRows {
             System.out.println("");
         }
 
+        if (lrs.length == 0) {
+            System.out.println("NO_LOG_RECORDS_FOUND");
+        }
+
     }
 
 }

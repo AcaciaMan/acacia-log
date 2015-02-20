@@ -77,6 +77,14 @@ public class ParseCmdLine {
                     }   if (isVerbose()) {
                         System.out.println("-exclude = " + getExclude());
                     }   break;
+                case "-top":
+                    if (i < args.length) {
+                        setTop(Integer.parseInt(args[i++].trim()));
+                    } else {
+                        System.err.println("-top requires an integer");
+                    }   if (isVerbose()) {
+                        System.out.println("-top = " + getTop());
+                    }   break;
                 default:
                     for (j = 1; j < arg.length(); j++) {
                         flag = arg.charAt(j);
