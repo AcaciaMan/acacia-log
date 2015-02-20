@@ -23,6 +23,7 @@ import acacialog.IniFile;
 import acacialog.PropertiesList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 public class LogConfig {
@@ -34,6 +35,7 @@ public class LogConfig {
     private Pattern datePattern;
     private String zonedDateTime;
     private char[] zonedCharArray;
+    private TreeSet<LogFile> logFiles = new TreeSet<>();
 
     public LogConfig(String section, IniFile iniFile) {
           this.logName = section;
@@ -124,6 +126,20 @@ public class LogConfig {
      */
     public char[] getZonedCharArray() {
         return zonedCharArray;
+    }
+
+    /**
+     * @return the logFiles
+     */
+    public TreeSet<LogFile> getLogFiles() {
+        return logFiles;
+    }
+
+    /**
+     * @param logFiles the logFiles to set
+     */
+    public void setLogFiles(TreeSet<LogFile> logFiles) {
+        this.logFiles = logFiles;
     }
     
 }

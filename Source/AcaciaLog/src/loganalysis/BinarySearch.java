@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with acacia-log.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 package loganalysis;
 
 import acacialog.Application;
@@ -35,10 +35,11 @@ public class BinarySearch {
     private Scanner scanner = null;
 
     public long getPositionFrom(LogFile lf) {
-        long res = 0;
+        long res;
 
 //<editor-fold defaultstate="collapsed" desc="check input parameters">
-        if (lf.getFrom().isAfter(app.getFrom()) || lf.getFrom().equals(app.getFrom())) {
+        if (lf.getFrom().isAfter(app.getFrom()) || lf.getFrom().equals(app.
+                getFrom())) {
             return 0;
         }
 //</editor-fold>
@@ -49,10 +50,10 @@ public class BinarySearch {
     }
 
     public long getPositionTo(long positionFrom, LogFile lf, LogFile lfNext) {
-        long res = lf.getFileSize();
+        long res;
 
 //<editor-fold defaultstate="collapsed" desc="check input parameters">
-        if (lfNext!=null && app.getTo().isAfter(lfNext.getFrom())) {
+        if (lfNext != null && app.getTo().isAfter(lfNext.getFrom())) {
             return lf.getFileSize();
         }
 //</editor-fold>
@@ -60,7 +61,7 @@ public class BinarySearch {
         res = searchPosition(lf, app.getTo(), positionFrom, lf.getFileSize());
 
         return res;
-    
+
     }
 
     /**
@@ -102,6 +103,17 @@ public class BinarySearch {
 
     }
 
+    public Instant getZonedDateTime(CharSequence cs) {
+        Instant res;
+        ZonedDateTime zdt = ZonedDateTime.parse(cs);
+        if (zdt != null) {
+            res = zdt.toInstant();
+        } else {
+            res = ZonedDateTime.now().toInstant();
+        }
+        return res;
+    }
+
     public CharSequence getZonedDateTime(MatchResult matcher, LogFile lf) {
         StringBuilder sb = new StringBuilder();
         char[] zonedArray = lf.getLc().getZonedCharArray();
@@ -125,28 +137,29 @@ public class BinarySearch {
 
         long imin = from;
         long imax = to;
-        
-        if(inst==null) return imax;
+
+        if (inst == null) {
+            return imax;
+        }
 
         while (imin < imax) {
             long imid = (imin + imax) / 2;
 
             // reduce the search
             Instant instMid = getZonedDateTime(imid, lf);
-            if (instMid !=null && instMid.isBefore(inst)) {
+            if (instMid != null && instMid.isBefore(inst)) {
                 imin = imid + 1;
             } else {
                 imax = imid;
             }
         }
-        
+
         Instant instFind = getZonedDateTime(imin, lf);
-        if(null!=instFind) {
+        if (null != instFind) {
             imin = imin + scanner.match().start();
         } else {
             imin = to;
         }
-            
 
         return imin;
 

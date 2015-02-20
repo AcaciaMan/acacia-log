@@ -26,5 +26,7 @@ public enum PropertiesList {
     FILE,
     DATE,
     INPUT_DATE_FORMAT,
-    ZONED_DATE_TIME
+    ZONED_DATE_TIME,
+    INCLUDE,
+    EXCLUDE
 }
