@@ -31,18 +31,28 @@ public class AcaciaLog {
 
         ApplicationFactory factory = new ApplicationFactory();
         Application app = factory.getInstance();
+        GetRows gr = new GetRows();
 
         app.cmd.parse(args);
 
+        if(app.cmd.isFindInterval()) {
+            gr.findInterval();
+        }
+        
         if (app.cmd.isListLastFiles()) {
             ListFiles instance = new ListFiles();
             instance.listLastFiles();
             System.out.println("");
         }
         
+        if(app.cmd.isPrintLongestOperations()) {
+            gr.findLogRecords();
+            gr.printLongestOperations();
+            System.out.println("");
+        }
+        
         if (app.cmd.isPrintInterval()) {
-            GetRows gr = new GetRows();
-            gr.getInterval();
+            gr.printInterval();
             System.out.println("");
         }
 

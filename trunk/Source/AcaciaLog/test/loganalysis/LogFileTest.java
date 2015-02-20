@@ -73,14 +73,16 @@ public class LogFileTest {
         System.out.println("containsInterval");
 
         Application app = (new ApplicationFactory()).getInstance();
-        app.cmd.setFrom("2015-02-07T20:23:35.111Z");
-
+        app.cmd.setFrom("2010-02-07T20:23:35.111Z");
+        app.cmd.setTo("2018-02-07T20:23:35.111Z");
+        
         Path p = Paths.get("c:/windows/WindowsUpdate.log");
         LogConfig lc = app.logs.get("[wu]");
 
-        LogFile instance = new LogFile(p, lc);
+        LogFile instance = new LogFile(p, lc, 0);
         boolean expResult = true;
-        boolean result = instance.containsInterval();
+        instance.checkContainsInterval();
+        boolean result = instance.isInterval();
         assertEquals(expResult, result);
     }
 
@@ -94,7 +96,7 @@ public class LogFileTest {
         Path p = Paths.get("c:/windows/WindowsUpdate.log");
         LogConfig lc = app.logs.get("[wu]");
 
-        LogFile instance = new LogFile(p, lc);
+        LogFile instance = new LogFile(p, lc, 0);
 
         Instant i = instance.getFirstTime();
         System.out.println("firstTime " + i);
@@ -139,7 +141,7 @@ public class LogFileTest {
         Path p = Paths.get("c:/windows/WindowsUpdate.log");
         LogConfig lc = app.logs.get("[wu]");
 
-        LogFile instance = new LogFile(p, lc);
+        LogFile instance = new LogFile(p, lc, 0);
 
         Instant i = instance.getFirstTime();
         System.out.println("firstTime " + i);
@@ -161,7 +163,7 @@ public class LogFileTest {
                 System.out.println("Matcher " + matcher.group());
             }
             
-            MatchResult mr = null;
+            MatchResult mr;
             scanner = new Scanner(fc);
             fc.position(700);
             res = scanner.findWithinHorizon(pattern, 0);

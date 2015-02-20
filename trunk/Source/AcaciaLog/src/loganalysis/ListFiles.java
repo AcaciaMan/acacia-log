@@ -61,7 +61,7 @@ public class ListFiles {
         // find files and sout last found file
         // section + last modified time + file path
         // else not found dir, not found file
-        for (String s : app.iniFile.getSections()) {
+        for (String s : app.getSections()) {
             LogConfig lc = app.logs.get(s);
 
             Path lastModified = null;
@@ -107,16 +107,17 @@ public class ListFiles {
 
     }
 
-    public TreeSet<LogFile> getIntervalFiles(LogConfig lc) {
+    public TreeSet<LogFile> getIntervalFiles(LogConfig lc, int logOrder) {
         TreeSet<LogFile> lfts = new TreeSet<>();
 
         for (Path entry : listFiles(lc)) {
-            LogFile lf = new LogFile(entry, lc);
+            LogFile lf = new LogFile(entry, lc, logOrder);
             lfts.add(lf);
         }
         
         for(LogFile lf:lfts) {
-            if(!lf.containsInterval()) {
+            lf.checkContainsInterval();
+            if(!lf.isInterval()) {
                 lfts.remove(lf);
             }
                 

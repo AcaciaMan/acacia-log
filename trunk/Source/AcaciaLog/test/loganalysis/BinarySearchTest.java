@@ -137,7 +137,7 @@ public class BinarySearchTest {
         Path p = Paths.get("c:/windows/WindowsUpdate.log");
         LogConfig lc = app.logs.get("[wu]");
 
-        LogFile lf = new LogFile(p, lc);
+        LogFile lf = new LogFile(p, lc, 0);
         
         try (FileChannel fc = FileChannel.open(p, StandardOpenOption.READ)) {
         

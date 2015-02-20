@@ -16,14 +16,15 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with acacia-log.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 package acacialog;
 
-import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import loganalysis.LogConfig;
@@ -32,39 +33,91 @@ import loganalysis.LogConfig;
  * Application class pointing to its properties file acacialog.properties
  */
 public class Application {
+
     public Application() {
         super();
     }
 
-  public PropertiesManager propsMg;
-  public FileTime propsLastModified;
-  public IniFile iniFile;
-  public Map<String,LogConfig> logs = new HashMap<>();
-  
-  public ParseCmdLine cmd = new ParseCmdLine();
+    public PropertiesManager propsMg;
+    public FileTime propsLastModified;
+    public IniFile iniFile;
+    public Map<String, LogConfig> logs = new HashMap<>();
 
-  public void setProperties(Properties props) {
-      this.propsMg.props = props;
-  }
+    public ParseCmdLine cmd = new ParseCmdLine();
+    public List<String> sections = new ArrayList<>();
 
-  public Properties getProperties() {
-      return this.propsMg.props;
-  }
-  
-  public void load() {
-      for(String s:iniFile.getSections()) {
-          LogConfig lc = new LogConfig(s, iniFile);
-          logs.put(s, lc);
-      }  
+    public void setProperties(Properties props) {
+        this.propsMg.props = props;
+    }
 
-  }
-  
-  public Instant getFrom() {
-      return ZonedDateTime.parse( cmd.getFrom() ).toInstant();
-  }
+    public Properties getProperties() {
+        return this.propsMg.props;
+    }
 
-  public Instant getTo() {
-      return ZonedDateTime.parse( cmd.getTo() ).toInstant();
-  }
+    public void load() {
+        logs.clear();
+        setupSections();
+
+        for (String s : getSections()) {
+            LogConfig lc = new LogConfig(s, iniFile);
+            logs.put(s, lc);
+        }
+
+    }
+
+    public Instant getFrom() {
+        return ZonedDateTime.parse(cmd.getFrom()).toInstant();
+    }
+
+    public Instant getTo() {
+        return ZonedDateTime.parse(cmd.getTo()).toInstant();
+    }
+
+    public List<String> getSections() {
+        return sections;
+    }
+
+    /**
+     * @param sections the sections to set
+     */
+    public void setSections(List<String> sections) {
+        this.sections = sections;
+    }
+
+    public void setupSections() {
+        
+        sections.clear();
+        
+        if (cmd.getInclude() != null) {
+            String[] secs = cmd.getInclude().split(";");
+            for (String s : secs) {
+                sections.add("[" + s.trim() + "]");
+            }
+        } else if (getProperties().getProperty(PropertiesList.INCLUDE.name()) != null) {
+            String[] secs = getProperties().getProperty(PropertiesList.INCLUDE.
+                    name()).split(";");
+            for (String s : secs) {
+                sections.add("[" + s.trim() + "]");
+            }
+        } else {
+            sections = iniFile.getSections();
+        }
+        
+        if(cmd.getExclude()!=null) {
+            String[] secs = cmd.getExclude().split(";");
+            for (String s : secs) {
+                sections.remove("[" + s.trim() + "]");
+            }
+
+        }
+        
+        if(cmd.getInclude()==null && getProperties().getProperty(PropertiesList.EXCLUDE.name()) != null) {
+            String[] secs = getProperties().getProperty(PropertiesList.EXCLUDE.name()).split(";");
+            for (String s : secs) {
+                sections.remove("[" + s.trim() + "]");
+            }
+        }
+        
+    }
 
 }
