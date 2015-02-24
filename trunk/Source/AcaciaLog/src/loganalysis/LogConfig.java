@@ -16,7 +16,7 @@
  * 
  * You should have received a copy of the GNU General Public License
  * along with acacia-log.  If not, see <http://www.gnu.org/licenses/>.
- */ 
+ */
 package loganalysis;
 
 import acacialog.IniFile;
@@ -27,7 +27,7 @@ import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 public class LogConfig {
-    
+
     private String logName;
     private Path dirPath;
     private String filePattern;
@@ -38,11 +38,15 @@ public class LogConfig {
     private TreeSet<LogFile> logFiles = new TreeSet<>();
 
     public LogConfig(String section, IniFile iniFile) {
-          this.logName = section;
-          this.dirPath = Paths.get(iniFile.getString(section, PropertiesList.DIR.name(), null));
-          this.filePattern = iniFile.getString(section, PropertiesList.FILE.name(), null);
-          this.setDateFormat(iniFile.getString(section, PropertiesList.DATE.name(), null));
-          this.setZonedDateTime(iniFile.getString(section, PropertiesList.ZONED_DATE_TIME.name(), null));
+        this.logName = section;
+        this.dirPath = Paths.get(iniFile.getString(section, PropertiesList.DIR.
+                name(), null));
+        this.filePattern = iniFile.
+                getString(section, PropertiesList.FILE.name(), null);
+        this.setDateFormat(iniFile.
+                getString(section, PropertiesList.DATE.name(), null));
+        this.setZonedDateTime(iniFile.getString(section,
+                PropertiesList.ZONED_DATE_TIME.name(), null));
     }
 
     /**
@@ -101,7 +105,7 @@ public class LogConfig {
         this.dateFormat = dateFormat;
         this.datePattern = Pattern.compile(dateFormat);
     }
-    
+
     public Pattern getDatePattern() {
         return datePattern;
     }
@@ -118,7 +122,7 @@ public class LogConfig {
      */
     public void setZonedDateTime(String zonedDateTime) {
         this.zonedDateTime = zonedDateTime;
-        this.zonedCharArray= zonedDateTime.toCharArray();
+        this.zonedCharArray = zonedDateTime.toCharArray();
     }
 
     /**
@@ -141,5 +145,19 @@ public class LogConfig {
     public void setLogFiles(TreeSet<LogFile> logFiles) {
         this.logFiles = logFiles;
     }
-    
+
+    public void printSection() {
+        System.out.print(getLogName() + " ");
+
+        if (logFiles.isEmpty()) {
+            System.out.println("NO_FILES_IN_INTERVAL");
+        } else if (logFiles.size() == 1) {
+            System.out.println(logFiles.first().getPath().getFileName());
+        } else {
+            System.out.println(
+                    logFiles.first().getPath().getFileName() + " ... " + logFiles.
+                    last().getPath().getFileName());
+        }
+    }
+
 }

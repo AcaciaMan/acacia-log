@@ -56,6 +56,11 @@ public class AcaciaLog {
             System.out.println("");
         }
 
+        if (app.cmd.isRemoveDates()) {
+            gr.removeDates();
+            System.out.println("");
+        }        
+        
     }
 
 }

@@ -284,7 +284,7 @@ public class LogFile implements Comparable<LogFile> {
 
             setFc(fcOpen);
             MappedByteBuffer buf = fc.map(FileChannel.MapMode.READ_ONLY,
-                    positionFrom, positionTo-positionFrom);
+                    positionFrom, positionTo - positionFrom);
             // Decode ByteBuffer into CharBuffer
             CharBuffer cbuf
                     = Charset.forName("ISO-8859-1").newDecoder().decode(buf);
@@ -300,16 +300,16 @@ public class LogFile implements Comparable<LogFile> {
                 Instant instant = bs.getZonedDateTime(cs);
                 LogRecord lr = new LogRecord(this, instant, m.start());
                 records.add(lr);
-                if(prev!=null) {
+                if (prev != null) {
                     prev.setPositionTo(lr.getPositionFrom());
                 }
-                
-                prev=lr;
+
+                prev = lr;
 
             }
-            
-            if(prev!=null) {
-                prev.setPositionTo(positionTo-positionFrom);
+
+            if (prev != null) {
+                prev.setPositionTo(positionTo - positionFrom);
             }
 
         } catch (IOException ex) {
@@ -334,6 +334,42 @@ public class LogFile implements Comparable<LogFile> {
      */
     public void setLogOrder(int logOrder) {
         this.logOrder = logOrder;
+    }
+
+    public void removeDates() {
+
+        //Make scanner
+        //Iterate through dates until is reached positionTo
+        try (FileChannel fcOpen = FileChannel.
+                open(path, StandardOpenOption.READ);) {
+
+            setFc(fcOpen);
+            MappedByteBuffer buf = fc.map(FileChannel.MapMode.READ_ONLY,
+                    positionFrom, positionTo - positionFrom);
+            // Decode ByteBuffer into CharBuffer
+            CharBuffer cbuf
+                    = Charset.forName("UTF-8").newDecoder().decode(buf);
+            Matcher m = lc.getDatePattern().matcher(cbuf);
+            int mEnd = 0;
+            int mStart;
+
+            while (m.find()) {
+                mStart = m.start();
+                System.out.print(cbuf.subSequence(mEnd, mStart));
+                mEnd = m.end();
+
+            }
+
+            System.out.println(cbuf.subSequence(mEnd, cbuf.length()));
+
+        } catch (IOException ex) {
+            Logger.getLogger(BinarySearch.class.getName()).
+                    log(Level.SEVERE, null, ex);
+        } catch (Exception ex) {
+            Logger.getLogger(BinarySearch.class.getName()).
+                    log(Level.SEVERE, null, ex);
+        }
+
     }
 
 }
