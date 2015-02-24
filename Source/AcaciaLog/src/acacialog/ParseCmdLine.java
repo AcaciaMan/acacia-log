@@ -24,6 +24,7 @@ public class ParseCmdLine {
     private boolean listLastFiles = false;
     private boolean printInterval = false;
     private boolean findInterval = false;
+    private boolean removeDates = false;
     private boolean printLongestOperations = false;
     private String include;
     private String exclude;
@@ -107,7 +108,12 @@ public class ParseCmdLine {
                                     System.out.println("Option o printLongestOperations");
                                 }
                                 break;
-
+                            case 'r':
+                                setRemoveDates(true);
+                                if (isVerbose()) {
+                                    System.out.println("Option r removeDates");
+                                }
+                                break;
                                 
                             default:
                                 System.err.println(
@@ -119,10 +125,11 @@ public class ParseCmdLine {
         }
         if (i < args.length) {
             System.err.println(
-                    "Usage: AcaciaLog [-verbose] [-lio] [-from aTime] [-to aTime] [-include sectionsList] [-exclude sectionsList] [-top n]");
+                    "Usage: AcaciaLog [-verbose] [-lior] [-from aTime] [-to aTime] [-include sectionsList] [-exclude sectionsList] [-top n]");
             System.err.println("-l list last modified log files");
             System.err.println("-i print interval [from,to) log rows");
             System.err.println("-o print top (default 10) longest operations from interval [from,to) log rows");
+            System.err.println("-r remove dates to compare intervals with WinMerge");
             System.err.println("java -jar C:\\Work\\log\\Project\\AcaciaLog\\dist\\AcaciaLog.jar -verbose -li -from 2015-02-08T11:52:02.310Z -to 2015-02-09T11:52:02.311Z");
         } else if (isVerbose()) {
             System.out.println("Success!");
@@ -269,6 +276,21 @@ public class ParseCmdLine {
     public void setPrintLongestOperations(boolean printLongestOperations) {
         this.findInterval = printLongestOperations;
         this.printLongestOperations = printLongestOperations;
+    }
+
+    /**
+     * @return the removeDates
+     */
+    public boolean isRemoveDates() {
+        return removeDates;
+    }
+
+    /**
+     * @param removeDates the removeDates to set
+     */
+    public void setRemoveDates(boolean removeDates) {
+        this.findInterval = removeDates;
+        this.removeDates = removeDates;
     }
 
 }

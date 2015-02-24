@@ -62,22 +62,8 @@ public class GetRows {
 
         for (String s : app.getSections()) {
             LogConfig lc = app.logs.get(s);
+            lc.printSection();
             TreeSet<LogFile> lfts = lc.getLogFiles();
-
-            //<editor-fold defaultstate="collapsed" desc="print interval files">
-            System.out.print(lc.getLogName() + " ");
-
-            if (lfts.isEmpty()) {
-                System.out.println("NO_FILES_IN_INTERVAL");
-                continue;
-            } else if (lfts.size() == 1) {
-                System.out.println(lfts.first().getPath().getFileName());
-            } else {
-                System.out.println(
-                        lfts.first().getPath().getFileName() + " ... " + lfts.
-                        last().getPath().getFileName());
-            }
-//</editor-fold>
 
             for (LogFile lf : lfts) {
                 lf.printInterval(lf.getPositionFrom(), lf.getPositionTo());
@@ -160,6 +146,25 @@ public class GetRows {
 
         if (lrs.length == 0) {
             System.out.println("NO_LOG_RECORDS_FOUND");
+        }
+
+    }
+
+    public void removeDates() {
+        // go through files
+        // find dates and remove them
+        // print to output
+
+        for (int i = 0; i < app.getSections().size(); i++) {
+            String s = app.getSections().get(i);
+            LogConfig lc = app.logs.get(s);
+            lc.printSection();
+            TreeSet<LogFile> lfts = lc.getLogFiles();
+
+            for (LogFile lf : lfts) {
+                lf.removeDates();
+            }
+
         }
 
     }
