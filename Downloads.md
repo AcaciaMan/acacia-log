@@ -1,0 +1,3 @@
+# Introduction #
+
+The binaries of this project are Java library file AcaciaLog.jar. It can be found at Source -> Browse -> trunk -> jar.
