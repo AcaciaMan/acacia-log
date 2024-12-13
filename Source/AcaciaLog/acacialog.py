@@ -3,6 +3,9 @@ import os
 import re
 import sys
 from datetime import datetime, timedelta
+from pathlib import Path
+from collections import defaultdict
+from typing import List, Dict, Any
 
 class AcaciaLog:
     def __init__(self):
@@ -10,6 +13,9 @@ class AcaciaLog:
         self.config.read('Source/AcaciaLog/acacialog.ini')
         self.properties = self.load_properties('Source/AcaciaLog/acacialog.properties')
         self.cmd = self.parse_cmd_line(sys.argv[1:])
+        self.logs = {}
+        self.sections = []
+        self.load()
 
     def load_properties(self, file_path):
         properties = {}
@@ -90,24 +96,52 @@ class AcaciaLog:
                 print(f"{section} NO_LOG_FILE_FOUND {file_pattern}")
 
     def find_interval(self):
-        # Implement the find_interval functionality here
-        pass
+        for section in self.sections:
+            lc = self.logs[section]
+            list_files = self.get_interval_files(lc)
+            lc['log_files'] = list_files
+
+            for i, lf in enumerate(list_files):
+                lf_next = list_files[i + 1] if i + 1 < len(list_files) else None
+                self.find_interval_for_log_file(lf, lf_next)
 
     def print_interval(self):
-        # Implement the print_interval functionality here
-        pass
+        for section in self.sections:
+            lc = self.logs[section]
+            print(f"{section} {lc['log_files'][0]['path'].name} ... {lc['log_files'][-1]['path'].name}")
+            for lf in lc['log_files']:
+                self.print_interval_for_log_file(lf)
 
     def find_log_records(self):
-        # Implement the find_log_records functionality here
-        pass
+        for section in self.sections:
+            lc = self.logs[section]
+            for lf in lc['log_files']:
+                self.find_records_for_log_file(lf)
 
     def print_longest_operations(self):
-        # Implement the print_longest_operations functionality here
-        pass
+        top = self.cmd['top']
+        longest = []
+
+        for section in self.sections:
+            lc = self.logs[section]
+            for lf in lc['log_files']:
+                for lr in lf['records']:
+                    if len(longest) < top:
+                        longest.append(lr)
+                    else:
+                        if lr['duration'] > min(longest, key=lambda x: x['duration'])['duration']:
+                            longest.remove(min(longest, key=lambda x: x['duration']))
+                            longest.append(lr)
+
+        longest.sort(key=lambda x: x['duration'], reverse=True)
+        for lr in longest:
+            print(f"{lr['duration']} {lr['log_file']['path'].name} {lr['content']}")
 
     def remove_dates(self):
-        # Implement the remove_dates functionality here
-        pass
+        for section in self.sections:
+            lc = self.logs[section]
+            for lf in lc['log_files']:
+                self.remove_dates_from_log_file(lf)
 
     def run(self):
         if self.cmd['list_last_files']:
@@ -121,6 +155,125 @@ class AcaciaLog:
             self.print_longest_operations()
         if self.cmd['remove_dates']:
             self.remove_dates()
+
+    def load(self):
+        self.logs.clear()
+        self.setup_sections()
+
+        for section in self.sections:
+            lc = self.create_log_config(section)
+            self.logs[section] = lc
+
+    def setup_sections(self):
+        self.sections.clear()
+
+        if self.cmd['include']:
+            self.sections = [f"[{s.strip()}]" for s in self.cmd['include'].split(';')]
+        elif self.properties.get('INCLUDE'):
+            self.sections = [f"[{s.strip()}]" for s in self.properties['INCLUDE'].split(';')]
+        else:
+            self.sections = self.config.sections()
+
+        if self.cmd['exclude']:
+            exclude_sections = [f"[{s.strip()}]" for s in self.cmd['exclude'].split(';')]
+            self.sections = [s for s in self.sections if s not in exclude_sections]
+        elif self.properties.get('EXCLUDE'):
+            exclude_sections = [f"[{s.strip()}]" for s in self.properties['EXCLUDE'].split(';')]
+            self.sections = [s for s in self.sections if s not in exclude_sections]
+
+    def create_log_config(self, section):
+        lc = {
+            'log_name': section,
+            'dir_path': Path(self.config.get(section, 'DIR')),
+            'file_pattern': self.config.get(section, 'FILE'),
+            'date_format': self.config.get(section, 'DATE'),
+            'zoned_date_time': self.config.get(section, 'ZONED_DATE_TIME'),
+            'log_files': []
+        }
+        lc['date_pattern'] = re.compile(lc['date_format'])
+        lc['zoned_char_array'] = list(lc['zoned_date_time'])
+        return lc
+
+    def get_interval_files(self, lc):
+        log_files = []
+        for root, _, files in os.walk(lc['dir_path']):
+            for file in files:
+                if re.match(lc['file_pattern'], file):
+                    log_file = {
+                        'path': Path(root) / file,
+                        'lc': lc,
+                        'from': self.get_first_time(Path(root) / file, lc),
+                        'interval': False,
+                        'records': []
+                    }
+                    log_files.append(log_file)
+
+        for lf in log_files:
+            lf['interval'] = self.check_contains_interval(lf)
+
+        return sorted(log_files, key=lambda x: x['from'])
+
+    def get_first_time(self, path, lc):
+        with open(path, 'r', encoding='utf-8') as f:
+            for line in f:
+                match = lc['date_pattern'].search(line)
+                if match:
+                    return datetime.strptime(match.group(), lc['date_format']).timestamp()
+        return datetime.now().timestamp()
+
+    def check_contains_interval(self, lf):
+        return lf['from'] <= datetime.strptime(self.cmd['to'], '%Y-%m-%dT%H:%M:%S.%fZ').timestamp()
+
+    def find_interval_for_log_file(self, lf, lf_next):
+        with open(lf['path'], 'r', encoding='utf-8') as f:
+            content = f.read()
+            lf['position_from'] = self.search_position(content, self.cmd['from'], 0, len(content), lf['lc'])
+            lf['position_to'] = self.search_position(content, self.cmd['to'], lf['position_from'], len(content), lf['lc'], lf_next)
+
+    def search_position(self, content, target_time, start, end, lc, lf_next=None):
+        target_time = datetime.strptime(target_time, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp()
+        while start < end:
+            mid = (start + end) // 2
+            match = lc['date_pattern'].search(content, mid)
+            if match:
+                mid_time = datetime.strptime(match.group(), lc['date_format']).timestamp()
+                if mid_time < target_time:
+                    start = mid + 1
+                else:
+                    end = mid
+            else:
+                end = mid
+
+        return start
+
+    def print_interval_for_log_file(self, lf):
+        with open(lf['path'], 'r', encoding='utf-8') as f:
+            f.seek(lf['position_from'])
+            print(f.read(lf['position_to'] - lf['position_from']))
+
+    def find_records_for_log_file(self, lf):
+        with open(lf['path'], 'r', encoding='utf-8') as f:
+            content = f.read()
+            matches = list(lf['lc']['date_pattern'].finditer(content))
+            for i, match in enumerate(matches):
+                record = {
+                    'log_file': lf,
+                    'instant': datetime.strptime(match.group(), lf['lc']['date_format']).timestamp(),
+                    'position_from': match.start(),
+                    'position_to': matches[i + 1].start() if i + 1 < len(matches) else len(content),
+                    'duration': 0
+                }
+                lf['records'].append(record)
+
+            for i, record in enumerate(lf['records']):
+                if i > 0:
+                    record['duration'] = record['instant'] - lf['records'][i - 1]['instant']
+
+    def remove_dates_from_log_file(self, lf):
+        with open(lf['path'], 'r', encoding='utf-8') as f:
+            content = f.read()
+            new_content = lf['lc']['date_pattern'].sub('', content)
+            print(new_content)
 
 if __name__ == '__main__':
     acacia_log = AcaciaLog()
