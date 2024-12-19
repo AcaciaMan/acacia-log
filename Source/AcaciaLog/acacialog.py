@@ -1,4 +1,4 @@
-import configparser
+import json
 import os
 import re
 import sys
@@ -9,22 +9,15 @@ from typing import List, Dict, Any
 
 class AcaciaLog:
     def __init__(self):
-        self.config = configparser.ConfigParser()
-        self.config.read('Source/AcaciaLog/acacialog.ini')
-        self.properties = self.load_properties('Source/AcaciaLog/acacialog.properties')
+        self.config = self.load_json_config('Source/AcaciaLog/acacialog.json')
         self.cmd = self.parse_cmd_line(sys.argv[1:])
         self.logs = {}
         self.sections = []
         self.load()
 
-    def load_properties(self, file_path):
-        properties = {}
+    def load_json_config(self, file_path):
         with open(file_path, 'r') as f:
-            for line in f:
-                if '=' in line:
-                    key, value = line.split('=', 1)
-                    properties[key.strip()] = value.strip()
-        return properties
+            return json.load(f)
 
     def parse_cmd_line(self, args):
         cmd = {
@@ -76,9 +69,9 @@ class AcaciaLog:
         return cmd
 
     def list_last_files(self):
-        for section in self.config.sections():
-            dir_path = self.config.get(section, 'DIR')
-            file_pattern = self.config.get(section, 'FILE')
+        for section in self.config.keys():
+            dir_path = self.config[section]['DIR']
+            file_pattern = self.config[section]['FILE']
             last_modified = None
 
             for root, _, files in os.walk(dir_path):
@@ -169,25 +162,25 @@ class AcaciaLog:
 
         if self.cmd['include']:
             self.sections = [f"[{s.strip()}]" for s in self.cmd['include'].split(';')]
-        elif self.properties.get('INCLUDE'):
-            self.sections = [f"[{s.strip()}]" for s in self.properties['INCLUDE'].split(';')]
+        elif self.config.get('INCLUDE'):
+            self.sections = [f"[{s.strip()}]" for s in self.config['INCLUDE'].split(';')]
         else:
-            self.sections = self.config.sections()
+            self.sections = self.config.keys()
 
         if self.cmd['exclude']:
             exclude_sections = [f"[{s.strip()}]" for s in self.cmd['exclude'].split(';')]
             self.sections = [s for s in self.sections if s not in exclude_sections]
-        elif self.properties.get('EXCLUDE'):
-            exclude_sections = [f"[{s.strip()}]" for s in self.properties['EXCLUDE'].split(';')]
+        elif self.config.get('EXCLUDE'):
+            exclude_sections = [f"[{s.strip()}]" for s in self.config['EXCLUDE'].split(';')]
             self.sections = [s for s in self.sections if s not in exclude_sections]
 
     def create_log_config(self, section):
         lc = {
             'log_name': section,
-            'dir_path': Path(self.config.get(section, 'DIR')),
-            'file_pattern': self.config.get(section, 'FILE'),
-            'date_format': self.config.get(section, 'DATE'),
-            'zoned_date_time': self.config.get(section, 'ZONED_DATE_TIME'),
+            'dir_path': Path(self.config[section]['DIR']),
+            'file_pattern': self.config[section]['FILE'],
+            'date_format': self.config[section]['DATE'],
+            'zoned_date_time': self.config[section]['ZONED_DATE_TIME'],
             'log_files': []
         }
         lc['date_pattern'] = re.compile(lc['date_format'])
@@ -241,8 +234,6 @@ class AcaciaLog:
                     start = mid + 1
                 else:
                     end = mid
-            else:
-                end = mid
 
         return start
 
