@@ -72,3 +72,26 @@ Example log file content:
 [wu] 2015-02-08 11:52:02.310 596 1514 EP Got 117CAB2D-82B1-4B5A-A08C-4D62DBEE7782 redir SecuredCli...
 [wu] 2015-02-08 11:52:02.310 596 1514 EP Got service 117CAB2D-82B1-4B5A-A08C-4D62DBEE7782 plugin S...
 ````
+
+## JSON Configuration File
+
+The `acacialog.py` script now supports reading configuration from a JSON file. The JSON configuration file should be named `Source/AcaciaLog/acacialog.json` and should have the following structure:
+
+```json
+{
+  "wu": {
+    "DIR": "C:\\Windows",
+    "FILE": "WindowsUpdate.log",
+    "DATE": "(?m)^(\d{4})-(\d{2})-(\d{2})\t(\d{2}):(\d{2}):(\d{2}):(\d{3})\t",
+    "ZONED_DATE_TIME": "g1-g2-g3Tg4:g5:g6.g7Z"
+  },
+  "cbs": {
+    "DIR": "C:\\Windows\\Logs\\CBS",
+    "FILE": "cbs.log",
+    "DATE": "(?m)^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}), ",
+    "ZONED_DATE_TIME": "g1-g2-g3Tg4:g5:g6.000Z"
+  }
+}
+```
+
+The JSON configuration file should contain the same configuration parameters as the INI and properties files. Command line arguments can be used to override the configuration parameters specified in the JSON file.
