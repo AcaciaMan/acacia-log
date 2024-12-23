@@ -9,7 +9,20 @@ from typing import List, Dict, Any
 
 class AcaciaLog:
     def __init__(self):
-        self.config = self.load_json_config('Source/AcaciaLog/acacialog.json')
+        self.cmd: Dict[str, Any] = {
+    "verbose": False,
+    "from": None,
+    "to": None,
+    "list_last_files": False,
+    "print_interval": False,
+    "find_interval": False,
+    "remove_dates": False,
+    "print_longest_operations": False,
+    "include": None,
+    "exclude": None,
+    "top": 10
+}
+        self.cmd = self.load_json_config('Source/AcaciaLog/acacialog.json')
         self.cmd = self.parse_cmd_line(sys.argv[1:])
         self.logs = {}
         self.sections = []

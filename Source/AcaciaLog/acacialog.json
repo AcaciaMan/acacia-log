@@ -1,14 +1,27 @@
 {
-  "wu": {
-    "DIR": "C:\\Windows",
-    "FILE": "WindowsUpdate.log",
-    "DATE": "(?m)^(\d{4})-(\d{2})-(\d{2})\t(\d{2}):(\d{2}):(\d{3})\t",
-    "ZONED_DATE_TIME": "g1-g2-g3Tg4:g5:g6.g7Z"
-  },
-  "cbs": {
-    "DIR": "C:\\Windows\\Logs\\CBS",
-    "FILE": "cbs.log",
-    "DATE": "(?m)^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}), ",
-    "ZONED_DATE_TIME": "g1-g2-g3Tg4:g5:g6.000Z"
+  "verbose": false,
+  "from": null,
+  "to": null,
+  "list_last_files": false,
+  "print_interval": false,
+  "find_interval": false,
+  "remove_dates": false,
+  "print_longest_operations": false,
+  "include": null,
+  "exclude": null,
+  "top": 10,
+  "logs": {
+    "wu": {
+      "DIR": "C:\\Windows",
+      "FILE": "WindowsUpdate.log",
+      "DATE": "(?m)^(d{4})-(d{2})-(d{2})\t(d{2}):(d{2}):(d{3})\t",
+      "ZONED_DATE_TIME": "g1-g2-g3Tg4:g5:g6.g7Z"
+    },
+    "cbs": {
+      "DIR": "C:\\Windows\\Logs\\CBS",
+      "FILE": "cbs.log",
+      "DATE": "(?m)^(d{4})-(d{2})-(d{2}) (d{2}):(d{2}):(d{2}), ",
+      "ZONED_DATE_TIME": "g1-g2-g3Tg4:g5:g6.000Z"
+    }
   }
 }
