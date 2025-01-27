@@ -3,13 +3,25 @@
 import * as vscode from 'vscode';
 import { DateTime } from 'luxon';
 
-const dateTimeRegex = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/;
 
-export async function navigateToDateTime(dateTime: DateTime) {
+
+export async function navigateToDateTime() {
   const editor = vscode.window.activeTextEditor;
   if (!editor) {
     return;
   }
+
+  const config = vscode.workspace.getConfiguration('acacia-log');
+  const logDateFormat = config.get<string>('logDateFormat');
+  const logDateRegex = config.get<string>('logDateRegex');
+  const logSearchDate = config.get<string>('logSearchDate');
+  const logSearchTime = config.get<string>('logSearchTime');
+  const dateTimeInput = `${logSearchDate}T${logSearchTime}`;
+          const dateTime = DateTime.fromISO(dateTimeInput);
+        if (!dateTime.isValid) {
+          vscode.window.showErrorMessage('Invalid date and time format');
+            return;
+        }
 
   const document = editor.document;
   const text = document.getText();
@@ -19,11 +31,12 @@ export async function navigateToDateTime(dateTime: DateTime) {
   let lineNumber = 0;
   let found = false;
   for (let i = 0; i < lineCount; i++) {
-    const line = lines[i];
-    const match = line.match(dateTimeRegex);
+    if (logDateRegex) {
+    const match = lines[i].match(logDateRegex);
     if (match) {
-        const matchDateTime = DateTime.fromFormat(match[0], 'yyyy-MM-dd HH:mm:ss');
-    console.log(`Found date time: ${matchDateTime.toISO()}`);
+        if (logDateFormat) {
+          const matchDateTime = DateTime.fromFormat(match[0], logDateFormat);
+          console.log(matchDateTime.toISO());
       if (matchDateTime.equals(dateTime)) {
         lineNumber = i;
         found = true;
@@ -31,14 +44,17 @@ export async function navigateToDateTime(dateTime: DateTime) {
       }
     }
   }
+    }
+}
 
   if (found) {
+    vscode.window.showInformationMessage('Date and time found in the log file at line ' + (lineNumber + 1));
     const position = new vscode.Position(lineNumber, 0);
     editor.selection = new vscode.Selection(position, position);
     editor.revealRange(new vscode.Range(position, position));
   }  else {
     vscode.window.showInformationMessage('Date and time not found in the log file');
   }
-}
- 
- 
+
+  
+} 

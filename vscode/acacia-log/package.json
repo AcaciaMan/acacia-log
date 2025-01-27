@@ -18,10 +18,48 @@
         "title": "Hello World"
       },
       {
-        "command": "extension.navigateToDateTime",
-        "title": "Navigate to Date Time"
+        "command": "extension.setLogDateFormat",
+        "title": "Log navigate to Date Format"
+      },
+      {
+        "command": "extension.setLogDateRegex",
+        "title": "Log navigate to Date RegExp"
+      },
+      {
+        "command": "extension.setLogSearchDate",
+        "title": "Log navigate to Search Date"
+      },
+      {
+        "command": "extension.setLogSearchTime",
+        "title": "Log navigate to Search Time"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "Acacia Log Settings",
+      "properties": {
+        "acacia-log.logDateFormat": {
+          "type": "string",
+          "default": "yyyy-MM-dd HH:mm:ss",
+          "description": "The date format used in the log files."
+        },
+        "acacia-log.logDateRegex": {
+          "type": "string",
+          "default": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
+          "description": "The regular expression to match the date in the log files."
+        },
+        "acacia-log.logSearchDate": {
+          "type": "string",
+          "default": "2023-01-01",
+          "description": "The date to search for in the log files (YYYY-MM-DD)."
+        },
+        "acacia-log.logSearchTime": {
+          "type": "string",
+          "default": "12:00:00",
+          "description": "The time to search for in the log files (HH:mm:ss)."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
