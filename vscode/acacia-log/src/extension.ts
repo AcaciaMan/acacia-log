@@ -31,10 +31,27 @@ export function activate(context: vscode.ExtensionContext) {
 		  return;
 		}
 	
-		const dateTimeInput = await vscode.window.showInputBox({
-		  prompt: 'Enter the date and time (YYYY-MM-DDTHH:mm:ss)',
-		  placeHolder: '2023-01-01T12:00:00'
-		});
+		const dateInput = await vscode.window.showInputBox({
+			prompt: 'Enter the date (YYYY-MM-DD)',
+			placeHolder: '2023-01-01'
+		  });
+	  
+		  if (!dateInput) {
+			vscode.window.showErrorMessage('Invalid date input');
+			return;
+		  }
+	  
+		  const timeInput = await vscode.window.showInputBox({
+			prompt: 'Enter the time (HH:mm:ss)',
+			placeHolder: '12:00:00'
+		  });
+	  
+		  if (!timeInput) {
+			vscode.window.showErrorMessage('Invalid time input');
+			return;
+		  }
+	  
+		  const dateTimeInput = `${dateInput}T${timeInput}`;
 	
 		if (!dateTimeInput) {
 		  vscode.window.showErrorMessage('Invalid date and time input');
