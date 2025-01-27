@@ -34,7 +34,7 @@ There are no specific requirements or dependencies for this extension.
 
 ## Known Issues
 
-There are no known issues at this time. Please report any issues you encounter on the [GitHub issues page](https://github.com/your-repo/acacia-log/issues).
+There are no known issues at this time. Please report any issues you encounter on the [GitHub issues page](https://github.com/AcaciaMan/acacia-log/issues).
 
 ## Release Notes
 
