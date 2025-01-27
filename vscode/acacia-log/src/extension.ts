@@ -1,6 +1,8 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
+import { navigateToDateTime } from './utils/navigateToDateTime';
+import { DateTime } from 'luxon';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -20,6 +22,35 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(disposable);
+
+	// Register the navigateToDateTime command
+	let disposable2 = vscode.commands.registerCommand('extension.navigateToDateTime', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+		  vscode.window.showErrorMessage('No active editor found');
+		  return;
+		}
+	
+		const dateTimeInput = await vscode.window.showInputBox({
+		  prompt: 'Enter the date and time (YYYY-MM-DDTHH:mm:ss)',
+		  placeHolder: '2023-01-01T12:00:00'
+		});
+	
+		if (!dateTimeInput) {
+		  vscode.window.showErrorMessage('Invalid date and time input');
+		  return;
+		}
+	
+		const dateTime = DateTime.fromISO(dateTimeInput);
+		if (!dateTime.isValid) {
+		  vscode.window.showErrorMessage('Invalid date and time format');
+		  return;
+		}
+	
+		navigateToDateTime(dateTime);
+	  });
+	
+	  context.subscriptions.push(disposable2);
 }
 
 // This method is called when your extension is deactivated
