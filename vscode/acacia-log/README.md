@@ -12,6 +12,8 @@ Acacia Log is a Visual Studio Code extension for navigating log files efficientl
 - Calculate counts of similar lines in the log file.
 - Draw a timeline chart of log file records.
 
+![Extension Screenshot](https://github.com/user-attachments/assets/f9987ce4-6f63-4fe8-bafe-9d2c1738caef)
+
 ## Commands
 
 This extension contributes the following commands:
