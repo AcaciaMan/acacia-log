@@ -47,7 +47,7 @@ export async function navigateToDateTime() {
         high = mid - 1;
       }
     } else {
-      high = mid - 1;
+      high = high - 1;
     }
   }
 
