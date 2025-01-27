@@ -12,8 +12,8 @@ export async function navigateToDateTime() {
   }
 
   const config = vscode.workspace.getConfiguration('acacia-log');
-  const logDateFormat = config.get<string>('logDateFormat');
-  const logDateRegex = config.get<string>('logDateRegex');
+  const logDateFormat = config.get<string>('logDateFormat') || 'yyyy-MM-dd HH:mm:ss';
+  const logDateRegex = config.get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}';
   const logSearchDate = config.get<string>('logSearchDate');
   const logSearchTime = config.get<string>('logSearchTime');
   const dateTimeInput = `${logSearchDate}T${logSearchTime}`;
@@ -31,10 +31,8 @@ export async function navigateToDateTime() {
   let lineNumber = 0;
   let found = false;
   for (let i = 0; i < lineCount; i++) {
-    if (logDateRegex) {
     const match = lines[i].match(logDateRegex);
     if (match) {
-        if (logDateFormat) {
           const matchDateTime = DateTime.fromFormat(match[0], logDateFormat);
           console.log(matchDateTime.toISO());
       if (matchDateTime.equals(dateTime)) {
@@ -42,8 +40,6 @@ export async function navigateToDateTime() {
         found = true;
         break;
       }
-    }
-  }
     }
 }
 
