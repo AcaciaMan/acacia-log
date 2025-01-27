@@ -1,71 +1,51 @@
 # acacia-log README
 
-This is the README for your extension "acacia-log". After writing up a brief description, we recommend including the following sections.
+Acacia Log is a Visual Studio Code extension for navigating log files efficiently. It provides commands to set log date formats, regular expressions, and search for specific dates and times in log files.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- Navigate to a specific date and time in the log file.
+- Set the date format used in the log files.
+- Set the regular expression to match the date in the log files.
+- Set the date to search for in the log files.
+- Set the time to search for in the log files.
 
-For example if there is an image subfolder under your extension project workspace:
+## Commands
 
-\!\[feature X\]\(images/feature-x.png\)
+This extension contributes the following commands:
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
-
-## Requirements
-
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- `extension.setLogDateFormat`: Sets the date format used in the log files.
+- `extension.setLogDateRegex`: Sets the regular expression to match the date in the log files.
+- `extension.setLogSearchDate`: Sets the date to search for in the log files (YYYY-MM-DD).
+- `extension.setLogSearchTime`: Sets the time to search for in the log files and RUNS the search.
 
 ## Extension Settings
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
 This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+- `acacia-log.logDateFormat`: The date format used in the log files. Default is `yyyy-MM-dd HH:mm:ss`.
+- `acacia-log.logDateRegex`: The regular expression to match the date in the log files. Default is `\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}`.
+- `acacia-log.logSearchDate`: The date to search for in the log files (YYYY-MM-DD).
+- `acacia-log.logSearchTime`: The time to search for in the log files (HH:mm:ss).
+
+## Requirements
+
+There are no specific requirements or dependencies for this extension.
 
 ## Known Issues
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+There are no known issues at this time. Please report any issues you encounter on the [GitHub issues page](https://github.com/your-repo/acacia-log/issues).
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
-
 ### 1.0.0
 
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
+- Initial release of Acacia Log.
+- Added commands to navigate to a specific date and time in the log file.
+- Added commands to set log date format, log date regular expression, log search date, and log search time.
 
 ---
 
 ## Following extension guidelines
 
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+Ensure that your extension follows the [Visual Studio Code extension guidelines](https://code.visualstudio.com/api/references/extension-guidelines) to provide the best experience for users.

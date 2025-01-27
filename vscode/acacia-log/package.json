@@ -14,24 +14,28 @@
   "contributes": {
     "commands": [
       {
-        "command": "acacia-log.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "extension.setLogDateFormat",
-        "title": "Log navigate to Date Format"
+        "title": "Log navigate to Date Format",
+        "category": "Acacia Log",
+        "description": "Sets the date format used in the log files."
       },
       {
         "command": "extension.setLogDateRegex",
-        "title": "Log navigate to Date RegExp"
+        "title": "Log navigate to Date RegExp",
+        "category": "Acacia Log",
+        "description": "Sets the regular expression to match the date in the log files."
       },
       {
         "command": "extension.setLogSearchDate",
-        "title": "Log navigate to Search Date"
+        "title": "Log navigate to Search Date",
+        "category": "Acacia Log",
+        "description": "Sets the date to search for in the log files (YYYY-MM-DD)."
       },
       {
         "command": "extension.setLogSearchTime",
-        "title": "Log navigate to Search Time"
+        "title": "Log navigate to Search Time",
+        "category": "Acacia Log",
+        "description": "Sets the time to search for in the log file and Runs the search."
       }
     ],
     "configuration": {
