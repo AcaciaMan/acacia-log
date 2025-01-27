@@ -1,3 +1,10 @@
+Added VSCode extension with Acacia Log commands:
+
+![Extension Screenshot](https://github.com/user-attachments/assets/f9987ce4-6f63-4fe8-bafe-9d2c1738caef)
+
+
+
+
 Extract date interval log records, find longest time operations, remove dates to compare intervals with WinMerge
 
 AcaciaLog.jar execution example from Windows Powershell.
