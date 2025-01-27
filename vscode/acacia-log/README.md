@@ -9,6 +9,7 @@ Acacia Log is a Visual Studio Code extension for navigating log files efficientl
 - Set the regular expression to match the date in the log files.
 - Set the date to search for in the log files.
 - Set the time to search for in the log files.
+- Calculate counts of similar lines in the log file.
 
 ## Commands
 
@@ -18,6 +19,7 @@ This extension contributes the following commands:
 - `extension.setLogDateRegex`: Sets the regular expression to match the date in the log files.
 - `extension.setLogSearchDate`: Sets the date to search for in the log files (YYYY-MM-DD).
 - `extension.setLogSearchTime`: Sets the time to search for in the log files and RUNS the search.
+- `extension.calculateSimilarLineCounts`: Calculates counts of similar lines in the log file and displays them in descending order.
 
 ## Extension Settings
 
@@ -43,6 +45,10 @@ There are no known issues at this time. Please report any issues you encounter o
 - Initial release of Acacia Log.
 - Added commands to navigate to a specific date and time in the log file.
 - Added commands to set log date format, log date regular expression, log search date, and log search time.
+
+### 0.0.2
+
+- Added command to calculate counts of similar lines in the log file and display them in descending order.
 
 ---
 

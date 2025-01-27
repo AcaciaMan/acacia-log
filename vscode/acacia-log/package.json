@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"},
-  "version": "0.0.1",
+  "version": "0.0.2",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -40,6 +40,12 @@
         "title": "Log navigate to Search Time",
         "category": "Acacia Log",
         "description": "Sets the time to search for in the log file and Runs the search."
+      },
+      {
+        "command": "extension.calculateSimilarLineCounts",
+        "title": "Calculate Similar Line Counts",
+        "category": "Acacia Log",
+        "description": "Calculates counts of similar lines in the log file and displays them in descending order."
       }
     ],
     "configuration": {

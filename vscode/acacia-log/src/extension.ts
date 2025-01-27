@@ -2,6 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { navigateToDateTime } from './utils/navigateToDateTime';
+import { calculateSimilarLineCounts } from './utils/calculateSimilarLineCounts';
 import { DateTime } from 'luxon';
 
 // This method is called when your extension is activated
@@ -81,6 +82,16 @@ export function activate(context: vscode.ExtensionContext) {
 	navigateToDateTime();
   }));
 
+    // Register the calculateSimilarLineCounts command
+	context.subscriptions.push(vscode.commands.registerCommand('extension.calculateSimilarLineCounts', async () => {
+		const editor = vscode.window.activeTextEditor;
+		if (!editor) {
+		  vscode.window.showErrorMessage('No active editor found');
+		  return;
+		}
+	
+		calculateSimilarLineCounts(editor);
+	  }));
 }
 
 // This method is called when your extension is deactivated
