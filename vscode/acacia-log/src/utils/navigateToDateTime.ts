@@ -26,22 +26,30 @@ export async function navigateToDateTime() {
   const document = editor.document;
   const text = document.getText();
   const lines = text.split('\n');
-  const lineCount = lines.length;
 
-  let lineNumber = 0;
+  let low = 0;
+  let high = lines.length - 1;
   let found = false;
-  for (let i = 0; i < lineCount; i++) {
-    const match = lines[i].match(logDateRegex);
+  let lineNumber = 0;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+    const match = lines[mid].match(new RegExp(logDateRegex));
     if (match) {
-          const matchDateTime = DateTime.fromFormat(match[0], logDateFormat);
-          console.log(matchDateTime.toISO());
+      const matchDateTime = DateTime.fromFormat(match[0], logDateFormat);
       if (matchDateTime.equals(dateTime)) {
-        lineNumber = i;
+        lineNumber = mid;
         found = true;
-        break;
+        high = mid - 1; // Continue searching in the lower half
+      } else if (matchDateTime < dateTime) {
+        low = mid + 1;
+      } else {
+        high = mid - 1;
       }
+    } else {
+      high = mid - 1;
     }
-}
+  }
 
   if (found) {
     vscode.window.showInformationMessage('Date and time found in the log file at line ' + (lineNumber + 1));
@@ -50,6 +58,10 @@ export async function navigateToDateTime() {
     editor.revealRange(new vscode.Range(position, position));
   }  else {
     vscode.window.showInformationMessage('Date and time not found in the log file');
+    // go to the lower bound
+    const position = new vscode.Position(low, 0);
+    editor.selection = new vscode.Selection(position, position);
+    editor.revealRange(new vscode.Range(position, position));
   }
 
   
