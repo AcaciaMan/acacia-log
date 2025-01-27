@@ -5,7 +5,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"},
-  "version": "0.0.2",
+  "version": "1.0.3",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -46,6 +46,12 @@
         "title": "Calculate Similar Line Counts",
         "category": "Acacia Log",
         "description": "Calculates counts of similar lines in the log file and displays them in descending order."
+      },
+      {
+        "command": "extension.drawLogTimeline",
+        "title": "Draw Log Timeline",
+        "category": "Acacia Log",
+        "description": "Draws a chart containing a timeline of log file records."
       }
     ],
     "configuration": {

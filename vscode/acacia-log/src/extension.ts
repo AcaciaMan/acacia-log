@@ -3,6 +3,7 @@
 import * as vscode from 'vscode';
 import { navigateToDateTime } from './utils/navigateToDateTime';
 import { calculateSimilarLineCounts } from './utils/calculateSimilarLineCounts';
+import { drawLogTimeline } from './utils/drawLogTimeline';
 import { DateTime } from 'luxon';
 
 // This method is called when your extension is activated
@@ -92,6 +93,18 @@ export function activate(context: vscode.ExtensionContext) {
 	
 		calculateSimilarLineCounts(editor);
 	  }));
+
+	    // Register the drawLogTimeline command
+  context.subscriptions.push(vscode.commands.registerCommand('extension.drawLogTimeline', async () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('No active editor found');
+      return;
+    }
+
+    drawLogTimeline(editor);
+  }));
+
 }
 
 // This method is called when your extension is deactivated
