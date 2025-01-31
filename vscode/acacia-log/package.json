@@ -67,7 +67,7 @@
       "myExtensionContainer": [
         {
           "type": "webview",
-          "id": "myExtension.myWebview",
+          "id": "acacia-log.logSearch",
           "name": "Process current log file"
         }
       ]
