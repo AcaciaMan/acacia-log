@@ -54,6 +54,24 @@
         "description": "Draws a chart containing a timeline of log file records."
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "myExtensionContainer",
+          "title": "Acacia Log",
+          "icon": "resources/log_icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "myExtensionContainer": [
+        {
+          "type": "webview",
+          "id": "myExtension.myWebview",
+          "name": "Process current log file"
+        }
+      ]
+    },   
     "configuration": {
       "type": "object",
       "title": "Acacia Log Settings",
