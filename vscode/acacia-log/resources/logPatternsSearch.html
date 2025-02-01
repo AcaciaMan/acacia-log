@@ -49,6 +49,16 @@
   <script>
     const vscode = acquireVsCodeApi();
 
+    window.addEventListener('message', event => {
+      const message = event.data;
+      switch (message.command) {
+        case 'setValues':
+          document.getElementById('logFilePath').value = message.logFilePath;
+          document.getElementById('searchPatternsFilePath').value = message.searchPatternsFilePath;
+          break;
+      }
+    });
+
     document.getElementById('searchButton').addEventListener('click', () => {
       const logFilePath = document.getElementById('logFilePath').value;
       const searchPatternsFilePath = document.getElementById('searchPatternsFilePath').value;

@@ -19,6 +19,10 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
 
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
+    const config = vscode.workspace.getConfiguration('acacia-log');
+    const logFilePath = config.get<string>('logFilePath') || '';
+    const searchPatternsFilePath = config.get<string>('patternsFilePath') || '';    
+
     webviewView.webview.onDidReceiveMessage(
       message => {
         switch (message.command) {
@@ -36,6 +40,10 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
               return;
             }
 
+            // store the log file and search patterns file paths in the configuration
+            vscode.workspace.getConfiguration('acacia-log').update('logFilePath', logFilePath, vscode.ConfigurationTarget.Workspace);
+            vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', searchPatternsFilePath, vscode.ConfigurationTarget.Workspace);
+
             const logText = fs.readFileSync(logFilePath, 'utf8');
             const searchPatterns = JSON.parse(fs.readFileSync(searchPatternsFilePath, 'utf8'));
 
@@ -49,6 +57,12 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
       undefined,
       this.context.subscriptions
     );
+
+    webviewView.webview.postMessage({
+        command: 'setValues',
+        logFilePath,
+        searchPatternsFilePath
+      });
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {

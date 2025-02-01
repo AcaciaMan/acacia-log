@@ -100,6 +100,16 @@
           "type": "string",
           "default": "12:00:00",
           "description": "The time to search for in the log files (HH:mm:ss)."
+        },
+        "acacia-log.logFilePath": {
+          "type": "string",
+          "default": "",
+          "description": "The path to the log file."
+        },
+        "acacia-log.patternsFilePath": {
+          "type": "string",
+          "default": "",
+          "description": "The path to the search patterns JSON file."
         }
       }
     }
