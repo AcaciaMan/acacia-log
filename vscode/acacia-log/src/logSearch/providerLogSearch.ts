@@ -24,10 +24,10 @@ export class LogSearchProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this.getHtmlForWebview(webviewView.webview);
 
     const config = vscode.workspace.getConfiguration('acacia-log');
-    const logTimeRegex = config.get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}';
-    const logTimeFormat = config.get<string>('logDateFormat') || 'yyyy-MM-dd HH:mm:ss';
-    const searchDate = config.get<string>('logSearchDate') || '';
-    const searchTime = config.get<string>('logSearchTime') || '';
+    let logTimeRegex = config.get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}';
+    let logTimeFormat = config.get<string>('logDateFormat') || 'yyyy-MM-dd HH:mm:ss';
+    let searchDate = config.get<string>('logSearchDate') || '';
+    let searchTime = config.get<string>('logSearchTime') || '';
 
     webviewView.webview.onDidReceiveMessage(
       async message => {
@@ -86,6 +86,27 @@ export class LogSearchProvider implements vscode.WebviewViewProvider {
         searchDate,
         searchTime
       });  
+
+          // Handle visibility changes to send the setValues message again
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        // reread the values from the configuration
+        const config = vscode.workspace.getConfiguration('acacia-log');
+        logTimeRegex = config.get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}';
+        logTimeFormat = config.get<string>('logDateFormat') || 'yyyy-MM-dd HH:mm:ss';
+        searchDate = config.get<string>('logSearchDate') || '';
+        searchTime = config.get<string>('logSearchTime') || '';
+
+        webviewView.webview.postMessage({
+          command: 'setValues',
+          logTimeRegex,
+          logTimeFormat,
+          searchDate,
+          searchTime
+        });
+      }
+    });
+
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {

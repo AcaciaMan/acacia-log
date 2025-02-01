@@ -63,6 +63,28 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
         logFilePath,
         searchPatternsFilePath
       });
+
+
+    webviewView.onDidChangeVisibility(
+        async () => {
+            if (webviewView.visible) {
+            // Webview is visible
+
+        const config = vscode.workspace.getConfiguration('acacia-log');
+        const logFilePath = config.get<string>('logFilePath') || '';
+        const searchPatternsFilePath = config.get<string>('patternsFilePath') || '';
+
+    webviewView.webview.postMessage({
+        command: 'setValues',
+        logFilePath,
+        searchPatternsFilePath
+      });
+
+            }
+        }
+        );
+
+      
   }
 
   private getHtmlForWebview(webview: vscode.Webview): string {
