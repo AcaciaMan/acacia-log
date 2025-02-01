@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { navigateToDateTime } from './utils/navigateToDateTime';
 import { calculateSimilarLineCounts } from './utils/calculateSimilarLineCounts';
 import { drawLogTimeline } from './utils/drawLogTimeline';
+import { LogSearchProvider } from './logSearch/providerLogSearch';
 import { DateTime } from 'luxon';
 
 // This method is called when your extension is activated
@@ -104,6 +105,14 @@ export function activate(context: vscode.ExtensionContext) {
 
     drawLogTimeline(editor);
   }));
+
+    // Register the LogSearchProvider
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(
+		  LogSearchProvider.viewType,
+		  new LogSearchProvider(context)
+		)
+	  );
 
 }
 
