@@ -8,6 +8,7 @@ import { LogSearchProvider } from './logSearch/providerLogSearch';
 import { DateTime } from 'luxon';
 import { create } from 'domain';
 import { createLogPatterns } from './utils/createLogPatterns';
+import { providerPatternsSearch } from './logSearch/providerPatternsSearch';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -118,6 +119,13 @@ export function activate(context: vscode.ExtensionContext) {
 		  new LogSearchProvider(context)
 		)
 	  );
+
+	  context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(
+		  providerPatternsSearch.viewType,
+		  new providerPatternsSearch(context)
+		)
+	  );  
 
 }
 
