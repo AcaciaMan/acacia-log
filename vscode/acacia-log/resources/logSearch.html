@@ -56,6 +56,18 @@
   <script>
     const vscode = acquireVsCodeApi();
 
+    window.addEventListener('message', event => {
+      const message = event.data;
+      switch (message.command) {
+        case 'setValues':
+          document.getElementById('logTimeRegex').value = message.logTimeRegex;
+          document.getElementById('logTimeFormat').value = message.logTimeFormat;
+          document.getElementById('searchDate').value = message.searchDate;
+          document.getElementById('searchTime').value = message.searchTime;
+          break;
+      }
+    });
+
     document.getElementById('searchButton').addEventListener('click', () => {
       const logTimeRegex = document.getElementById('logTimeRegex').value;
       const logTimeFormat = document.getElementById('logTimeFormat').value;

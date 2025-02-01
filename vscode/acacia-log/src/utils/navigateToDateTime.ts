@@ -17,6 +17,7 @@ export async function navigateToDateTime() {
   const logSearchDate = config.get<string>('logSearchDate');
   const logSearchTime = config.get<string>('logSearchTime');
   const dateTimeInput = `${logSearchDate}T${logSearchTime}`;
+  console.log(dateTimeInput);
           const dateTime = DateTime.fromISO(dateTimeInput);
         if (!dateTime.isValid) {
           vscode.window.showErrorMessage('Invalid date and time format');
