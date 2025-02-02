@@ -55,11 +55,24 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
             vscode.window.showInformationMessage('Searching...');
 
             const results = await this.searchLogFile(logFilePath, searchPatterns);
+            interface SearchResult {
+              count: number;
+              line_match: string[];
+            }
+
+            const editorResults: { [pattern: string]: SearchResult } = {};
+            for (const pattern in results) {
+              editorResults[pattern] = {
+              count: results[pattern].count,
+              line_match: results[pattern].lines.map((line, index) => `${line}: ${results[pattern].matches[index]}`)
+              };
+            }
+
 
             // Show the results in the new editor
             const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
             resultEditor.edit(editBuilder => {
-              editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(results, null, 2));
+              editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(editorResults, null, 2));
             });
 
             vscode.window.showInformationMessage('Search completed');
@@ -105,11 +118,11 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
     return htmlContent;
   }
 
-  private async searchLogFile(logFilePath: string, searchPatterns: { key: string, regexp: string, regexpoptions: string }[]): Promise<{ [pattern: string]: { count: number, positions: number[], lines: number[] } }> {
-    const results: { [pattern: string]: { count: number, positions: number[], lines: number[] } } = {};
+  private async searchLogFile(logFilePath: string, searchPatterns: { key: string, regexp: string, regexpoptions: string }[]): Promise<{ [pattern: string]: { count: number, positions: number[], lines: number[], matches: string[] } }> {
+    const results: { [pattern: string]: { count: number, positions: number[], lines: number[], matches: string[] } } = {};
   
     for (const pattern of searchPatterns) {
-      results[pattern.key] = { count: 0, positions: [], lines: [] };
+      results[pattern.key] = { count: 0, positions: [], lines: [], matches: [] };
     }
   
     const fileStream = fs.createReadStream(logFilePath, { encoding: 'utf8' });
@@ -125,7 +138,7 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
   
       // Iterate over all search patterns and count the number of occurrences and their positions
       for (const pattern of searchPatterns) {
-        const regex = new RegExp(pattern.regexp, pattern.regexpoptions); 
+        const regex = new RegExp(pattern.regexp, pattern.regexpoptions);
   
         while ((match = regex.exec(buffer)) !== null) {
           const matchPosition = position + match.index;
@@ -133,7 +146,7 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
             results[pattern.key].count++;
             results[pattern.key].positions.push(matchPosition);
   
-            // Calculate line number
+            // Calculate line number and extract the matching line
             while (lineStart < matchPosition) {
               const nextLineBreak = buffer.indexOf('\n', lineStart);
               if (nextLineBreak === -1 || nextLineBreak >= matchPosition) {
@@ -143,6 +156,11 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
               lineStart = nextLineBreak + 1;
             }
             results[pattern.key].lines.push(lineNumber);
+  
+            // Extract the whole matching line
+            const lineEnd = buffer.indexOf('\n', match.index);
+            const matchingLine = buffer.substring(lineStart, lineEnd !== -1 ? lineEnd : buffer.length);
+            results[pattern.key].matches.push(matchingLine);
           } else {
             console.error(`Invalid match position: ${matchPosition}`);
           }
@@ -161,5 +179,4 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
   
     return results;
   }
-
 }
