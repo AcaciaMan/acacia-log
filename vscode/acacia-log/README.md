@@ -16,6 +16,10 @@ Added command calls through activity bar:
 
 ![Screenshot 2025-02-01 151004](https://github.com/user-attachments/assets/a13cf7f0-a801-4ccc-a39b-ca9e8881db8f)
 
+Added patterns search in log file:
+
+![Screenshot 2025-02-02 063654](https://github.com/user-attachments/assets/dc92f595-09ec-426c-9c4a-2b20267c18c4)
+
 ![Extension Screenshot](https://github.com/user-attachments/assets/f9987ce4-6f63-4fe8-bafe-9d2c1738caef)
 
 ## Commands
