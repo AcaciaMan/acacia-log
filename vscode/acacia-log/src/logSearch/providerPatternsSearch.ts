@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { readLogPatterns } from '../utils/readLogPatterns';
 
 export class providerPatternsSearch implements vscode.WebviewViewProvider {
   public static readonly viewType = 'acacia-log.patternsSearch';
@@ -24,7 +25,7 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
     const searchPatternsFilePath = config.get<string>('patternsFilePath') || '';    
 
     webviewView.webview.onDidReceiveMessage(
-      message => {
+      async message => {
         switch (message.command) {
           case 'search':
             const logFilePath = message.logFilePath;
@@ -41,14 +42,25 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
             }
 
             // store the log file and search patterns file paths in the configuration
-            vscode.workspace.getConfiguration('acacia-log').update('logFilePath', logFilePath, vscode.ConfigurationTarget.Workspace);
-            vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', searchPatternsFilePath, vscode.ConfigurationTarget.Workspace);
+            await vscode.workspace.getConfiguration('acacia-log').update('logFilePath', logFilePath, vscode.ConfigurationTarget.Workspace);
+            await vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', searchPatternsFilePath, vscode.ConfigurationTarget.Workspace);
 
-            const logText = fs.readFileSync(logFilePath, 'utf8');
-            const searchPatterns = JSON.parse(fs.readFileSync(searchPatternsFilePath, 'utf8'));
+            const searchPatterns = readLogPatterns(searchPatternsFilePath);
 
-            // Perform search using logText and searchPatterns
-            // ...
+            // Perform search using searchPatterns in logFilePath
+            // For each pattern in searchPatterns, search the log file asynchronously in parallel
+            // Show the results in the new editor
+            // For each pattern, show the number of occurrences and the lines where the pattern is found in json format
+
+            vscode.window.showInformationMessage('Searching...');
+
+            const results = await this.searchLogFile(logFilePath, searchPatterns);
+
+            // Show the results in the new editor
+            const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
+            resultEditor.edit(editBuilder => {
+              editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(results, null, 2));
+            });
 
             vscode.window.showInformationMessage('Search completed');
             return;
@@ -92,4 +104,46 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
     const htmlContent = fs.readFileSync(htmlPath, 'utf8');
     return htmlContent;
   }
+
+  private async searchLogFile(logFilePath: string, searchPatterns: { key: string, regexp: string, regexpoptions: string }[]): Promise<{ [pattern: string]: { count: number, positions: number[] } }> {
+    const results: { [pattern: string]: { count: number, positions: number[] } } = {};
+
+    for (const pattern of searchPatterns) {
+    results[pattern.key] = { count: 0, positions: [] };
+    }
+
+    const fileStream = fs.createReadStream(logFilePath, { encoding: 'utf8' });
+    let buffer = '';
+    let position = 0;
+
+    for await (const chunk of fileStream) {
+      buffer += chunk;
+      let match;
+      let lastIndex = -1;
+      // iterate over all search patterns and count the number of occurrences and their positions
+
+
+      for (const pattern of searchPatterns) {
+        const regex = new RegExp(pattern.regexp, pattern.regexpoptions);
+        while ((match = regex.exec(buffer)) !== null) {
+          results[pattern.key].count++;
+          results[pattern.key].positions.push(position + match.index);
+
+                          // Safeguard to prevent infinite loop
+                          if (regex.lastIndex === lastIndex) {
+                            console.error('Infinite loop detected, breaking out of the loop');
+                            break;
+                          }
+                          lastIndex = regex.lastIndex;
+        }
+
+
+      }
+      position += chunk.length;
+      buffer = buffer.slice(-1024); // Keep the last 1024 characters to handle patterns spanning chunks
+    }
+
+    return results;
+  }
+
 }

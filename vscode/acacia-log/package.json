@@ -4,7 +4,8 @@
   "description": "log files processing",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AcaciaMan/acacia-log"},
+    "url": "https://github.com/AcaciaMan/acacia-log"
+  },
   "version": "1.0.6",
   "publisher": "manacacia",
   "engines": {
@@ -76,7 +77,7 @@
           "name": "Search for patterns"
         }
       ]
-    },   
+    },
     "configuration": {
       "type": "object",
       "title": "Acacia Log Settings",
@@ -126,7 +127,7 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "jest"
   },
   "devDependencies": {
     "@types/luxon": "^3.4.2",
@@ -143,7 +144,10 @@
     "typescript": "^5.7.2"
   },
   "dependencies": {
-    "luxon": "^3.5.0"
+    "@types/jest": "^29.5.14",
+    "jest": "^29.7.0",
+    "luxon": "^3.5.0",
+    "ts-jest": "^29.2.5"
   },
   "icon": "log_icon.png"
 }

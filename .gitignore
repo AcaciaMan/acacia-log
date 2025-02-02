@@ -1,3 +1,5 @@
 
 /vscode/acacia-log/node_modules
 /vscode/acacia-log/dist
+/vscode/acacia-log/.vscode-test
+/vscode/acacia-log/out

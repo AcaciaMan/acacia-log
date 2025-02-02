@@ -22,17 +22,17 @@ export function createLogPatterns() {
       logPatterns: {
         error: {
             regexp: 'ERROR',
-            regexpoptions: 'i',
+            regexpoptions: 'ig',
             bSearch: true
         },
         warn: {
             regexp: 'WARN',
-            regexpoptions: 'i',
+            regexpoptions: 'ig',
             bSearch: true
         },
         info: {
             regexp: 'INFO',
-            regexpoptions: 'i',
+            regexpoptions: 'ig',
             bSearch: true
         }
       }

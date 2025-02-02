@@ -2,17 +2,17 @@
   "logPatterns": {
     "error": {
       "regexp": "ERROR",
-      "regexpoptions": "ig",
+      "regexpoptions": "i",
       "bSearch": true
     },
     "warn": {
       "regexp": "WARN",
-      "regexpoptions": "ig",
+      "regexpoptions": "i",
       "bSearch": true
     },
     "info": {
-      "regexp": "DnldMgr",
-      "regexpoptions": "ig",
+      "regexp": "INFO",
+      "regexpoptions": "i",
       "bSearch": true
     }
   }
