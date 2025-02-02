@@ -4,5 +4,7 @@
     "acacia-log.logDateRegex": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
     "acacia-log.logDateFormat": "yyyy-MM-dd HH:mm:ss",
     "acacia-log.logFilePath": "C:\\work\\GitHub\\acacia-log\\log_example\\example.log",
-    "acacia-log.patternsFilePath": "C:\\work\\GitHub\\acacia-log\\log_example\\.vscode\\logPatterns.json"
+    "acacia-log.patternsFilePath": "C:\\work\\GitHub\\acacia-log\\log_example\\.vscode\\logPatterns.json",
+    "vscode-git-kafka.workspaceUUID": "z7ajuc59-5l1x-0apl-tucn-fj0000000000",
+    "vscode-git-kafka.sort": "Clicks (High-Low)"
 }
