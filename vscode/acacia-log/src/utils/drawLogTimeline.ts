@@ -20,7 +20,43 @@ export async function drawLogTimeline(editor: vscode.TextEditor) {
     }
   }
 
-  const data = timestamps.map(ts => ts.toISO()).filter((d): d is string => d !== null);
+  // aggregate the timestamps by months
+  // if months are more than 1 year, then aggregate by years
+  // if there are only 2 months, then aggregate by days
+  // if there are only 2 days, then aggregate by hours
+  // if there are only 2 hours, then aggregate by minutes
+  // if there are only 2 minutes, then aggregate by seconds
+
+  let aggregationUnit: 'year' | 'month' | 'day' | 'hour' | 'minute' | 'second' = 'second';
+
+  const firstTimestamp = timestamps[0];
+  const lastTimestamp = timestamps[timestamps.length - 1];
+
+  const diffInYears = lastTimestamp.diff(firstTimestamp, 'years').years;
+  const diffInMonths = lastTimestamp.diff(firstTimestamp, 'months').months;
+  const diffInDays = lastTimestamp.diff(firstTimestamp, 'days').days;
+  const diffInHours = lastTimestamp.diff(firstTimestamp, 'hours').hours;
+  const diffInMinutes = lastTimestamp.diff(firstTimestamp, 'minutes').minutes;
+
+  if (diffInYears > 1) {
+    aggregationUnit = 'year';
+  } else if (diffInMonths > 1) {
+    aggregationUnit = 'month';
+  } else if (diffInDays > 2) {
+    aggregationUnit = 'day';
+  } else if (diffInHours > 2) {
+    aggregationUnit = 'hour';
+  } else if (diffInMinutes > 2) {
+    aggregationUnit = 'minute';
+  }
+
+  console.log('Aggregating by', aggregationUnit);
+  const aggregatedTimestamps = timestamps.map(ts => ts.startOf(aggregationUnit));
+
+  // send the aggregated timestamps to the webview
+  // the webview will draw a timeline chart based on the timestamps
+
+  const data = aggregatedTimestamps.map(ts => ts.toISO()) as string[];
 
   const panel = vscode.window.createWebviewPanel(
     'logTimeline',
@@ -30,11 +66,12 @@ export async function drawLogTimeline(editor: vscode.TextEditor) {
       enableScripts: true
     }
   );
-
-  panel.webview.html = getWebviewContent(data);
+  
+  // send to the webview also the aggregation unit
+  panel.webview.html = getWebviewContent(data, aggregationUnit);
 }
 
-function getWebviewContent(data: string[]): string {
+function getWebviewContent(data: string[], aggregationUnit: string): string {
   return `
     <!DOCTYPE html>
     <html lang="en">
@@ -69,7 +106,7 @@ function getWebviewContent(data: string[]): string {
               x: {
                 type: 'time',
                 time: {
-                  unit: 'minute'
+                  unit: ${JSON.stringify(aggregationUnit)}
                 },
                 title: {
                   display: true,

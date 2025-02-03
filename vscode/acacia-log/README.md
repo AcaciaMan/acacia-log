@@ -75,6 +75,10 @@ There are no known issues at this time. Please report any issues you encounter o
 
 - Fixed Patterns search
 
+### 2.0.5s
+
+- Fixed Draw Time Line
+
 ---
 
 ## Following extension guidelines
