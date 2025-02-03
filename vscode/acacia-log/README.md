@@ -71,6 +71,10 @@ There are no known issues at this time. Please report any issues you encounter o
 
 - Speed up Patterns search
 
+### 2.0.4
+
+- Fixed Patterns search
+
 ---
 
 ## Following extension guidelines
