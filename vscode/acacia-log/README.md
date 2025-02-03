@@ -67,6 +67,10 @@ There are no known issues at this time. Please report any issues you encounter o
 - Added command to calculate counts of similar lines in the log file and display them in descending order.
 - Added command to draw a timeline chart of log file records.
 
+### 2.0.3
+
+- Speed up Patterns search
+
 ---
 
 ## Following extension guidelines

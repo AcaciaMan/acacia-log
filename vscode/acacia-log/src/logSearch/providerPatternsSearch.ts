@@ -131,15 +131,22 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
   private async searchLogFile(logFilePath: string, searchPatterns: { key: string, regexp: string, regexpoptions: string }[]): Promise<{ [pattern: string]: { count: number, positions: number[], lines: number[], matches: string[] } }> {
     const results: { [pattern: string]: { count: number, positions: number[], lines: number[], matches: string[] } } = {};
   
-    for (const pattern of searchPatterns) {
-      results[pattern.key] = { count: 0, positions: [], lines: [], matches: [] };
-    }
-  
 
-       // Iterate over all search patterns and count the number of occurrences and their positions
-       for (const pattern of searchPatterns) {
-        const regex = new RegExp(pattern.regexp, pattern.regexpoptions);
-        const fileStream = fs.createReadStream(logFilePath, { encoding: 'utf8' });        
+    const searchPromises = searchPatterns.map(pattern => this.searchPatternInLogFile(logFilePath, pattern));
+    const searchResults = await Promise.all(searchPromises);
+
+    searchResults.forEach((result, index) => {
+      results[searchPatterns[index].key] = result;
+    });
+
+    return results;
+  }
+
+  private async searchPatternInLogFile(logFilePath: string, pattern: { key: string, regexp: string, regexpoptions: string }): Promise<{ count: number, positions: number[], lines: number[], matches: string[] }> {
+    const result = { count: 0, positions: [] as number[], lines: [] as number[], matches: [] as string[] };
+  
+    const regex = new RegExp(pattern.regexp, pattern.regexpoptions);
+    const fileStream = fs.createReadStream(logFilePath, { encoding: 'utf8' });
     let buffer = '';
     let position = 0;
     let lineNumber = 1;
@@ -150,43 +157,42 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
       let match;
       let lastIndex = -1;
   
-        while ((match = regex.exec(buffer)) !== null) {
-          const matchPosition = position + match.index;
-          if (matchPosition >= 0 && Number.isSafeInteger(matchPosition)) {
-            results[pattern.key].count++;
-            results[pattern.key].positions.push(matchPosition);
+      while ((match = regex.exec(buffer)) !== null) {
+        const matchPosition = position + match.index;
+        if (matchPosition >= 0 && Number.isSafeInteger(matchPosition)) {
+          result.count++;
+          result.positions.push(matchPosition);
   
-            // Calculate line number and extract the matching line
-            while (lineStart < matchPosition) {
-              const nextLineBreak = buffer.indexOf('\n', lineStart);
-              if (nextLineBreak === -1 || nextLineBreak >= matchPosition) {
-                break;
-              }
-              lineNumber++;
-              lineStart = nextLineBreak + 1;
+          // Calculate line number and extract the matching line
+          while (lineStart < matchPosition) {
+            const nextLineBreak = buffer.indexOf('\n', lineStart);
+            if (nextLineBreak === -1 || nextLineBreak >= matchPosition) {
+              break;
             }
-            results[pattern.key].lines.push(lineNumber);
-  
-            // Extract the whole matching line
-            const lineEnd = buffer.indexOf('\n', match.index);
-            const matchingLine = buffer.substring(lineStart, lineEnd !== -1 ? lineEnd : buffer.length);
-            results[pattern.key].matches.push(matchingLine);
-          } else {
-            console.error(`Invalid match position: ${matchPosition}`);
+            lineNumber++;
+            lineStart = nextLineBreak + 1;
           }
+          result.lines.push(lineNumber);
   
-          // Safeguard to prevent infinite loop
-          if (regex.lastIndex === lastIndex) {
-            console.error('Infinite loop detected, breaking out of the loop');
-            break;
-          }
-          lastIndex = regex.lastIndex;
+          // Extract the whole matching line
+          const lineEnd = buffer.indexOf('\n', match.index);
+          const matchingLine = buffer.substring(lineStart, lineEnd !== -1 ? lineEnd : buffer.length);
+          result.matches.push(matchingLine);
+        } else {
+          console.error(`Invalid match position: ${matchPosition}`);
         }
-      
+  
+        // Safeguard to prevent infinite loop
+        if (regex.lastIndex === lastIndex) {
+          console.error('Infinite loop detected, breaking out of the loop');
+          break;
+        }
+        lastIndex = regex.lastIndex;
+      }
       position += chunk.length;
       buffer = buffer.slice(-1024); // Keep the last 1024 characters to handle patterns spanning chunks
     }
-  }
-    return results;
+  
+    return result;
   }
 }
