@@ -55,6 +55,14 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
             vscode.window.showInformationMessage('Searching...');
 
             const results = await this.searchLogFile(logFilePath, searchPatterns);
+
+
+                        // Send results to the webview for visualization
+                        webviewView.webview.postMessage({
+                          command: 'displayResults',
+                          results
+                        });
+
             interface SearchResult {
               count: number;
               line_match: string[];
@@ -72,6 +80,8 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
             // Show the results in the new editor
             const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
             resultEditor.edit(editBuilder => {
+              // Insert the results in the editor, previously clearing the editor
+              editBuilder.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(resultEditor.document.lineCount + 1, 0)));
               editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(editorResults, null, 2));
             });
 
@@ -125,7 +135,11 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
       results[pattern.key] = { count: 0, positions: [], lines: [], matches: [] };
     }
   
-    const fileStream = fs.createReadStream(logFilePath, { encoding: 'utf8' });
+
+       // Iterate over all search patterns and count the number of occurrences and their positions
+       for (const pattern of searchPatterns) {
+        const regex = new RegExp(pattern.regexp, pattern.regexpoptions);
+        const fileStream = fs.createReadStream(logFilePath, { encoding: 'utf8' });        
     let buffer = '';
     let position = 0;
     let lineNumber = 1;
@@ -135,10 +149,6 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
       buffer += chunk;
       let match;
       let lastIndex = -1;
-  
-      // Iterate over all search patterns and count the number of occurrences and their positions
-      for (const pattern of searchPatterns) {
-        const regex = new RegExp(pattern.regexp, pattern.regexpoptions);
   
         while ((match = regex.exec(buffer)) !== null) {
           const matchPosition = position + match.index;
@@ -172,11 +182,11 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
           }
           lastIndex = regex.lastIndex;
         }
-      }
+      
       position += chunk.length;
       buffer = buffer.slice(-1024); // Keep the last 1024 characters to handle patterns spanning chunks
     }
-  
+  }
     return results;
   }
 }

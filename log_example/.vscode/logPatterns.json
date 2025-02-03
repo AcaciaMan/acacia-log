@@ -1,12 +1,12 @@
 {
   "logPatterns": {
     "error": {
-      "regexp": "ERROR",
+      "regexp": "BITS",
       "regexpoptions": "ig",
       "bSearch": true
     },
     "warn": {
-      "regexp": "WARN",
+      "regexp": "SID",
       "regexpoptions": "ig",
       "bSearch": true
     },
