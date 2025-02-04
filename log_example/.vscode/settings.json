@@ -1,8 +1,8 @@
 {
-    "acacia-log.logSearchDate": "2015-02-09",
-    "acacia-log.logSearchTime": "12:53:03",
-    "acacia-log.logDateRegex": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}",
-    "acacia-log.logDateFormat": "yyyy-MM-dd HH:mm:ss",
+    "acacia-log.logSearchDate": "2015-02-08",
+    "acacia-log.logSearchTime": "11:52:06",
+    "acacia-log.logDateRegex": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
+    "acacia-log.logDateFormat": "yyyy-MM-dd HH:mm:ss.SSS",
     "acacia-log.logFilePath": "C:\\work\\GitHub\\acacia-log\\log_example\\example.log",
     "acacia-log.patternsFilePath": "C:\\work\\GitHub\\acacia-log\\log_example\\.vscode\\logPatterns.json",
     "vscode-git-kafka.workspaceUUID": "z7ajuc59-5l1x-0apl-tucn-fj0000000000",

@@ -75,9 +75,13 @@ There are no known issues at this time. Please report any issues you encounter o
 
 - Fixed Patterns search
 
-### 2.0.5s
+### 2.0.6
 
 - Fixed Draw Time Line
+
+### 2.1.0
+
+- Added time regex and format suggestions
 
 ---
 
