@@ -1,12 +1,12 @@
 {
   "name": "acacia-log",
   "displayName": "acacia-log",
-  "description": "log files processing",
+  "description": "log files processing, similar lines, patterns",
   "repository": {
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "2.1.0",
+  "version": "2.1.1",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
