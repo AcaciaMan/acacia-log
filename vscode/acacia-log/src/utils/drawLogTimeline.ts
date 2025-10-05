@@ -378,7 +378,7 @@ function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: stri
         <h1>
           📊 Log Timeline Analysis
         </h1>
-        <div class="file-path">${logFilePath.replace(/\\/g, '\\\\')}</div>
+        <div class="file-path">${logFilePath.split('\\').join('\\\\')}</div>
       </div>
 
       <div class="stats-grid">
@@ -469,7 +469,7 @@ function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: stri
                 label: 'Log Entries',
                 data: totalCounts,
                 backgroundColor: colors.total,
-                borderColor: colors.total.replace('0.8', '1'),
+                borderColor: 'rgba(54, 162, 235, 1)',
                 borderWidth: 2,
                 fill: currentChartType === 'area',
                 tension: 0.4
@@ -479,7 +479,7 @@ function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: stri
                   label: 'ERROR',
                   data: errorCounts,
                   backgroundColor: colors.error,
-                  borderColor: colors.error.replace('0.8', '1'),
+                  borderColor: 'rgba(255, 99, 132, 1)',
                   borderWidth: 1,
                   fill: currentChartType === 'area',
                   tension: 0.4,
@@ -489,7 +489,7 @@ function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: stri
                   label: 'WARN',
                   data: warnCounts,
                   backgroundColor: colors.warn,
-                  borderColor: colors.warn.replace('0.8', '1'),
+                  borderColor: 'rgba(255, 159, 64, 1)',
                   borderWidth: 1,
                   fill: currentChartType === 'area',
                   tension: 0.4,
@@ -499,7 +499,7 @@ function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: stri
                   label: 'INFO',
                   data: infoCounts,
                   backgroundColor: colors.info,
-                  borderColor: colors.info.replace('0.8', '1'),
+                  borderColor: 'rgba(75, 192, 192, 1)',
                   borderWidth: 1,
                   fill: currentChartType === 'area',
                   tension: 0.4,
@@ -509,7 +509,7 @@ function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: stri
                   label: 'DEBUG',
                   data: debugCounts,
                   backgroundColor: colors.debug,
-                  borderColor: colors.debug.replace('0.8', '1'),
+                  borderColor: 'rgba(153, 102, 255, 1)',
                   borderWidth: 1,
                   fill: currentChartType === 'area',
                   tension: 0.4,

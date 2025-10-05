@@ -3,3 +3,4 @@
 /vscode/acacia-log/dist
 /vscode/acacia-log/.vscode-test
 /vscode/acacia-log/out
+*.vsix
