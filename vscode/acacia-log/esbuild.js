@@ -41,6 +41,10 @@ async function main() {
 			/* add to the end of plugins array */
 			esbuildProblemMatcherPlugin,
 		],
+		// Security: Never enable serve mode in VS Code extensions
+		// esbuild's dev server has CORS vulnerabilities that allow
+		// any website to send requests and read responses.
+		// This extension uses watch mode only for file changes.
 	});
 	if (watch) {
 		await ctx.watch();

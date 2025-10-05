@@ -406,7 +406,23 @@ code .
 
 ---
 
-## 📄 License
+## � Security
+
+This extension follows VS Code security best practices:
+
+- **No External Network Calls**: All operations are performed locally
+- **Secure WebViews**: Content Security Policy enforced on all panels
+- **File System Access**: Only reads files opened in the workspace
+- **Build Security**: No development server mode used (esbuild watch only)
+- **Package Integrity**: Dependencies audited during installation
+
+For detailed security information, see [SECURITY.md](SECURITY.md).
+
+If you discover a security vulnerability, please email the maintainer directly rather than opening a public issue.
+
+---
+
+## �📄 License
 
 This extension is licensed under the [MIT License](LICENSE.md).
 
