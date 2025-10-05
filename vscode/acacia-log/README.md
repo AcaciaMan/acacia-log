@@ -9,6 +9,8 @@ Acacia Log is a powerful Visual Studio Code extension designed to make log file 
 
 ![Acacia Log Banner](log_icon.png)
 
+<img alt="Screenshot_log_search" src="https://github.com/user-attachments/assets/eca1bc9d-12a2-4833-9c98-1ec56417a859" />
+
 ---
 
 ## ✨ Key Features
