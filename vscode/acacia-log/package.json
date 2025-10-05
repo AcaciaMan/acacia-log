@@ -69,12 +69,14 @@
         {
           "type": "webview",
           "id": "acacia-log.logSearch",
-          "name": "Process current log file"
+          "name": "Process current log file",
+          "icon": "resources/log_icon.svg"
         },
         {
           "type": "webview",
           "id": "acacia-log.patternsSearch",
-          "name": "Search for patterns"
+          "name": "Search for patterns",
+          "icon": "resources/log_icon.svg"
         }
       ]
     },
