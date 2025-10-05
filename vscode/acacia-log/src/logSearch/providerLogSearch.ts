@@ -33,46 +33,86 @@ export class LogSearchProvider implements vscode.WebviewViewProvider {
       async message => {
         let editor = vscode.window.activeTextEditor;
         console.log(message.command);
-        switch (message.command) {
-            
-          case 'search':
-            vscode.window.showInformationMessage(`Searching for logs with regex: ${message.logTimeRegex}, format: ${message.logTimeFormat}, date: ${message.searchDate}, time: ${message.searchTime}`);
-            
-            await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
-            await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
-            await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
-            await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
+        
+        try {
+          switch (message.command) {
+              
+            case 'search':
+              // Update configuration
+              await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
 
-            navigateToDateTime();
-            
-            
-            return;
-          case 'calculateSimilarLineCounts':
+              // Execute navigation
+              await navigateToDateTime();
+              
+              // Send success feedback
+              webviewView.webview.postMessage({
+                command: 'operationComplete',
+                success: true,
+                message: 'Navigation completed successfully'
+              });
+              
+              return;
+              
+            case 'calculateSimilarLineCounts':
+              // Update configuration
+              await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
 
-          await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
-          await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
-          await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
-          await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
-
-
-                if (editor) {
-                  calculateSimilarLineCounts(editor);
-                } else {
-                  vscode.window.showErrorMessage('No active editor found');
-                }
-                return;
-          case 'drawLogTimeline':
-
-          await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
-          await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
-          await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
-          await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
-                if (editor) {
-                  drawLogTimeline(editor);
-                } else {
-                  vscode.window.showErrorMessage('No active editor found');
-                }
-                return;
+              if (editor) {
+                await calculateSimilarLineCounts(editor);
+                webviewView.webview.postMessage({
+                  command: 'operationComplete',
+                  success: true,
+                  message: 'Similar line counts calculated successfully'
+                });
+              } else {
+                vscode.window.showErrorMessage('No active editor found');
+                webviewView.webview.postMessage({
+                  command: 'operationComplete',
+                  success: false,
+                  message: 'No active editor found'
+                });
+              }
+              return;
+              
+            case 'drawLogTimeline':
+              // Update configuration
+              await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
+              
+              if (editor) {
+                await drawLogTimeline(editor);
+                webviewView.webview.postMessage({
+                  command: 'operationComplete',
+                  success: true,
+                  message: 'Timeline drawn successfully'
+                });
+              } else {
+                vscode.window.showErrorMessage('No active editor found');
+                webviewView.webview.postMessage({
+                  command: 'operationComplete',
+                  success: false,
+                  message: 'No active editor found'
+                });
+              }
+              return;
+          }
+        } catch (error) {
+          // Handle any errors
+          const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+          vscode.window.showErrorMessage(`Error: ${errorMessage}`);
+          webviewView.webview.postMessage({
+            command: 'operationComplete',
+            success: false,
+            message: errorMessage
+          });
         }
       },
       undefined,

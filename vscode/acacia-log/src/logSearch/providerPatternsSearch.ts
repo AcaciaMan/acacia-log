@@ -26,67 +26,101 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(
       async message => {
-        switch (message.command) {
-          case 'search':
-            const logFilePath = message.logFilePath;
-            const searchPatternsFilePath = message.searchPatternsFilePath;
+        try {
+          switch (message.command) {
+            case 'search':
+              const logFilePath = message.logFilePath;
+              const searchPatternsFilePath = message.searchPatternsFilePath;
 
-            if (!fs.existsSync(logFilePath)) {
-              vscode.window.showErrorMessage(`Log file not found: ${logFilePath}`);
+              if (!fs.existsSync(logFilePath)) {
+                vscode.window.showErrorMessage(`Log file not found: ${logFilePath}`);
+                webviewView.webview.postMessage({
+                  command: 'operationComplete',
+                  success: false,
+                  message: `Log file not found: ${logFilePath}`
+                });
+                return;
+              }
+
+              if (!fs.existsSync(searchPatternsFilePath)) {
+                vscode.window.showErrorMessage(`Search patterns file not found: ${searchPatternsFilePath}`);
+                webviewView.webview.postMessage({
+                  command: 'operationComplete',
+                  success: false,
+                  message: `Search patterns file not found: ${searchPatternsFilePath}`
+                });
+                return;
+              }
+
+              // Store the log file and search patterns file paths in the configuration
+              await vscode.workspace.getConfiguration('acacia-log').update('logFilePath', logFilePath, vscode.ConfigurationTarget.Workspace);
+              await vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', searchPatternsFilePath, vscode.ConfigurationTarget.Workspace);
+
+              const searchPatterns = readLogPatterns(searchPatternsFilePath);
+
+              vscode.window.showInformationMessage('Searching patterns...');
+
+              const results = await this.searchLogFile(logFilePath, searchPatterns);
+
+              // Send results to the webview for visualization
+              webviewView.webview.postMessage({
+                command: 'displayResults',
+                results
+              });
+
+              interface SearchResult {
+                count: number;
+                line_match: string[];
+              }
+
+              const editorResults: { [pattern: string]: SearchResult } = {};
+              for (const pattern in results) {
+                editorResults[pattern] = {
+                  count: results[pattern].count,
+                  line_match: results[pattern].lines.map((line, index) => `${line}: ${results[pattern].matches[index]}`)
+                };
+              }
+
+              // Show the results in the new editor
+              const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
+              await resultEditor.edit(editBuilder => {
+                // Clear the editor first
+                editBuilder.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(resultEditor.document.lineCount + 1, 0)));
+                editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(editorResults, null, 2));
+              });
+
+              vscode.window.showInformationMessage('Search completed successfully!');
               return;
-            }
 
-            if (!fs.existsSync(searchPatternsFilePath)) {
-              vscode.window.showErrorMessage(`Search patterns file not found: ${searchPatternsFilePath}`);
-              return;
-            }
-
-            // store the log file and search patterns file paths in the configuration
-            await vscode.workspace.getConfiguration('acacia-log').update('logFilePath', logFilePath, vscode.ConfigurationTarget.Workspace);
-            await vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', searchPatternsFilePath, vscode.ConfigurationTarget.Workspace);
-
-            const searchPatterns = readLogPatterns(searchPatternsFilePath);
-
-            // Perform search using searchPatterns in logFilePath
-            // For each pattern in searchPatterns, search the log file asynchronously in parallel
-            // Show the results in the new editor
-            // For each pattern, show the number of occurrences and the lines where the pattern is found in json format
-
-            vscode.window.showInformationMessage('Searching...');
-
-            const results = await this.searchLogFile(logFilePath, searchPatterns);
-
-
-                        // Send results to the webview for visualization
-                        webviewView.webview.postMessage({
-                          command: 'displayResults',
-                          results
-                        });
-
-            interface SearchResult {
-              count: number;
-              line_match: string[];
-            }
-
-            const editorResults: { [pattern: string]: SearchResult } = {};
-            for (const pattern in results) {
-              editorResults[pattern] = {
-              count: results[pattern].count,
-              line_match: results[pattern].lines.map((line, index) => `${line}: ${results[pattern].matches[index]}`)
+            case 'browseFile':
+              // Handle file browsing request
+              const fileType = message.fileType;
+              const options: vscode.OpenDialogOptions = {
+                canSelectMany: false,
+                openLabel: 'Select',
+                filters: fileType === 'patterns' 
+                  ? { 'JSON files': ['json'], 'All files': ['*'] }
+                  : { 'Log files': ['log', 'txt'], 'All files': ['*'] }
               };
-            }
 
-
-            // Show the results in the new editor
-            const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
-            resultEditor.edit(editBuilder => {
-              // Insert the results in the editor, previously clearing the editor
-              editBuilder.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(resultEditor.document.lineCount + 1, 0)));
-              editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(editorResults, null, 2));
-            });
-
-            vscode.window.showInformationMessage('Search completed');
-            return;
+              const fileUri = await vscode.window.showOpenDialog(options);
+              if (fileUri && fileUri[0]) {
+                webviewView.webview.postMessage({
+                  command: 'setFilePath',
+                  fileType: fileType,
+                  path: fileUri[0].fsPath
+                });
+              }
+              return;
+          }
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'An unexpected error occurred';
+          vscode.window.showErrorMessage(`Error: ${errorMessage}`);
+          webviewView.webview.postMessage({
+            command: 'operationComplete',
+            success: false,
+            message: errorMessage
+          });
         }
       },
       undefined,
