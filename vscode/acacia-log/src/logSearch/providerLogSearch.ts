@@ -80,6 +80,70 @@ export class LogSearchProvider implements vscode.WebviewViewProvider {
               }
               return;
               
+            case 'testRegex':
+              // Test regex pattern against the current file
+              if (editor) {
+                const document = editor.document;
+                const regex = new RegExp(message.logTimeRegex);
+                let matchCount = 0;
+                let firstMatch = '';
+                let lastMatch = '';
+                
+                try {
+                  for (let i = 0; i < document.lineCount && i < 1000; i++) {
+                    const lineText = document.lineAt(i).text;
+                    const match = lineText.match(regex);
+                    if (match) {
+                      matchCount++;
+                      if (matchCount === 1) {
+                        firstMatch = match[0];
+                      }
+                      lastMatch = match[0];
+                    }
+                  }
+                  
+                  const totalLines = document.lineCount;
+                  const scannedLines = Math.min(totalLines, 1000);
+                  
+                  if (matchCount > 0) {
+                    let resultMessage = `✓ Found ${matchCount} match(es) in first ${scannedLines} lines`;
+                    if (totalLines > 1000) {
+                      resultMessage += ` (file has ${totalLines} lines total)`;
+                    }
+                    resultMessage += `\nFirst: "${firstMatch}"`;
+                    if (matchCount > 1) {
+                      resultMessage += `\nLast: "${lastMatch}"`;
+                    }
+                    
+                    webviewView.webview.postMessage({
+                      command: 'testRegexResult',
+                      success: true,
+                      message: resultMessage
+                    });
+                  } else {
+                    webviewView.webview.postMessage({
+                      command: 'testRegexResult',
+                      success: false,
+                      message: `✗ No matches found in first ${scannedLines} lines. Check your regex pattern.`
+                    });
+                  }
+                } catch (error) {
+                  const errorMsg = error instanceof Error ? error.message : 'Invalid regex';
+                  webviewView.webview.postMessage({
+                    command: 'testRegexResult',
+                    success: false,
+                    message: `✗ Regex error: ${errorMsg}`
+                  });
+                }
+              } else {
+                webviewView.webview.postMessage({
+                  command: 'testRegexResult',
+                  success: false,
+                  message: '✗ No active editor found. Please open a log file.'
+                });
+              }
+              return;
+              
             case 'drawLogTimeline':
               // Update configuration
               await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);

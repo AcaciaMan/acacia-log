@@ -17,53 +17,76 @@ export async function navigateToDateTime() {
   const logSearchDate = config.get<string>('logSearchDate');
   const logSearchTime = config.get<string>('logSearchTime');
   const dateTimeInput = `${logSearchDate}T${logSearchTime}`;
-  console.log(dateTimeInput);
-          const dateTime = DateTime.fromISO(dateTimeInput);
-        if (!dateTime.isValid) {
-          vscode.window.showErrorMessage('Invalid date and time format');
-            return;
-        }
+  
+  const dateTime = DateTime.fromISO(dateTimeInput);
+  if (!dateTime.isValid) {
+    vscode.window.showErrorMessage('Invalid date and time format');
+    return;
+  }
 
   const document = editor.document;
-  const text = document.getText();
-  const lines = text.split('\n');
+  const totalLines = document.lineCount;
+
+  // Compile regex once outside the loop
+  const dateRegexCompiled = new RegExp(logDateRegex);
 
   let low = 0;
-  let high = lines.length - 1;
-  let found = false;
-  let lineNumber = 0;
+  let high = totalLines - 1;
+  let foundExactMatch = false;
+  let exactMatchLine = -1;
+  let closestLine = 0;
 
+  // Binary search for the target date/time
   while (low <= high) {
     const mid = Math.floor((low + high) / 2);
-    const match = lines[mid].match(new RegExp(logDateRegex));
+    const lineText = document.lineAt(mid).text;
+    const match = lineText.match(dateRegexCompiled);
+    
     if (match) {
       const matchDateTime = DateTime.fromFormat(match[0], logDateFormat);
-      if (matchDateTime.equals(dateTime)) {
-        lineNumber = mid;
-        found = true;
-        high = mid - 1; // Continue searching in the lower half
-      } else if (matchDateTime < dateTime) {
+      
+      // Skip invalid dates in the log
+      if (!matchDateTime.isValid) {
+        // Try searching lower half first
+        high = mid - 1;
+        continue;
+      }
+
+      const comparison = matchDateTime.valueOf() - dateTime.valueOf();
+      
+      if (comparison === 0) {
+        // Found exact match - continue searching for first occurrence
+        exactMatchLine = mid;
+        foundExactMatch = true;
+        high = mid - 1; // Look for earlier occurrences
+      } else if (comparison < 0) {
+        // Match is before target, search upper half
+        closestLine = mid;
         low = mid + 1;
       } else {
+        // Match is after target, search lower half
         high = mid - 1;
       }
     } else {
-      high = high - 1;
+      // No date on this line, try lower half
+      high = mid - 1;
     }
   }
 
-  if (found) {
-    vscode.window.showInformationMessage('Date and time found in the log file at line ' + (lineNumber + 1));
-    const position = new vscode.Position(lineNumber, 0);
+  // Navigate to the result
+  if (foundExactMatch) {
+    vscode.window.showInformationMessage(`Date and time found at line ${exactMatchLine + 1}`);
+    const position = new vscode.Position(exactMatchLine, 0);
     editor.selection = new vscode.Selection(position, position);
-    editor.revealRange(new vscode.Range(position, position));
-  }  else {
-    vscode.window.showInformationMessage('Date and time not found in the log file');
-    // go to the lower bound
-    const position = new vscode.Position(low, 0);
+    editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
+  } else {
+    // Navigate to closest line (the last line before the target time, or beginning)
+    const targetLine = Math.min(Math.max(low, 0), totalLines - 1);
+    vscode.window.showInformationMessage(
+      `Exact date/time not found. Navigating to closest line ${targetLine + 1}`
+    );
+    const position = new vscode.Position(targetLine, 0);
     editor.selection = new vscode.Selection(position, position);
-    editor.revealRange(new vscode.Range(position, position));
+    editor.revealRange(new vscode.Range(position, position), vscode.TextEditorRevealType.InCenter);
   }
-
-  
 } 
