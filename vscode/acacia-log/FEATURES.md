@@ -1,12 +1,69 @@
 # Acacia Log - Detailed Features Guide
 
 ## Table of Contents
+- [Log Tree View](#log-tree-view) _(New in 3.2.0)_
 - [Date/Time Navigation](#datetime-navigation)
 - [Timeline Visualization](#timeline-visualization)
 - [Pattern Search](#pattern-search)
 - [Similar Line Analysis](#similar-line-analysis)
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
+
+---
+
+## Log Tree View
+
+### Overview
+The Log Tree View provides a hierarchical interface for browsing and managing log files from multiple sources. Located at the top of the Acacia Log sidebar, it automatically discovers log files in your workspace and custom folders.
+
+### Key Features
+
+#### 1. **Automatic Log File Detection**
+- Automatically finds files with extensions: `.log`, `.txt`, `.out`, `.err`, `.trace`
+- Works in workspace folders and custom added folders
+- Hierarchical folder structure with expandable/collapsible sections
+
+#### 2. **Rich Metadata Display**
+- **File size** - Shown in B, KB, or MB
+- **Line count** - Total number of lines in the file
+- **Error count** - Lines containing 'error', 'failed', 'exception', or 'fatal'
+- **Warning count** - Lines containing 'warning' or 'warn'
+- **Last modified** - File modification timestamp
+- Tooltips with detailed statistics on hover
+
+#### 3. **Folder Management**
+- **Add Folder** - Browse and add custom log folders (persists across sessions)
+- **Remove Folder** - Remove watched folders via context menu
+- **Auto-refresh** - File system watchers update view when files change
+- Folders stored globally, available across all workspaces
+
+#### 4. **Quick Actions**
+- **Open File** - Double-click or use context menu to open in editor
+- **Reveal in Explorer** - Show file in system file explorer
+- **Refresh** - Manually refresh the entire tree view
+
+#### 5. **Performance Optimization**
+- Files under 10MB get full analysis (line count, error/warning detection)
+- Files over 10MB show only size and modification time
+- Smart caching and incremental updates
+
+### Usage
+
+**Add a custom log folder:**
+1. Click the **+** (Add Folder) button in the Log Tree View title bar
+2. Browse to your log folder
+3. Folder is added and automatically scanned for log files
+
+**Open a log file:**
+- Double-click any log file in the tree
+- Or right-click → "Open Log File"
+
+**View file details:**
+- Hover over any file to see detailed tooltip
+- Description shows: size • line count • error count
+
+**Remove a folder:**
+- Right-click on a folder → "Remove Folder"
 
 ---
 

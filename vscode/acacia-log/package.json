@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.1.0",
+  "version": "3.2.0",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -66,6 +66,34 @@
         "title": "Draw Log Timeline",
         "category": "Acacia Log",
         "description": "Draws a chart containing a timeline of log file records."
+      },
+      {
+        "command": "acacia-log.logExplorer.refresh",
+        "title": "Refresh Log Files",
+        "category": "Acacia Log",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "acacia-log.logExplorer.addFolder",
+        "title": "Add Log Folder",
+        "category": "Acacia Log",
+        "icon": "$(add)"
+      },
+      {
+        "command": "acacia-log.logExplorer.removeFolder",
+        "title": "Remove Folder",
+        "category": "Acacia Log",
+        "icon": "$(remove)"
+      },
+      {
+        "command": "acacia-log.logExplorer.openFile",
+        "title": "Open Log File",
+        "category": "Acacia Log"
+      },
+      {
+        "command": "acacia-log.logExplorer.revealInExplorer",
+        "title": "Reveal in File Explorer",
+        "category": "Acacia Log"
       }
     ],
     "viewsContainers": {
@@ -80,6 +108,11 @@
     "views": {
       "myExtensionContainer": [
         {
+          "id": "acacia-log.logExplorer",
+          "name": "Log Files",
+          "icon": "resources/log_icon.svg"
+        },
+        {
           "type": "webview",
           "id": "acacia-log.logSearch",
           "name": "Process current log file",
@@ -90,6 +123,37 @@
           "id": "acacia-log.patternsSearch",
           "name": "Search for patterns",
           "icon": "resources/log_icon.svg"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "acacia-log.logExplorer.refresh",
+          "when": "view == acacia-log.logExplorer",
+          "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.addFolder",
+          "when": "view == acacia-log.logExplorer",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "acacia-log.logExplorer.openFile",
+          "when": "view == acacia-log.logExplorer && viewItem == logFile",
+          "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.revealInExplorer",
+          "when": "view == acacia-log.logExplorer && viewItem == logFile",
+          "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.removeFolder",
+          "when": "view == acacia-log.logExplorer && viewItem == logFolder",
+          "group": "navigation"
         }
       ]
     },

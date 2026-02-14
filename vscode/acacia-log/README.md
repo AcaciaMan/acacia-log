@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.2.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -14,6 +14,9 @@ Acacia Log is a powerful Visual Studio Code extension designed to make log file 
 ---
 
 ## ✨ Key Features
+
+### 📁 **Log Tree View** _(New in 3.2.0)_
+Browse and manage log files from multiple folders with rich metadata display. Add custom log folders, view file statistics, and quickly access your logs.
 
 ### 🎯 **Precise Date/Time Navigation**
 Jump directly to any timestamp in your log files with intelligent date parsing and format detection.

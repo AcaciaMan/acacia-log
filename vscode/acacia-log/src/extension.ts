@@ -9,6 +9,7 @@ import { DateTime } from 'luxon';
 import { create } from 'domain';
 import { createLogPatterns } from './utils/createLogPatterns';
 import { providerPatternsSearch } from './logSearch/providerPatternsSearch';
+import { LogTreeProvider, LogTreeItem } from './logManagement/logTreeProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -126,6 +127,48 @@ export function activate(context: vscode.ExtensionContext) {
 		  new providerPatternsSearch(context)
 		)
 	  );  
+
+	// Register the Log Tree Provider
+	const logTreeProvider = new LogTreeProvider(context);
+	context.subscriptions.push(
+		vscode.window.registerTreeDataProvider('acacia-log.logExplorer', logTreeProvider)
+	);
+
+	// Register tree view commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.refresh', () => {
+			logTreeProvider.refresh();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.addFolder', () => {
+			logTreeProvider.addFolder();
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.removeFolder', (item: LogTreeItem) => {
+			logTreeProvider.removeFolder(item);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.openFile', (item: LogTreeItem) => {
+			logTreeProvider.openFile(item);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.revealInExplorer', (item: LogTreeItem) => {
+			logTreeProvider.revealInExplorer(item);
+		})
+	);
+
+	// Dispose tree provider on deactivation
+	context.subscriptions.push({
+		dispose: () => logTreeProvider.dispose()
+	});
 
 }
 

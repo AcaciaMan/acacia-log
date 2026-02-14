@@ -4,6 +4,24 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.2.0] - 2026-02-14
+
+### Added
+- 📁 **Log Tree View** - New hierarchical file/folder management interface
+  - Automatic detection of log files (`.log`, `.txt`, `.out`, `.err`, `.trace`)
+  - Add and manage custom log folders that persist across sessions
+  - Rich metadata display: file size, line count, error/warning counts
+  - Context menu actions: Open file, Reveal in Explorer, Remove folder
+  - Auto-refresh with file system watchers
+  - Performance optimized for large files
+  - Tooltips with detailed file statistics
+
+### Enhanced
+- Improved sidebar organization with tree view at the top
+- Better log file discovery across workspace and custom folders
+
+---
+
 ## [2.1.1] - 2025-10-05
 
 ### 🎉 Major UI/UX Overhaul
