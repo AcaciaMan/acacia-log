@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern Search Results</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      font-size: 13px;
+      color: #cccccc;
+      background-color: #1e1e1e;
+      padding: 24px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 24px;
+      color: #ffffff;
+      border-bottom: 2px solid #007acc;
+      padding-bottom: 12px;
+    }
+
+    .statistics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background-color: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 6px;
+      padding: 16px;
+      transition: transform 0.2s, border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      border-color: #007acc;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #858585;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #4ec9b0;
+    }
+
+    .stat-icon {
+      font-size: 20px;
+      margin-right: 8px;
+    }
+
+    .charts-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .chart-card {
+      background-color: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .chart-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+    }
+
+    .chart-type-selector {
+      display: flex;
+      gap: 6px;
+    }
+
+    .chart-type-btn {
+      padding: 6px 12px;
+      font-size: 11px;
+      background-color: #2d2d30;
+      color: #cccccc;
+      border: 1px solid #3e3e42;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chart-type-btn:hover {
+      background-color: #37373d;
+      border-color: #007acc;
+    }
+
+    .chart-type-btn.active {
+      background-color: #007acc;
+      color: #ffffff;
+      border-color: #007acc;
+    }
+
+    .chart-container {
+      position: relative;
+      height: 350px;
+    }
+
+    .results-section {
+      background-color: #252526;
+      border: 1px solid #3e3e42;
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .results-header {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .results-summary {
+      font-size: 12px;
+      color: #858585;
+    }
+
+    .result-item {
+      background-color: #1e1e1e;
+      border: 1px solid #3e3e42;
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 12px;
+      transition: border-color 0.15s;
+    }
+
+    .result-item:hover {
+      border-color: #007acc;
+    }
+
+    .result-pattern {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 13px;
+      color: #4ec9b0;
+      font-weight: 600;
+      margin-bottom: 8px;
+      word-break: break-all;
+    }
+
+    .result-count {
+      font-size: 14px;
+      color: #cccccc;
+      margin-bottom: 8px;
+    }
+
+    .result-count-number {
+      font-weight: 700;
+      color: #4fc1ff;
+      font-size: 16px;
+    }
+
+    .result-lines {
+      font-family: 'Consolas', 'Courier New', monospace;
+      font-size: 11px;
+      color: #858585;
+      max-height: 120px;
+      overflow-y: auto;
+      padding: 10px;
+      background-color: #252526;
+      border-radius: 3px;
+      margin-top: 8px;
+      border: 1px solid #3e3e42;
+    }
+
+    .result-lines div {
+      padding: 2px 0;
+      line-height: 1.4;
+    }
+
+    .result-lines-toggle {
+      font-size: 11px;
+      color: #4fc1ff;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    .result-lines-toggle:hover {
+      color: #007acc;
+    }
+
+    .line-number {
+      color: #858585;
+      margin-right: 8px;
+    }
+
+    .match-text {
+      color: #cccccc;
+    }
+
+    /* Scrollbar styling */
+    .result-lines::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .result-lines::-webkit-scrollbar-track {
+      background: #1e1e1e;
+      border-radius: 3px;
+    }
+
+    .result-lines::-webkit-scrollbar-thumb {
+      background: #424242;
+      border-radius: 3px;
+    }
+
+    .result-lines::-webkit-scrollbar-thumb:hover {
+      background: #4e4e4e;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #858585;
+      margin-top: 16px;
+      text-align: center;
+      padding-top: 16px;
+      border-top: 1px solid #3e3e42;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📊 Pattern Search Results</h1>
+
+    <!-- Statistics Cards -->
+    <div class="statistics">
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon">🎯</span>Total Patterns</div>
+        <div class="stat-value" id="totalPatterns">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon">✓</span>Total Matches</div>
+        <div class="stat-value" id="totalMatches">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon">📈</span>Average Matches</div>
+        <div class="stat-value" id="avgMatches">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label"><span class="stat-icon">🏆</span>Top Pattern</div>
+        <div class="stat-value" id="topPattern" style="font-size: 14px; line-height: 1.2;">-</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-section">
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">📈 Distribution by Pattern</span>
+          <div class="chart-type-selector">
+            <button class="chart-type-btn active" onclick="changeChartType('pie')" data-type="pie">🥧 Pie</button>
+            <button class="chart-type-btn" onclick="changeChartType('bar')" data-type="bar">📊 Bar</button>
+            <button class="chart-type-btn" onclick="changeChartType('doughnut')" data-type="doughnut">🍩 Doughnut</button>
+          </div>
+        </div>
+        <div class="chart-container">
+          <canvas id="resultsChart"></canvas>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <div class="chart-header">
+          <span class="chart-title">📊 Top 10 Patterns</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="topPatternsChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Results -->
+    <div class="results-section">
+      <div class="results-header">
+        <span>📋 Detailed Results</span>
+        <span class="results-summary" id="resultsSummary"></span>
+      </div>
+      <div id="resultsContainer"></div>
+    </div>
+
+    <div class="timestamp" id="timestamp"></div>
+  </div>
+
+  <script>
+    let chartInstance = null;
+    let topPatternsChartInstance = null;
+    let currentChartType = 'pie';
+    let currentResults = {};
+
+    // Parse results from data attribute or embedded script
+    function loadResults() {
+      try {
+        const resultsData = window.RESULTS_DATA || {};
+        displayResults(resultsData);
+      } catch (error) {
+        console.error('Error loading results:', error);
+      }
+    }
+
+    function displayResults(results) {
+      currentResults = results;
+      const labels = [];
+      const data = [];
+      let totalMatches = 0;
+
+      // Calculate statistics
+      for (const pattern in results) {
+        const result = results[pattern];
+        totalMatches += result.count;
+        labels.push(pattern);
+        data.push(result.count);
+      }
+
+      const patternCount = labels.length;
+      const avgMatches = patternCount > 0 ? Math.round(totalMatches / patternCount) : 0;
+      
+      // Find top pattern
+      let topPattern = '-';
+      let topCount = 0;
+      for (const pattern in results) {
+        if (results[pattern].count > topCount) {
+          topCount = results[pattern].count;
+          topPattern = pattern;
+        }
+      }
+
+      // Update statistics
+      document.getElementById('totalPatterns').textContent = patternCount;
+      document.getElementById('totalMatches').textContent = totalMatches.toLocaleString();
+      document.getElementById('avgMatches').textContent = avgMatches.toLocaleString();
+      document.getElementById('topPattern').textContent = topPattern.length > 20 ? topPattern.substring(0, 20) + '...' : topPattern;
+      document.getElementById('resultsSummary').textContent = `${patternCount} pattern${patternCount !== 1 ? 's' : ''} • ${totalMatches.toLocaleString()} total match${totalMatches !== 1 ? 'es' : ''}`;
+
+      // Create charts
+      if (data.length > 0) {
+        createMainChart(labels, data);
+        createTopPatternsChart(labels, data);
+      }
+
+      // Display detailed results
+      displayDetailedResults(results);
+
+      // Set timestamp
+      document.getElementById('timestamp').textContent = `Generated on ${new Date().toLocaleString()}`;
+    }
+
+    function createMainChart(labels, data) {
+      const ctx = document.getElementById('resultsChart').getContext('2d');
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const colors = [
+        '#4ec9b0', '#4fc1ff', '#c586c0', '#9cdcfe', '#ce9178',
+        '#dcdcaa', '#b5cea8', '#d4d4d4', '#6a9955', '#569cd6'
+      ];
+
+      chartInstance = new Chart(ctx, {
+        type: currentChartType,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Pattern Matches',
+            data: data,
+            backgroundColor: colors.slice(0, data.length),
+            borderColor: '#252526',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                color: '#cccccc',
+                font: { size: 11 },
+                padding: 10,
+                boxWidth: 15
+              }
+            },
+            tooltip: {
+              backgroundColor: '#252526',
+              borderColor: '#007acc',
+              borderWidth: 1,
+              titleColor: '#ffffff',
+              bodyColor: '#cccccc',
+              padding: 12
+            }
+          },
+          scales: currentChartType === 'bar' ? {
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#858585' },
+              grid: { color: '#3e3e42' }
+            },
+            x: {
+              ticks: { color: '#858585' },
+              grid: { color: '#3e3e42' }
+            }
+          } : {}
+        }
+      });
+    }
+
+    function createTopPatternsChart(labels, data) {
+      const ctx = document.getElementById('topPatternsChart').getContext('2d');
+
+      if (topPatternsChartInstance) {
+        topPatternsChartInstance.destroy();
+      }
+
+      // Sort and get top 10
+      const sorted = labels.map((label, i) => ({ label, value: data[i] }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 10);
+
+      const topLabels = sorted.map(item => {
+        return item.label.length > 30 ? item.label.substring(0, 30) + '...' : item.label;
+      });
+      const topData = sorted.map(item => item.value);
+
+      topPatternsChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: topLabels,
+          datasets: [{
+            label: 'Matches',
+            data: topData,
+            backgroundColor: '#4fc1ff',
+            borderColor: '#007acc',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#252526',
+              borderColor: '#007acc',
+              borderWidth: 1,
+              titleColor: '#ffffff',
+              bodyColor: '#cccccc',
+              padding: 12
+            }
+          },
+          scales: {
+            x: {
+              beginAtZero: true,
+              ticks: { color: '#858585' },
+              grid: { color: '#3e3e42' }
+            },
+            y: {
+              ticks: { color: '#858585' },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function changeChartType(type) {
+      currentChartType = type;
+
+      // Update button states
+      document.querySelectorAll('.chart-type-btn').forEach(btn => {
+        if (btn.dataset.type === type) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Recreate chart
+      const labels = Object.keys(currentResults);
+      const data = labels.map(label => currentResults[label].count);
+      createMainChart(labels, data);
+    }
+
+    function displayDetailedResults(results) {
+      const resultsContainer = document.getElementById('resultsContainer');
+      resultsContainer.innerHTML = '';
+
+      // Sort patterns by count (descending)
+      const sortedPatterns = Object.keys(results).sort((a, b) => results[b].count - results[a].count);
+
+      for (const pattern of sortedPatterns) {
+        const result = results[pattern];
+        
+        const resultItem = document.createElement('div');
+        resultItem.className = 'result-item';
+        
+        const lineMatchesPreview = result.line_match.slice(0, 5);
+        const hasMore = result.line_match.length > 5;
+        
+        let linesHtml = lineMatchesPreview.map(match => {
+          const parts = match.split(': ', 2);
+          if (parts.length === 2) {
+            return `<div><span class="line-number">Line ${parts[0]}:</span><span class="match-text">${escapeHtml(parts[1])}</span></div>`;
+          }
+          return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
+        }).join('');
+        
+        resultItem.innerHTML = `
+          <div class="result-pattern">🎯 ${escapeHtml(pattern)}</div>
+          <div class="result-count">
+            Matches: <span class="result-count-number">${result.count.toLocaleString()}</span>
+          </div>
+          <div class="result-lines" id="lines-${hashCode(pattern)}">
+            ${linesHtml}
+          </div>
+          ${hasMore ? `<div class="result-lines-toggle" onclick="toggleAllLines('${escapeHtml(pattern)}')">
+            Show all ${result.line_match.length} matches
+          </div>` : ''}
+        `;
+        
+        resultsContainer.appendChild(resultItem);
+      }
+    }
+
+    function toggleAllLines(pattern) {
+      const result = currentResults[pattern];
+      const linesDiv = document.getElementById(`lines-${hashCode(pattern)}`);
+      const toggleBtn = event.target;
+      
+      if (toggleBtn.textContent.startsWith('Show all')) {
+        const allLinesHtml = result.line_match.map(match => {
+          const parts = match.split(': ', 2);
+          if (parts.length === 2) {
+            return `<div><span class="line-number">Line ${parts[0]}:</span><span class="match-text">${escapeHtml(parts[1])}</span></div>`;
+          }
+          return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
+        }).join('');
+        
+        linesDiv.innerHTML = allLinesHtml;
+        toggleBtn.textContent = 'Show less';
+      } else {
+        const lineMatchesPreview = result.line_match.slice(0, 5);
+        const linesHtml = lineMatchesPreview.map(match => {
+          const parts = match.split(': ', 2);
+          if (parts.length === 2) {
+            return `<div><span class="line-number">Line ${parts[0]}:</span><span class="match-text">${escapeHtml(parts[1])}</span></div>`;
+          }
+          return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
+        }).join('');
+        
+        linesDiv.innerHTML = linesHtml;
+        toggleBtn.textContent = `Show all ${result.line_match.length} matches`;
+      }
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function hashCode(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    }
+
+    // Load results when page loads
+    window.addEventListener('DOMContentLoaded', loadResults);
+  </script>
+</body>
+</html>

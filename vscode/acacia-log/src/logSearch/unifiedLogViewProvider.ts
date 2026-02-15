@@ -5,6 +5,7 @@ import { navigateToDateTime } from '../utils/navigateToDateTime';
 import { calculateSimilarLineCounts } from '../utils/calculateSimilarLineCounts';
 import { drawLogTimeline } from '../utils/drawLogTimeline';
 import { readLogPatterns } from '../utils/readLogPatterns';
+import { ResultDocumentProvider } from '../utils/resultDocumentProvider';
 
 /**
  * Unified Log View Provider with tabbed interface
@@ -39,8 +40,8 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
     // Handle messages from the webview
     webviewView.webview.onDidReceiveMessage(
       async message => {
+        console.log('[UnifiedLogView] Message received:', message.command);
         let editor = vscode.window.activeTextEditor;
-        console.log('Received command:', message.command);
         
         try {
           switch (message.command) {
@@ -177,10 +178,14 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
 
             // ==== Pattern Search Tab Commands ====
             case 'searchPatterns':
+              console.log('[UnifiedLogView] searchPatterns case reached');
               const searchLogFilePath = message.logFilePath;
               const patternFilePath = message.searchPatternsFilePath;
+              console.log('[UnifiedLogView] Log file:', searchLogFilePath);
+              console.log('[UnifiedLogView] Pattern file:', patternFilePath);
 
               if (!fs.existsSync(searchLogFilePath)) {
+                console.log('[UnifiedLogView] Log file not found');
                 vscode.window.showErrorMessage(`Log file not found: ${searchLogFilePath}`);
                 webviewView.webview.postMessage({
                   command: 'operationComplete',
@@ -191,6 +196,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               }
 
               if (!fs.existsSync(patternFilePath)) {
+                console.log('[UnifiedLogView] Pattern file not found');
                 vscode.window.showErrorMessage(`Search patterns file not found: ${patternFilePath}`);
                 webviewView.webview.postMessage({
                   command: 'operationComplete',
@@ -205,17 +211,14 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               await vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', patternFilePath, vscode.ConfigurationTarget.Workspace);
 
               const searchPatterns = readLogPatterns(patternFilePath);
+              console.log('[UnifiedLogView] Patterns loaded:', searchPatterns.length);
 
               vscode.window.showInformationMessage('Searching patterns...');
 
               const results = await this.searchLogFile(searchLogFilePath, searchPatterns);
+              console.log('[UnifiedLogView] Search completed, preparing results...');
 
-              // Send results to the webview for visualization
-              webviewView.webview.postMessage({
-                command: 'displayResults',
-                results
-              });
-
+              // Prepare results for HTML visualization
               interface SearchResult {
                 count: number;
                 line_match: string[];
@@ -229,15 +232,24 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
                 };
               }
 
-              // Show the results in the new editor
-              const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
-              await resultEditor.edit(editBuilder => {
-                // Clear the editor first
-                editBuilder.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(resultEditor.document.lineCount + 1, 0)));
-                editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(editorResults, null, 2));
+              // Open results in editor tab with HTML visualization
+              const resultProvider = ResultDocumentProvider.getInstance(this.context.extensionPath);
+              console.log('[UnifiedLogView] Opening pattern search results...');
+              try {
+                await resultProvider.openPatternSearchResult(editorResults);
+                console.log('[UnifiedLogView] Results opened successfully');
+              } catch (error) {
+                console.error('[UnifiedLogView] Failed to open results:', error);
+                vscode.window.showErrorMessage(`Failed to open results: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+
+              webviewView.webview.postMessage({
+                command: 'operationComplete',
+                success: true,
+                message: 'Search completed! Results opened in editor with charts and statistics.'
               });
 
-              vscode.window.showInformationMessage('Search completed successfully!');
+              vscode.window.showInformationMessage('Search completed! Results opened in editor with charts and statistics.');
               return;
 
             case 'browseFile':

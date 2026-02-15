@@ -9,6 +9,7 @@ import { create } from 'domain';
 import { createLogPatterns } from './utils/createLogPatterns';
 import { LogTreeProvider, LogTreeItem } from './logManagement/logTreeProvider';
 import { UnifiedLogViewProvider } from './logSearch/unifiedLogViewProvider';
+import { ResultDocumentProvider } from './utils/resultDocumentProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -118,6 +119,12 @@ export function activate(context: vscode.ExtensionContext) {
 		  UnifiedLogViewProvider.viewType,
 		  new UnifiedLogViewProvider(context)
 		)
+	);
+
+	// Register the Result Document Provider for editor tabs
+	const resultProvider = ResultDocumentProvider.getInstance(context.extensionPath);
+	context.subscriptions.push(
+		vscode.workspace.registerTextDocumentContentProvider('acacia-log', resultProvider)
 	);
 
 	// Register the Log Tree Provider

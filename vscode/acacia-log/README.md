@@ -53,7 +53,8 @@ Or search for "Acacia Log" in the Extensions view (`Ctrl+Shift+X`).
 3. **Browse log files** in the Log Files tree view, or add custom log folders
 4. **Use the Log Analysis view** with tabbed interface:
    - **Log Analysis tab** - Navigate and analyze the active log file
-   - **Pattern Search tab** - Find patterns across multiple log files
+   - **Pattern Search tab** - Configure multi-pattern search
+5. **Results open in editor tabs** giving you full screen space to view and analyze data
 
 ---
 

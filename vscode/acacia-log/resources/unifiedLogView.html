@@ -799,35 +799,19 @@
       <div class="kbd-hint">💡 Press Enter to search</div>
     </div>
 
-    <!-- Results Section -->
-    <div class="results" id="resultsSection" style="display: none;">
-      <div class="results-header">
-        <span>📊 Search Results</span>
-        <span class="results-summary" id="resultsSummary"></span>
+    <!-- Results Info -->
+    <div style="margin-top: 20px; padding: 14px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid #007acc; border-radius: 3px; font-size: 12px;">
+      <div style="font-weight: 600; margin-bottom: 6px;">📋 Results Display</div>
+      <div style="color: var(--vscode-descriptionForeground); line-height: 1.6;">
+        Search results will open in a new editor tab with JSON format, giving you more space to view and analyze the matches.
       </div>
-      <div id="resultsContainer"></div>
-    </div>
-
-    <!-- Chart Section -->
-    <div class="chart-container" id="chartContainer">
-      <div class="chart-header">
-        <span class="chart-title">📈 Visual Distribution</span>
-        <div class="chart-type-selector">
-          <button class="chart-type-btn active" onclick="changeChartType('pie')" data-type="pie">🥧 Pie</button>
-          <button class="chart-type-btn" onclick="changeChartType('bar')" data-type="bar">📊 Bar</button>
-          <button class="chart-type-btn" onclick="changeChartType('doughnut')" data-type="doughnut">🍩 Doughnut</button>
-        </div>
-      </div>
-      <canvas id="resultsChart"></canvas>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
   <script>
     const vscode = acquireVsCodeApi();
     let isProcessing = false;
     let isProcessingPatterns = false;
-    let chartInstance = null;
     let currentResults = null;
     let currentChartType = 'pie';
 
@@ -1215,13 +1199,20 @@
           break;
 
         case 'operationComplete':
+          console.log('[Webview] operationComplete received');
           isProcessing = false;
+          isProcessingPatterns = false;
+          console.log('[Webview] isProcessingPatterns reset to:', isProcessingPatterns);
+          
           const buttons = document.querySelectorAll('button');
           buttons.forEach(btn => setButtonLoading(btn, false));
+          
           if (message.success) {
             showStatus(message.message || 'Operation completed successfully', 'success');
+            showStatusPatterns(message.message || 'Operation completed successfully', 'success');
           } else {
             showStatus(message.message || 'Operation failed', 'error');
+            showStatusPatterns(message.message || 'Operation failed', 'error');
           }
           break;
 
@@ -1230,26 +1221,6 @@
             showTestResult(message.message, 'success');
           } else {
             showTestResult(message.message, 'error');
-          }
-          break;
-
-        case 'displayResults':
-          currentResults = message.results;
-          displayResults(message.results);
-          isProcessingPatterns = false;
-          const button = document.getElementById('searchPatternsButton');
-          setButtonLoading(button, false);
-          showStatusPatterns('Search completed successfully!', 'success');
-          break;
-
-        case 'operationCompletePatterns':
-          isProcessingPatterns = false;
-          const searchBtn = document.getElementById('searchPatternsButton');
-          setButtonLoading(searchBtn, false);
-          if (message.success) {
-            showStatusPatterns(message.message || 'Operation completed successfully', 'success');
-          } else {
-            showStatusPatterns(message.message || 'Operation failed', 'error');
           }
           break;
 
@@ -1327,7 +1298,18 @@
 
     // Search button (Pattern Search)
     document.getElementById('searchPatternsButton').addEventListener('click', () => {
-      if (!validateFormPatterns() || isProcessingPatterns) return;
+      console.log('[Webview] searchPatternsButton clicked');
+      console.log('[Webview] isProcessingPatterns:', isProcessingPatterns);
+      
+      if (!validateFormPatterns()) {
+        console.log('[Webview] Form validation failed');
+        return;
+      }
+      
+      if (isProcessingPatterns) {
+        console.log('[Webview] Already processing, ignoring click');
+        return;
+      }
       
       const button = document.getElementById('searchPatternsButton');
       setButtonLoading(button, true);
@@ -1336,6 +1318,10 @@
       const logFilePath = document.getElementById('logFilePath').value;
       const searchPatternsFilePath = document.getElementById('searchPatternsFilePath').value;
 
+      console.log('[Webview] Sending searchPatterns message');
+      console.log('[Webview] Log file:', logFilePath);
+      console.log('[Webview] Pattern file:', searchPatternsFilePath);
+      
       vscode.postMessage({
         command: 'searchPatterns',
         logFilePath,

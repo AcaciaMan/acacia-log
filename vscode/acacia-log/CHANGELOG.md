@@ -15,16 +15,19 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
   - Auto-refresh with file system watchers
   - Performance optimized for large files
   - Tooltips with detailed file statistics
-- 📑 **Unified Tabbed Webview** - Single interface with tabs for all analysis tools
+- 📑 **Unified Tabbed Webview** - Single compact interface for all analysis tools
   - Tab 1: Log Analysis (date/time navigation, similar lines, timeline)
-  - Tab 2: Pattern Search (multi-pattern search with visualizations)
-  - Space-efficient design with collapsible sections
-  - Independent state management per tab
+  - Tab 2: Pattern Search (multi-pattern search configuration)
+  - Cleaner sidebar with less clutter
+- 📊 **Editor Tab Results** - Pattern search results open in editor tabs
+  - JSON formatted results in dedicated editor tabs
+  - Leverages full editor space for better readability
+  - Syntax highlighting and search capability
 
 ### Enhanced
-- Improved sidebar organization with tree view at the top
-- Better log file discovery across workspace and custom folders
-- Consolidated UI reduces screen real estate usage
+- Improved sidebar organization: tree view + compact tabbed controls
+- Better screen space usage: sidebar for controls, editor for results
+- Pattern search results display in editor with full JSON formatting
 
 ---
 

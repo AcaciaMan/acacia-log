@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { readLogPatterns } from '../utils/readLogPatterns';
+import { ResultDocumentProvider } from '../utils/resultDocumentProvider';
 
 export class providerPatternsSearch implements vscode.WebviewViewProvider {
   public static readonly viewType = 'acacia-log.patternsSearch';
@@ -62,12 +63,7 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
 
               const results = await this.searchLogFile(logFilePath, searchPatterns);
 
-              // Send results to the webview for visualization
-              webviewView.webview.postMessage({
-                command: 'displayResults',
-                results
-              });
-
+              // Prepare results for HTML visualization
               interface SearchResult {
                 count: number;
                 line_match: string[];
@@ -81,15 +77,24 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
                 };
               }
 
-              // Show the results in the new editor
-              const resultEditor = await vscode.window.showTextDocument(vscode.Uri.parse('untitled:results.json'));
-              await resultEditor.edit(editBuilder => {
-                // Clear the editor first
-                editBuilder.delete(new vscode.Range(new vscode.Position(0, 0), new vscode.Position(resultEditor.document.lineCount + 1, 0)));
-                editBuilder.insert(new vscode.Position(0, 0), JSON.stringify(editorResults, null, 2));
+              // Open results in editor tab with HTML visualization
+              const resultProvider = ResultDocumentProvider.getInstance(this.context.extensionPath);
+              console.log('[PatternsSearch] Opening pattern search results...');
+              try {
+                await resultProvider.openPatternSearchResult(editorResults);
+                console.log('[PatternsSearch] Results opened successfully');
+              } catch (error) {
+                console.error('[PatternsSearch] Failed to open results:', error);
+                vscode.window.showErrorMessage(`Failed to open results: ${error instanceof Error ? error.message : 'Unknown error'}`);
+              }
+
+              webviewView.webview.postMessage({
+                command: 'operationComplete',
+                success: true,
+                message: 'Search completed! Results opened in editor with charts.'
               });
 
-              vscode.window.showInformationMessage('Search completed successfully!');
+              vscode.window.showInformationMessage('Search completed! Results opened in editor with charts and statistics.');
               return;
 
             case 'browseFile':

@@ -94,14 +94,17 @@ Tools for searching patterns across log files:
 - Log file selection with file browser
 - Pattern file (JSON) configuration
 - Multi-pattern search execution
-- Visual results with charts
-- Line-by-line match display
+- **Results open in editor tabs with rich HTML visualization**
+- Interactive pie charts, bar charts, and doughnut charts
+- Comprehensive statistics dashboard
+- Sortable detailed results with expandable line matches
+- Full syntax highlighting and editor features for results
 
 #### 4. **Space-Efficient Design**
-- Single webview instead of two separate panels
-- Collapsible sections within each tab
+- Single compact webview for controls and inputs
+- Results display in editor tabs (not in sidebar)
 - More room for the Log Files tree view
-- Better organization of related features
+- Better organization: sidebar for controls, editor for results
 
 ### Usage
 
@@ -329,51 +332,77 @@ JSON array with objects:
 #### Search Execution
 - Parallel processing for multiple patterns
 - Progress feedback during search
-- Results in two formats:
-  1. Visual webview with charts
-  2. JSON editor with detailed line matches
+- **Results open in dedicated editor tab with rich HTML visualization**
+- Interactive charts and comprehensive statistics dashboard
 
 #### Results Display
 
-**Interactive Cards**:
-- Pattern name (color-coded)
-- Match count (bold, green)
-- Line numbers (first 5 shown)
-- "Show all" toggle for complete lists
-- Hover effects for interactivity
+**Statistics Dashboard**:
+- 🎯 **Total Patterns**: Number of unique patterns searched
+- ✓ **Total Matches**: Sum of all matches across patterns
+- 📈 **Average Matches**: Average matches per pattern
+- 🏆 **Top Pattern**: Pattern with the most matches
+
+**Interactive Visualizations**:
+- **Distribution Chart**: Switch between pie, bar, or doughnut chart types
+- **Top 10 Patterns**: Horizontal bar chart showing highest match counts
+- Real-time chart type switching with visual feedback
+- Theme-aware colors matching VS Code theme
+- Interactive tooltips with detailed counts
+
+**Detailed Results Cards**:
+- Pattern name (syntax-highlighted)
+- Match count (prominently displayed)
+- Line numbers with actual log content
+- First 5 matches shown by default
+- "Show all" / "Show less" toggle for complete lists
+- Hover effects for better interactivity
+- Scrollable lists for long match sets
 
 **Results Summary**:
-- Pattern count
-- Total matches across all patterns
+- Pattern count and total matches displayed at top
+- Timestamp of when results were generated
+- Results sorted by match count (descending)
 
 #### Chart Visualization
 
-**Three Chart Types**:
-- 🥧 **Pie Chart**: Shows proportion of each pattern
-- 📊 **Bar Chart**: Compares counts side by side
+**Distribution Chart** (Left Panel):
+- 🥧 **Pie Chart**: Shows proportion of each pattern (default)
+- 📊 **Bar Chart**: Compares counts side by side  
 - 🍩 **Doughnut Chart**: Like pie with center cutout
+- One-click switching between chart types
+- Interactive legend with color coding
+- Hover tooltips showing exact counts
 
-**Features**:
-- One-click switching between types
-- Theme-aware colors
-- Interactive legend
-- Hover tooltips with counts
-- Proper legend positioning
+**Top Patterns Chart** (Right Panel):
+- Horizontal bar chart showing top 10 patterns
+- Sorted by match count (highest first)
+- Easy comparison of most common patterns
+- Pattern names truncated for readability
 
-#### JSON Results
+**Chart Features**:
+- Theme-aware color palette
+- Smooth animations
+- Responsive design
+- High-quality rendering using Chart.js 4.x
 
-Separate editor opens with:
-```json
-{
-  "Pattern Name": {
-    "count": 42,
-    "line_match": [
-      "123: Actual log line content",
-      "456: Another matching line"
-    ]
-  }
-}
-```
+#### HTML Results Editor
+
+Results open in a dedicated editor tab with:
+- **Full HTML visualization** with embedded charts
+- **Statistics dashboard** at the top
+- **Interactive chart controls** for switching visualization types
+- **Detailed result cards** with expandable match lists
+- **Professional styling** matching VS Code theme
+- Can be kept open, refreshed, or closed like any editor tab
+- Side-by-side viewing with source log files
+
+**Benefits over plain JSON**:
+- Immediate visual insights with charts
+- Better readability with formatted cards
+- Interactive exploration of results
+- Statistical summary at a glance
+- Professional presentation for sharing/screenshots
 
 ### Usage Example
 
