@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Unified Log View</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-foreground);
+      background-color: var(--vscode-sideBar-background);
+      padding: 0;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Tab Navigation Styles */
+    .tab-nav {
+      display: flex;
+      background-color: #2d2d30;
+      border-bottom: 2px solid #007acc;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      min-height: 38px;
+      width: 100%;
+    }
+
+    .tab-button {
+      flex: 1 1 50%;
+      padding: 8px 12px;
+      background-color: #2d2d30;
+      color: #cccccc;
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-right: 1px solid #444444;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: var(--vscode-font-family);
+      font-weight: 500;
+      transition: all 0.15s;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tab-button:last-child {
+      border-right: none;
+    }
+
+    .tab-button:hover {
+      background-color: #3e3e42;
+      color: #ffffff;
+    }
+
+    .tab-button.active {
+      background-color: #1e1e1e;
+      color: #ffffff;
+      border-bottom-color: #007acc;
+    }
+
+    .tab-button:focus-visible {
+      outline: 1px solid var(--vscode-focusBorder);
+      outline-offset: -1px;
+    }
+
+    .tab-icon {
+      font-size: 14px;
+    }
+
+    /* Tab Content Styles */
+    .tab-content {
+      display: none;
+      padding: 16px;
+      animation: fadeIn 0.2s ease-in;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    h1 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--vscode-foreground);
+      border-bottom: 1px solid var(--vscode-panel-border);
+      padding-bottom: 10px;
+    }
+
+    .section {
+      background-color: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+    }
+
+    .section-toggle {
+      font-size: 12px;
+      color: var(--vscode-descriptionForeground);
+      transition: transform 0.2s;
+    }
+
+    .section.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .section.collapsed .section-content {
+      display: none;
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--vscode-foreground);
+    }
+
+    .help-icon {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      margin-left: 6px;
+      border-radius: 50%;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      text-align: center;
+      line-height: 14px;
+      font-size: 10px;
+      cursor: help;
+      font-weight: bold;
+    }
+
+    .help-text {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+      padding: 6px 8px;
+      background-color: var(--vscode-textCodeBlock-background);
+      border-radius: 3px;
+      display: none;
+    }
+
+    .help-text.visible {
+      display: block;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .input-group input {
+      flex: 1;
+    }
+
+    .browse-btn {
+      padding: 6px 12px;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+      transition: background-color 0.15s;
+      margin-top: 0;
+    }
+
+    .browse-btn:hover {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      background-color: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 2px;
+      font-family: var(--vscode-font-family);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="date"]:focus,
+    input[type="time"]:focus,
+    select:focus {
+      border-color: var(--vscode-focusBorder);
+    }
+
+    input[type="text"]::placeholder {
+      color: var(--vscode-input-placeholderForeground);
+    }
+
+    select {
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .file-info {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .file-info.valid {
+      color: var(--vscode-testing-iconPassed);
+    }
+
+    .file-info.invalid {
+      color: var(--vscode-testing-iconFailed);
+    }
+
+    .preset-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .preset-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      white-space: nowrap;
+    }
+
+    .preset-btn:hover {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .preset-btn:active {
+      opacity: 0.8;
+    }
+
+    .date-time-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 400px) {
+      .date-time-group {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .actions {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--vscode-panel-border);
+    }
+
+    .primary-action {
+      margin-bottom: 12px;
+    }
+
+    .secondary-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 8px 16px;
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 13px;
+      font-family: var(--vscode-font-family);
+      font-weight: 500;
+      transition: background-color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: var(--vscode-button-hoverBackground);
+    }
+
+    button:active:not(:disabled) {
+      opacity: 0.9;
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn {
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+    }
+
+    .secondary-btn:hover:not(:disabled) {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .button-icon {
+      font-size: 14px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--vscode-button-foreground);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .status-message {
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 3px;
+      font-size: 12px;
+      display: none;
+    }
+
+    .status-message.visible {
+      display: block;
+    }
+
+    .status-message.success {
+      background-color: var(--vscode-testing-iconPassed);
+      color: var(--vscode-editor-background);
+    }
+
+    .status-message.error {
+      background-color: var(--vscode-testing-iconFailed);
+      color: var(--vscode-editor-background);
+    }
+
+    .status-message.info {
+      background-color: var(--vscode-textLink-foreground);
+      color: var(--vscode-editor-background);
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .quick-action-btn {
+      flex: 1;
+      padding: 6px 12px;
+      font-size: 11px;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .quick-action-btn:hover {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+      border-color: var(--vscode-focusBorder);
+    }
+
+    .kbd-hint {
+      font-size: 10px;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    /* Pattern Search Specific Styles */
+    .results {
+      margin-top: 16px;
+    }
+
+    .results-header {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--vscode-panel-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .results-summary {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .result-item {
+      background-color: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 3px;
+      padding: 12px;
+      margin-bottom: 10px;
+      transition: border-color 0.15s;
+    }
+
+    .result-item:hover {
+      border-color: var(--vscode-focusBorder);
+    }
+
+    .result-pattern {
+      font-family: var(--vscode-editor-font-family);
+      font-size: 12px;
+      color: var(--vscode-textLink-foreground);
+      font-weight: 600;
+      margin-bottom: 6px;
+      word-break: break-all;
+    }
+
+    .result-count {
+      font-size: 13px;
+      color: var(--vscode-foreground);
+      margin-bottom: 6px;
+    }
+
+    .result-count-number {
+      font-weight: 600;
+      color: var(--vscode-charts-green);
+    }
+
+    .result-lines {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      max-height: 100px;
+      overflow-y: auto;
+      padding: 6px;
+      background-color: var(--vscode-textCodeBlock-background);
+      border-radius: 2px;
+      margin-top: 6px;
+    }
+
+    .result-lines-toggle {
+      font-size: 11px;
+      color: var(--vscode-textLink-foreground);
+      cursor: pointer;
+      text-decoration: underline;
+      margin-top: 4px;
+      display: inline-block;
+    }
+
+    .result-lines-toggle:hover {
+      color: var(--vscode-textLink-activeForeground);
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 350px;
+      margin-top: 16px;
+      background-color: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 16px;
+      display: none;
+    }
+
+    .chart-container.visible {
+      display: block;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .chart-title {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .chart-type-selector {
+      display: flex;
+      gap: 4px;
+    }
+
+    .chart-type-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: 1px solid transparent;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .chart-type-btn:hover {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .chart-type-btn.active {
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border-color: var(--vscode-focusBorder);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state-text {
+      font-size: 13px;
+      margin-bottom: 4px;
+    }
+
+    .empty-state-hint {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    /* Scrollbar styling */
+    .result-lines::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .result-lines::-webkit-scrollbar-track {
+      background: var(--vscode-scrollbarSlider-background);
+    }
+
+    .result-lines::-webkit-scrollbar-thumb {
+      background: var(--vscode-scrollbarSlider-activeBackground);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Tab Navigation -->
+  <div class="tab-nav">
+    <button class="tab-button active" data-tab="logAnalysis" onclick="switchTab('logAnalysis')">
+      <span class="tab-icon">🔍</span>
+      <span>Log Analysis</span>
+    </button>
+    <button class="tab-button" data-tab="patternSearch" onclick="switchTab('patternSearch')">
+      <span class="tab-icon">🔎</span>
+      <span>Pattern Search</span>
+    </button>
+  </div>
+
+  <!-- Tab 1: Log Analysis -->
+  <div class="tab-content active" id="logAnalysisTab">
+    <h1>🔍 Log Search</h1>
+    
+    <div style="margin-bottom: 16px; padding: 10px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid var(--vscode-textLink-foreground); border-radius: 3px; font-size: 12px; color: var(--vscode-descriptionForeground);">
+      ℹ️ Search is performed on the currently open file in the editor
+    </div>
+
+    <!-- Format Configuration Section -->
+    <div class="section" id="formatSection">
+      <div class="section-header" onclick="toggleSection('formatSection')">
+        <span class="section-title">⚙️ Log Format Configuration</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="logTimeRegex">
+            Date/Time Regex Pattern
+            <span class="help-icon" onclick="toggleHelp('regexHelp')">?</span>
+          </label>
+          <div id="regexHelp" class="help-text">
+            Regular expression to match date/time stamps in your log files. Select a preset or enter a custom pattern.
+          </div>
+          <input type="text" id="logTimeRegex" placeholder="e.g., \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" 
+                 aria-label="Date time regex pattern">
+          <select id="logTimeRegexSelect" aria-label="Preset regex patterns">
+            <option value="">-- Select a preset format --</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📅 Standard (yyyy-MM-dd HH:mm:ss)</option>
+            <option value="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})">🌐 ISO 8601</option>
+            <option value="\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}">🌐 Common Log Format</option>
+            <option value="\[\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]">🔧 Apache Log Format</option>
+            <option value="\w{3} \d{2} \d{2}:\d{2}:\d{2}">💻 Syslog Format</option>
+            <option value="\d{10}">⏱️ UNIX Timestamp</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}">🪟 Windows Event Log</option>
+            <option value="\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}">📧 RFC 2822</option>
+            <option value="\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}">📝 Custom (yyyy/MM/dd)</option>
+            <option value="\d{2}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📝 Short (yy-MM-dd)</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}">☕ Log4j Format</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="logTimeFormat">
+            Date/Time Format String
+            <span class="help-icon" onclick="toggleHelp('formatHelp')">?</span>
+          </label>
+          <div id="formatHelp" class="help-text">
+            Format string for parsing matched date/time stamps (using Luxon format tokens).
+          </div>
+          <input type="text" id="logTimeFormat" placeholder="e.g., yyyy-MM-dd HH:mm:ss"
+                 aria-label="Date time format string">
+          <select id="logTimeFormatSelect" aria-label="Preset format strings">
+            <option value="">-- Select a preset format --</option>
+            <option value="yyyy-MM-dd HH:mm:ss">📅 Standard</option>
+            <option value="yyyy-MM-dd'T'HH:mm:ss.SSSXXX">🌐 ISO 8601</option>
+            <option value="dd/MMM/yyyy:HH:mm:ss Z">🌐 Common Log</option>
+            <option value="[dd/MMM/yyyy:HH:mm:ss Z]">🔧 Apache Log</option>
+            <option value="MMM dd HH:mm:ss">💻 Syslog</option>
+            <option value="X">⏱️ UNIX Timestamp</option>
+            <option value="yyyy-MM-dd HH:mm:ss.SSS">🪟 Windows Event</option>
+            <option value="EEE, dd MMM yyyy HH:mm:ss Z">📧 RFC 2822</option>
+            <option value="yyyy/MM/dd HH:mm:ss">📝 Custom</option>
+            <option value="yy-MM-dd HH:mm:ss">📝 Short</option>
+            <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <button type="button" class="secondary-btn" onclick="testRegex()">
+            <span class="button-icon">🧪</span>
+            Test Regex Pattern
+          </button>
+          <div id="regexTestResult" class="status-message"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Criteria Section -->
+    <div class="section" id="searchSection">
+      <div class="section-header" onclick="toggleSection('searchSection')">
+        <span class="section-title">🎯 Search Criteria</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="date-time-group">
+          <div class="form-group">
+            <label for="searchDate">Search Date</label>
+            <input type="date" id="searchDate" aria-label="Search date">
+          </div>
+          <div class="form-group">
+            <label for="searchTime">Search Time</label>
+            <input type="time" id="searchTime" step="1" aria-label="Search time">
+          </div>
+        </div>
+        
+        <div class="quick-actions">
+          <button class="quick-action-btn" onclick="setToday()">📅 Today</button>
+          <button class="quick-action-btn" onclick="setNow()">🕐 Now</button>
+          <button class="quick-action-btn" onclick="clearDateTime()">✖️ Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="actions">
+      <div class="primary-action">
+        <button id="searchButton" aria-label="Navigate to date and time">
+          <span class="button-icon">🔍</span>
+          <span>Navigate to Date & Time</span>
+        </button>
+      </div>
+      <div class="secondary-actions">
+        <button id="calculateSimilarLineCountsButton" class="secondary-btn" aria-label="Calculate similar line counts">
+          <span class="button-icon">📊</span>
+          <span>Similar Lines</span>
+        </button>
+        <button id="drawLogTimelineButton" class="secondary-btn" aria-label="Draw log timeline">
+          <span class="button-icon">📈</span>
+          <span>Timeline</span>
+        </button>
+      </div>
+      <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+      <div class="kbd-hint">💡 Press Enter to search</div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Pattern Search -->
+  <div class="tab-content" id="patternSearchTab">
+    <h1>🔎 Log Patterns Search</h1>
+
+    <!-- Configuration Section -->
+    <div class="section" id="configSection">
+      <div class="section-header" onclick="toggleSection('configSection')">
+        <span class="section-title">⚙️ File Configuration</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="logFilePath">
+            Log File Path
+            <span class="help-icon" onclick="toggleHelp('logFileHelp')">?</span>
+          </label>
+          <div id="logFileHelp" class="help-text">
+            Path to the log file you want to search. Enter the full path to your log file.
+          </div>
+          <div class="input-group">
+            <input type="text" id="logFilePath" placeholder="e.g., C:\logs\application.log" 
+                   aria-label="Log file path" onchange="validateFile('logFilePath')">
+            <button class="browse-btn" onclick="requestFilePath('log')" title="Browse for file">📁</button>
+          </div>
+          <div id="logFileInfo" class="file-info"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="searchPatternsFilePath">
+            Patterns File Path (JSON)
+            <span class="help-icon" onclick="toggleHelp('patternsFileHelp')">?</span>
+          </label>
+          <div id="patternsFileHelp" class="help-text">
+            Path to JSON file containing search patterns. Each pattern should have: key, regexp, and regexpoptions.
+          </div>
+          <div class="input-group">
+            <input type="text" id="searchPatternsFilePath" placeholder="e.g., C:\patterns\search-patterns.json" 
+                   aria-label="Patterns file path" onchange="validateFile('searchPatternsFilePath')">
+            <button class="browse-btn" onclick="requestFilePath('patterns')" title="Browse for file">📁</button>
+          </div>
+          <div id="patternsFileInfo" class="file-info"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="actions">
+      <button id="searchPatternsButton" aria-label="Search log file for patterns">
+        <span class="button-icon">🔍</span>
+        <span>Search Patterns</span>
+      </button>
+      <div id="statusMessagePatterns" class="status-message" role="status" aria-live="polite"></div>
+      <div class="kbd-hint">💡 Press Enter to search</div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="results" id="resultsSection" style="display: none;">
+      <div class="results-header">
+        <span>📊 Search Results</span>
+        <span class="results-summary" id="resultsSummary"></span>
+      </div>
+      <div id="resultsContainer"></div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="chart-container" id="chartContainer">
+      <div class="chart-header">
+        <span class="chart-title">📈 Visual Distribution</span>
+        <div class="chart-type-selector">
+          <button class="chart-type-btn active" onclick="changeChartType('pie')" data-type="pie">🥧 Pie</button>
+          <button class="chart-type-btn" onclick="changeChartType('bar')" data-type="bar">📊 Bar</button>
+          <button class="chart-type-btn" onclick="changeChartType('doughnut')" data-type="doughnut">🍩 Doughnut</button>
+        </div>
+      </div>
+      <canvas id="resultsChart"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>  
+  <script>
+    const vscode = acquireVsCodeApi();
+    let isProcessing = false;
+    let isProcessingPatterns = false;
+    let chartInstance = null;
+    let currentResults = null;
+    let currentChartType = 'pie';
+
+    // Tab switching function
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.tab === tabName) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+
+      if (tabName === 'logAnalysis') {
+        document.getElementById('logAnalysisTab').classList.add('active');
+      } else if (tabName === 'patternSearch') {
+        document.getElementById('patternSearchTab').classList.add('active');
+      }
+    }
+
+    // Toggle section collapse
+    function toggleSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      section.classList.toggle('collapsed');
+    }
+
+    // Toggle help text
+    function toggleHelp(helpId) {
+      event.stopPropagation();
+      const helpText = document.getElementById(helpId);
+      helpText.classList.toggle('visible');
+    }
+
+    // ====== Log Analysis Tab Functions ======
+    
+    // Quick action functions
+    function setToday() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('searchDate').value = today;
+      showStatus('Date set to today', 'info');
+    }
+
+    function setNow() {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('searchTime').value = time;
+      showStatus('Time set to now', 'info');
+    }
+
+    function clearDateTime() {
+      document.getElementById('searchDate').value = '';
+      document.getElementById('searchTime').value = '';
+      showStatus('Date and time cleared', 'info');
+    }
+
+    // Show status message (Log Analysis)
+    function showStatus(message, type = 'info') {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = message;
+      statusEl.className = `status-message visible ${type}`;
+      
+      setTimeout(() => {
+        statusEl.classList.remove('visible');
+      }, 3000);
+    }
+
+    // Set button loading state
+    function setButtonLoading(button, isLoading) {
+      if (isLoading) {
+        button.disabled = true;
+        const originalContent = button.innerHTML;
+        button.dataset.originalContent = originalContent;
+        button.innerHTML = '<span class="spinner"></span><span>Processing...</span>';
+      } else {
+        button.disabled = false;
+        if (button.dataset.originalContent) {
+          button.innerHTML = button.dataset.originalContent;
+        }
+      }
+    }
+
+    // Test regex pattern against current log file
+    function testRegex() {
+      const logTimeRegex = document.getElementById('logTimeRegex').value;
+      const logTimeFormat = document.getElementById('logTimeFormat').value;
+      
+      if (!logTimeRegex) {
+        showTestResult('Please enter a regex pattern to test', 'error');
+        return;
+      }
+      
+      if (!logTimeFormat) {
+        showTestResult('Please enter a format string to test', 'error');
+        return;
+      }
+      
+      vscode.postMessage({
+        command: 'testRegex',
+        logTimeRegex,
+        logTimeFormat
+      });
+    }
+    
+    // Show test result
+    function showTestResult(message, type = 'info') {
+      const resultEl = document.getElementById('regexTestResult');
+      resultEl.textContent = message;
+      resultEl.className = `status-message visible ${type}`;
+      
+      setTimeout(() => {
+        resultEl.classList.remove('visible');
+      }, 5000);
+    }
+
+    // Get form values (Log Analysis)
+    function getFormValues() {
+      return {
+        logTimeRegex: document.getElementById('logTimeRegex').value,
+        logTimeFormat: document.getElementById('logTimeFormat').value,
+        searchDate: document.getElementById('searchDate').value,
+        searchTime: document.getElementById('searchTime').value
+      };
+    }
+
+    // Validate form (Log Analysis)
+    function validateForm() {
+      const values = getFormValues();
+      if (!values.logTimeRegex) {
+        showStatus('Please enter a date/time regex pattern', 'error');
+        return false;
+      }
+      if (!values.logTimeFormat) {
+        showStatus('Please enter a date/time format string', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    // ====== Pattern Search Tab Functions ======
+
+    // Request file path from extension
+    function requestFilePath(type) {
+      vscode.postMessage({
+        command: 'browseFile',
+        fileType: type
+      });
+    }
+
+    // Validate file (visual feedback only)
+    function validateFile(inputId) {
+      const input = document.getElementById(inputId);
+      const infoId = inputId === 'logFilePath' ? 'logFileInfo' : 'patternsFileInfo';
+      const infoEl = document.getElementById(infoId);
+      
+      if (input.value) {
+        infoEl.textContent = `✓ Path set: ${input.value.split('\\').pop() || input.value.split('/').pop()}`;
+        infoEl.className = 'file-info valid';
+      } else {
+        infoEl.textContent = '';
+        infoEl.className = 'file-info';
+      }
+    }
+
+    // Show status message (Pattern Search)
+    function showStatusPatterns(message, type = 'info') {
+      const statusEl = document.getElementById('statusMessagePatterns');
+      statusEl.textContent = message;
+      statusEl.className = `status-message visible ${type}`;
+      
+      setTimeout(() => {
+        statusEl.classList.remove('visible');
+      }, 5000);
+    }
+
+    // Validate form (Pattern Search)
+    function validateFormPatterns() {
+      const logPath = document.getElementById('logFilePath').value;
+      const patternsPath = document.getElementById('searchPatternsFilePath').value;
+      
+      if (!logPath) {
+        showStatusPatterns('Please enter a log file path', 'error');
+        return false;
+      }
+      if (!patternsPath) {
+        showStatusPatterns('Please enter a patterns file path', 'error');
+        return false;
+      }
+      return true;
+    }
+
+    // Display results
+    function displayResults(results) {
+      const resultsSection = document.getElementById('resultsSection');
+      const resultsContainer = document.getElementById('resultsContainer');
+      const resultsSummary = document.getElementById('resultsSummary');
+      
+      resultsContainer.innerHTML = '';
+      resultsSection.style.display = 'block';
+
+      const labels = [];
+      const data = [];
+      let totalMatches = 0;
+
+      for (const pattern in results) {
+        const result = results[pattern];
+        totalMatches += result.count;
+        
+        const resultItem = document.createElement('div');
+        resultItem.className = 'result-item';
+        
+        const linesPreview = result.lines.slice(0, 5).join(', ');
+        const hasMore = result.lines.length > 5;
+        
+        resultItem.innerHTML = `
+          <div class="result-pattern">🎯 ${pattern}</div>
+          <div class="result-count">
+            Matches: <span class="result-count-number">${result.count}</span>
+          </div>
+          <div class="result-lines">
+            <strong>Line numbers:</strong> ${linesPreview}${hasMore ? '...' : ''}
+          </div>
+          ${hasMore ? `<div class="result-lines-toggle" onclick="toggleAllLines(this, '${pattern}')">
+            Show all ${result.lines.length} lines
+          </div>` : ''}
+        `;
+        
+        resultsContainer.appendChild(resultItem);
+
+        labels.push(pattern);
+        data.push(result.count);
+      }
+
+      const patternCount = Object.keys(results).length;
+      resultsSummary.textContent = `${patternCount} pattern${patternCount !== 1 ? 's' : ''} • ${totalMatches} total match${totalMatches !== 1 ? 'es' : ''}`;
+
+      // Show chart if there are results
+      if (data.length > 0) {
+        document.getElementById('chartContainer').classList.add('visible');
+        createChart(labels, data);
+      }
+    }
+
+    // Toggle showing all lines
+    function toggleAllLines(element, pattern) {
+      const result = currentResults[pattern];
+      const resultItem = element.closest('.result-item');
+      const linesDiv = resultItem.querySelector('.result-lines');
+      
+      if (element.textContent.startsWith('Show all')) {
+        linesDiv.innerHTML = `<strong>Line numbers:</strong> ${result.lines.join(', ')}`;
+        element.textContent = 'Show less';
+      } else {
+        const linesPreview = result.lines.slice(0, 5).join(', ');
+        linesDiv.innerHTML = `<strong>Line numbers:</strong> ${linesPreview}...`;
+        element.textContent = `Show all ${result.lines.length} lines`;
+      }
+    }
+
+    // Create chart
+    function createChart(labels, data) {
+      const ctx = document.getElementById('resultsChart').getContext('2d');
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      const colors = [
+        '#FF6384', '#36A2EB', '#FFCE56', '#4CAF50', '#FF9800', 
+        '#9C27B0', '#E91E63', '#00BCD4', '#8BC34A', '#FFC107'
+      ];
+
+      chartInstance = new Chart(ctx, {
+        type: currentChartType,
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Pattern Matches',
+            data: data,
+            backgroundColor: colors.slice(0, data.length),
+            borderColor: 'var(--vscode-panel-border)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                color: 'var(--vscode-foreground)',
+                font: {
+                  size: 11
+                },
+                boxWidth: 12,
+                padding: 10
+              }
+            },
+            title: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'var(--vscode-editor-background)',
+              titleColor: 'var(--vscode-foreground)',
+              bodyColor: 'var(--vscode-foreground)',
+              borderColor: 'var(--vscode-panel-border)',
+              borderWidth: 1
+            }
+          },
+          scales: currentChartType === 'bar' ? {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                color: 'var(--vscode-foreground)'
+              },
+              grid: {
+                color: 'var(--vscode-panel-border)'
+              }
+            },
+            x: {
+              ticks: {
+                color: 'var(--vscode-foreground)'
+              },
+              grid: {
+                color: 'var(--vscode-panel-border)'
+              }
+            }
+          } : {}
+        }
+      });
+    }
+
+    // Change chart type
+    function changeChartType(type) {
+      currentChartType = type;
+      
+      // Update button states
+      document.querySelectorAll('.chart-type-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.type === type) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Recreate chart if results exist
+      if (currentResults) {
+        const labels = Object.keys(currentResults);
+        const data = labels.map(label => currentResults[label].count);
+        createChart(labels, data);
+      }
+    }
+
+    // ====== Message Handler ======
+    window.addEventListener('message', event => {
+      const message = event.data;
+      switch (message.command) {
+        case 'setValues':
+          // Log Analysis values
+          if (message.logTimeRegex !== undefined) {
+            document.getElementById('logTimeRegex').value = message.logTimeRegex;
+          }
+          if (message.logTimeFormat !== undefined) {
+            document.getElementById('logTimeFormat').value = message.logTimeFormat;
+          }
+          if (message.searchDate !== undefined) {
+            document.getElementById('searchDate').value = message.searchDate;
+          }
+          if (message.searchTime !== undefined) {
+            document.getElementById('searchTime').value = message.searchTime;
+          }
+          // Pattern Search values
+          if (message.logFilePath !== undefined) {
+            document.getElementById('logFilePath').value = message.logFilePath;
+            validateFile('logFilePath');
+          }
+          if (message.searchPatternsFilePath !== undefined) {
+            document.getElementById('searchPatternsFilePath').value = message.searchPatternsFilePath;
+            validateFile('searchPatternsFilePath');
+          }
+          break;
+
+        case 'operationComplete':
+          isProcessing = false;
+          const buttons = document.querySelectorAll('button');
+          buttons.forEach(btn => setButtonLoading(btn, false));
+          if (message.success) {
+            showStatus(message.message || 'Operation completed successfully', 'success');
+          } else {
+            showStatus(message.message || 'Operation failed', 'error');
+          }
+          break;
+
+        case 'testRegexResult':
+          if (message.success) {
+            showTestResult(message.message, 'success');
+          } else {
+            showTestResult(message.message, 'error');
+          }
+          break;
+
+        case 'displayResults':
+          currentResults = message.results;
+          displayResults(message.results);
+          isProcessingPatterns = false;
+          const button = document.getElementById('searchPatternsButton');
+          setButtonLoading(button, false);
+          showStatusPatterns('Search completed successfully!', 'success');
+          break;
+
+        case 'operationCompletePatterns':
+          isProcessingPatterns = false;
+          const searchBtn = document.getElementById('searchPatternsButton');
+          setButtonLoading(searchBtn, false);
+          if (message.success) {
+            showStatusPatterns(message.message || 'Operation completed successfully', 'success');
+          } else {
+            showStatusPatterns(message.message || 'Operation failed', 'error');
+          }
+          break;
+
+        case 'setFilePath':
+          if (message.fileType === 'log') {
+            document.getElementById('logFilePath').value = message.path;
+            validateFile('logFilePath');
+          } else if (message.fileType === 'patterns') {
+            document.getElementById('searchPatternsFilePath').value = message.path;
+            validateFile('searchPatternsFilePath');
+          }
+          showStatusPatterns('File path updated', 'info');
+          break;
+      }
+    });
+
+    // ====== Event Listeners ======
+
+    // Preset selectors (Log Analysis)
+    document.getElementById('logTimeRegexSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('logTimeRegex').value = e.target.value;
+        showStatus('Regex pattern updated', 'info');
+      }
+    });
+
+    document.getElementById('logTimeFormatSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('logTimeFormat').value = e.target.value;
+        showStatus('Format string updated', 'info');
+      }
+    });
+
+    // Search button (Log Analysis)
+    document.getElementById('searchButton').addEventListener('click', () => {
+      if (!validateForm() || isProcessing) return;
+      
+      const button = document.getElementById('searchButton');
+      setButtonLoading(button, true);
+      isProcessing = true;
+
+      vscode.postMessage({
+        command: 'search',
+        ...getFormValues()
+      });
+    });
+
+    // Calculate similar lines button
+    document.getElementById('calculateSimilarLineCountsButton').addEventListener('click', () => {
+      if (!validateForm() || isProcessing) return;
+      
+      const button = document.getElementById('calculateSimilarLineCountsButton');
+      setButtonLoading(button, true);
+      isProcessing = true;
+
+      vscode.postMessage({
+        command: 'calculateSimilarLineCounts',
+        ...getFormValues()
+      });
+    });
+
+    // Draw timeline button
+    document.getElementById('drawLogTimelineButton').addEventListener('click', () => {
+      if (!validateForm() || isProcessing) return;
+      
+      const button = document.getElementById('drawLogTimelineButton');
+      setButtonLoading(button, true);
+      isProcessing = true;
+
+      vscode.postMessage({
+        command: 'drawLogTimeline',
+        ...getFormValues()
+      });
+    });
+
+    // Search button (Pattern Search)
+    document.getElementById('searchPatternsButton').addEventListener('click', () => {
+      if (!validateFormPatterns() || isProcessingPatterns) return;
+      
+      const button = document.getElementById('searchPatternsButton');
+      setButtonLoading(button, true);
+      isProcessingPatterns = true;
+
+      const logFilePath = document.getElementById('logFilePath').value;
+      const searchPatternsFilePath = document.getElementById('searchPatternsFilePath').value;
+
+      vscode.postMessage({
+        command: 'searchPatterns',
+        logFilePath,
+        searchPatternsFilePath
+      });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+        const target = e.target;
+        if (target.tagName === 'INPUT') {
+          e.preventDefault();
+          // Determine which tab is active and trigger appropriate search
+          const activeTab = document.querySelector('.tab-content.active');
+          if (activeTab.id === 'logAnalysisTab') {
+            document.getElementById('searchButton').click();
+          } else if (activeTab.id === 'patternSearchTab') {
+            document.getElementById('searchPatternsButton').click();
+          }
+        }
+      }
+    });
+
+    // Initialize - set today's date if empty
+    window.addEventListener('load', () => {
+      const dateInput = document.getElementById('searchDate');
+      if (!dateInput.value) {
+        setToday();
+      }
+    });
+  </script>
+</body>
+</html>

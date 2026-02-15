@@ -2,6 +2,7 @@
 
 ## Table of Contents
 - [Log Tree View](#log-tree-view) _(New in 3.2.0)_
+- [Unified Tabbed Interface](#unified-tabbed-interface) _(New in 3.2.0)_
 - [Date/Time Navigation](#datetime-navigation)
 - [Timeline Visualization](#timeline-visualization)
 - [Pattern Search](#pattern-search)
@@ -64,6 +65,54 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 
 **Remove a folder:**
 - Right-click on a folder → "Remove Folder"
+
+---
+
+## Unified Tabbed Interface
+
+### Overview
+Version 3.2.0 introduces a single tabbed webview interface that consolidates all log analysis tools. This design saves sidebar space while making all features easily accessible.
+
+### Key Features
+
+#### 1. **Tab Navigation**
+- Two primary tabs: **Log Analysis** and **Pattern Search**
+- Visual tab indicators showing active tab
+- Smooth transitions between tabs
+- Keyboard accessible
+
+#### 2. **Tab 1: Log Analysis**
+Contains all tools for working with the currently open log file:
+- Date/Time Navigation
+- Format Configuration (11 preset formats)
+- Similar Line Counts calculation
+- Timeline generation
+- Quick actions and keyboard shortcuts
+
+#### 3. **Tab 2: Pattern Search**
+Tools for searching patterns across log files:
+- Log file selection with file browser
+- Pattern file (JSON) configuration
+- Multi-pattern search execution
+- Visual results with charts
+- Line-by-line match display
+
+#### 4. **Space-Efficient Design**
+- Single webview instead of two separate panels
+- Collapsible sections within each tab
+- More room for the Log Files tree view
+- Better organization of related features
+
+### Usage
+
+**Switch between tabs:**
+- Click on the tab buttons at the top of the view
+- Tabs remember your settings when switching
+
+**Tab persistence:**
+- Each tab maintains its state independently
+- Configuration values persist across tab switches
+- Results remain visible when returning to a tab
 
 ---
 

@@ -50,9 +50,10 @@ Or search for "Acacia Log" in the Extensions view (`Ctrl+Shift+X`).
 
 1. **Open a log file** in VS Code
 2. **Click the Acacia Log icon** in the Activity Bar (left sidebar)
-3. Choose your operation:
-   - **Process current log file** - Navigate and analyze the active log
-   - **Search for patterns** - Find patterns across multiple log files
+3. **Browse log files** in the Log Files tree view, or add custom log folders
+4. **Use the Log Analysis view** with tabbed interface:
+   - **Log Analysis tab** - Navigate and analyze the active log file
+   - **Pattern Search tab** - Find patterns across multiple log files
 
 ---
 
