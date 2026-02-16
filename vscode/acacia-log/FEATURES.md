@@ -71,23 +71,27 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 ## Unified Tabbed Interface
 
 ### Overview
-Version 3.2.0 introduces a single tabbed webview interface that consolidates all log analysis tools. This design saves sidebar space while making all features easily accessible.
+Version 3.4.0 expands the tabbed interface to 4 dedicated tabs, each focused on a specific analysis tool. The icon-only navigation design saves space while providing clear tooltips on hover.
 
 ### Key Features
 
-#### 1. **Tab Navigation**
-- Two primary tabs: **Log Analysis** and **Pattern Search**
-- Visual tab indicators showing active tab
-- Smooth transitions between tabs
+#### 1. **Icon-Only Tab Navigation** _(New in 3.4.0)_
+- Four tabs with clear icon-based navigation:
+  - 🔍 **Log Analysis** - Navigate to date/time in log files
+  - 🔎 **Pattern Search** - Search log files using regex patterns
+  - 📊 **Similar Lines** - Analyze and count similar log lines
+  - 📈 **Timeline** - Generate visual timeline of log events
+- Hover tooltips show full descriptions
+- Larger 18px icons for better visibility
+- Visual indicators for active tab
 - Keyboard accessible
 
 #### 2. **Tab 1: Log Analysis**
-Contains all tools for working with the currently open log file:
-- Date/Time Navigation
+Tools for navigating to specific dates/times in the currently open log file:
+- Date/Time Navigation with calendar picker
 - Format Configuration (11 preset formats)
-- Similar Line Counts calculation
-- Timeline generation
-- Quick actions and keyboard shortcuts
+- Quick actions: Today, Now, Clear
+- Keyboard shortcuts (Press Enter to search)
 
 #### 3. **Tab 2: Pattern Search**
 Tools for searching patterns across log files:
@@ -98,10 +102,26 @@ Tools for searching patterns across log files:
 - Interactive pie charts, bar charts, and doughnut charts
 - Comprehensive statistics dashboard
 - Sortable detailed results with expandable line matches
-- Full syntax highlighting and editor features for results
 
-#### 4. **Space-Efficient Design**
-- Single compact webview for controls and inputs
+#### 4. **Tab 3: Similar Lines** _(New in 3.4.0)_
+Dedicated tab for analyzing repetitive log patterns:
+- Format Configuration (11 preset formats)
+- Calculate similar line counts for current file
+- **Results open in editor result tab**
+- Groups similar patterns with occurrence counts
+- Full editor features for results analysis
+
+#### 5. **Tab 4: Timeline** _(New in 3.4.0)_
+Dedicated tab for generating visual timelines:
+- Format Configuration (11 preset formats)
+- Generate interactive timeline for current file
+- Multiple chart types: Bar, Area, Line
+- Automatic log level detection (ERROR, WARN, INFO, DEBUG)
+- Click-to-navigate to specific log entries
+- CSV export functionality
+
+#### 6. **Space-Efficient Design**
+- Single compact webview with 4 organized tabs
 - Results display in editor tabs (not in sidebar)
 - More room for the Log Files tree view
 - Better organization: sidebar for controls, editor for results
@@ -109,13 +129,14 @@ Tools for searching patterns across log files:
 ### Usage
 
 **Switch between tabs:**
-- Click on the tab buttons at the top of the view
+- Click on the icon buttons at the top of the view
+- Hover over icons to see descriptive tooltips
 - Tabs remember your settings when switching
 
 **Tab persistence:**
 - Each tab maintains its state independently
 - Configuration values persist across tab switches
-- Results remain visible when returning to a tab
+- Format settings can be different per tab
 
 ---
 

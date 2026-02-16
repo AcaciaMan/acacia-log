@@ -99,7 +99,7 @@ export function activate(context: vscode.ExtensionContext) {
 		  return;
 		}
 	
-		calculateSimilarLineCounts(editor);
+		await calculateSimilarLineCounts(editor);
 	  }));
 
 	    // Register the drawLogTimeline command

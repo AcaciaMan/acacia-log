@@ -4,6 +4,31 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.4.0] - 2026-02-16
+
+### Added
+- 📑 **Expanded Tabbed Interface** - Now with 4 dedicated tabs for better organization
+  - Tab 1: Log Analysis (date/time navigation)
+  - Tab 2: Pattern Search (multi-pattern search)
+  - Tab 3: Similar Lines (analyze repetitive patterns)
+  - Tab 4: Timeline (visual timeline generation)
+- 🎯 **Icon-Only Tab Navigation** - Cleaner, more compact tab design
+  - Tabs show only icons to save space
+  - Hover over tabs to see descriptive tooltips
+  - Larger icons (18px) for better visibility
+- 📊 **Similar Lines Results in Editor** - Improved result viewing
+  - Similar lines results now open in dedicated editor result tab
+  - Consistent with pattern search results behavior
+  - Better use of screen space for analysis
+
+### Enhanced
+- Separated Similar Lines and Timeline features into dedicated tabs
+- Each tab now has its own configuration section
+- Improved UI consistency across all analysis tools
+- Better organization of features for easier discoverability
+
+---
+
 ## [3.2.0] - 2026-02-14
 
 ### Added

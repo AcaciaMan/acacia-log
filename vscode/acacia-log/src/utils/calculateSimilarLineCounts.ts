@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
+import { ResultDocumentProvider } from './resultDocumentProvider';
 
-export function calculateSimilarLineCounts(editor: vscode.TextEditor) {
+export async function calculateSimilarLineCounts(editor: vscode.TextEditor) {
   const document = editor.document;
   const text = document.getText();
   const lines = text.split('\n');
@@ -26,7 +27,7 @@ const sortedLineCounts = Object.entries(lineCounts).sort((a, b) => {
 });
   const result = sortedLineCounts.map(([line, count]) => `${count}: ${line}`).join('\n');
 
-  vscode.workspace.openTextDocument({ content: result, language: 'plaintext' }).then(doc => {
-    vscode.window.showTextDocument(doc);
-  });
+  // Use ResultDocumentProvider to open in an editor result tab
+  const resultProvider = ResultDocumentProvider.getInstance();
+  await resultProvider.openSimilarLinesResult(result);
 }

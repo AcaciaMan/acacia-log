@@ -34,7 +34,7 @@
     }
 
     .tab-button {
-      flex: 1 1 50%;
+      flex: 1 1 25%;
       padding: 8px 12px;
       background-color: #2d2d30;
       color: #cccccc;
@@ -50,7 +50,6 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -77,7 +76,7 @@
     }
 
     .tab-icon {
-      font-size: 14px;
+      font-size: 18px;
     }
 
     /* Tab Content Styles */
@@ -608,13 +607,17 @@
 <body>
   <!-- Tab Navigation -->
   <div class="tab-nav">
-    <button class="tab-button active" data-tab="logAnalysis" onclick="switchTab('logAnalysis')">
+    <button class="tab-button active" data-tab="logAnalysis" onclick="switchTab('logAnalysis')" title="Log Analysis - Navigate to date/time in log files">
       <span class="tab-icon">🔍</span>
-      <span>Log Analysis</span>
     </button>
-    <button class="tab-button" data-tab="patternSearch" onclick="switchTab('patternSearch')">
+    <button class="tab-button" data-tab="patternSearch" onclick="switchTab('patternSearch')" title="Pattern Search - Search log files using regex patterns">
       <span class="tab-icon">🔎</span>
-      <span>Pattern Search</span>
+    </button>
+    <button class="tab-button" data-tab="similarLines" onclick="switchTab('similarLines')" title="Similar Lines - Analyze and count similar log lines">
+      <span class="tab-icon">📊</span>
+    </button>
+    <button class="tab-button" data-tab="timeline" onclick="switchTab('timeline')" title="Timeline - Generate visual timeline of log events">
+      <span class="tab-icon">📈</span>
     </button>
   </div>
 
@@ -729,16 +732,6 @@
           <span>Navigate to Date & Time</span>
         </button>
       </div>
-      <div class="secondary-actions">
-        <button id="calculateSimilarLineCountsButton" class="secondary-btn" aria-label="Calculate similar line counts">
-          <span class="button-icon">📊</span>
-          <span>Similar Lines</span>
-        </button>
-        <button id="drawLogTimelineButton" class="secondary-btn" aria-label="Draw log timeline">
-          <span class="button-icon">📈</span>
-          <span>Timeline</span>
-        </button>
-      </div>
       <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
       <div class="kbd-hint">💡 Press Enter to search</div>
     </div>
@@ -808,6 +801,184 @@
     </div>
   </div>
 
+  <!-- Tab 3: Similar Lines -->
+  <div class="tab-content" id="similarLinesTab">
+    <h1>📊 Similar Lines Analysis</h1>
+    
+    <div style="margin-bottom: 16px; padding: 10px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid var(--vscode-textLink-foreground); border-radius: 3px; font-size: 12px; color: var(--vscode-descriptionForeground);">
+      ℹ️ Analyzes the currently open file in the editor to find and count similar log lines
+    </div>
+
+    <!-- Format Configuration Section -->
+    <div class="section" id="similarLinesFormatSection">
+      <div class="section-header" onclick="toggleSection('similarLinesFormatSection')">
+        <span class="section-title">⚙️ Log Format Configuration</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="similarLinesLogTimeRegex">
+            Date/Time Regex Pattern
+            <span class="help-icon" onclick="toggleHelp('similarLinesRegexHelp')">?</span>
+          </label>
+          <div id="similarLinesRegexHelp" class="help-text">
+            Regular expression to match date/time stamps in your log files. Select a preset or enter a custom pattern.
+          </div>
+          <input type="text" id="similarLinesLogTimeRegex" placeholder="e.g., \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" 
+                 aria-label="Date time regex pattern">
+          <select id="similarLinesLogTimeRegexSelect" aria-label="Preset regex patterns">
+            <option value="">-- Select a preset format --</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📅 Standard (yyyy-MM-dd HH:mm:ss)</option>
+            <option value="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})">🌐 ISO 8601</option>
+            <option value="\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}">🌐 Common Log Format</option>
+            <option value="\[\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]">🔧 Apache Log Format</option>
+            <option value="\w{3} \d{2} \d{2}:\d{2}:\d{2}">💻 Syslog Format</option>
+            <option value="\d{10}">⏱️ UNIX Timestamp</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}">🪟 Windows Event Log</option>
+            <option value="\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}">📧 RFC 2822</option>
+            <option value="\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}">📝 Custom (yyyy/MM/dd)</option>
+            <option value="\d{2}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📝 Short (yy-MM-dd)</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}">☕ Log4j Format</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="similarLinesLogTimeFormat">
+            Date/Time Format String
+            <span class="help-icon" onclick="toggleHelp('similarLinesFormatHelp')">?</span>
+          </label>
+          <div id="similarLinesFormatHelp" class="help-text">
+            Format string for parsing matched date/time stamps (using Luxon format tokens).
+          </div>
+          <input type="text" id="similarLinesLogTimeFormat" placeholder="e.g., yyyy-MM-dd HH:mm:ss"
+                 aria-label="Date time format string">
+          <select id="similarLinesLogTimeFormatSelect" aria-label="Preset format strings">
+            <option value="">-- Select a preset format --</option>
+            <option value="yyyy-MM-dd HH:mm:ss">📅 Standard</option>
+            <option value="yyyy-MM-dd'T'HH:mm:ss.SSSXXX">🌐 ISO 8601</option>
+            <option value="dd/MMM/yyyy:HH:mm:ss Z">🌐 Common Log</option>
+            <option value="[dd/MMM/yyyy:HH:mm:ss Z]">🔧 Apache Log</option>
+            <option value="MMM dd HH:mm:ss">💻 Syslog</option>
+            <option value="X">⏱️ UNIX Timestamp</option>
+            <option value="yyyy-MM-dd HH:mm:ss.SSS">🪟 Windows Event</option>
+            <option value="EEE, dd MMM yyyy HH:mm:ss Z">📧 RFC 2822</option>
+            <option value="yyyy/MM/dd HH:mm:ss">📝 Custom</option>
+            <option value="yy-MM-dd HH:mm:ss">📝 Short</option>
+            <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="actions">
+      <div class="primary-action">
+        <button id="calculateSimilarLineCountsButton" aria-label="Calculate similar line counts">
+          <span class="button-icon">📊</span>
+          <span>Calculate Similar Lines</span>
+        </button>
+      </div>
+      <div id="statusMessageSimilarLines" class="status-message" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Results Info -->
+    <div style="margin-top: 20px; padding: 14px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid #007acc; border-radius: 3px; font-size: 12px;">
+      <div style="font-weight: 600; margin-bottom: 6px;">📋 Results Display</div>
+      <div style="color: var(--vscode-descriptionForeground); line-height: 1.6;">
+        Results will open in a new editor tab showing similar line patterns grouped together with their occurrence counts.
+      </div>
+    </div>
+  </div>
+
+  <!-- Tab 4: Timeline -->
+  <div class="tab-content" id="timelineTab">
+    <h1>📈 Log Timeline</h1>
+    
+    <div style="margin-bottom: 16px; padding: 10px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid var(--vscode-textLink-foreground); border-radius: 3px; font-size: 12px; color: var(--vscode-descriptionForeground);">
+      ℹ️ Generates a visual timeline of the currently open log file in the editor
+    </div>
+
+    <!-- Format Configuration Section -->
+    <div class="section" id="timelineFormatSection">
+      <div class="section-header" onclick="toggleSection('timelineFormatSection')">
+        <span class="section-title">⚙️ Log Format Configuration</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="timelineLogTimeRegex">
+            Date/Time Regex Pattern
+            <span class="help-icon" onclick="toggleHelp('timelineRegexHelp')">?</span>
+          </label>
+          <div id="timelineRegexHelp" class="help-text">
+            Regular expression to match date/time stamps in your log files. Select a preset or enter a custom pattern.
+          </div>
+          <input type="text" id="timelineLogTimeRegex" placeholder="e.g., \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" 
+                 aria-label="Date time regex pattern">
+          <select id="timelineLogTimeRegexSelect" aria-label="Preset regex patterns">
+            <option value="">-- Select a preset format --</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📅 Standard (yyyy-MM-dd HH:mm:ss)</option>
+            <option value="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})">🌐 ISO 8601</option>
+            <option value="\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}">🌐 Common Log Format</option>
+            <option value="\[\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]">🔧 Apache Log Format</option>
+            <option value="\w{3} \d{2} \d{2}:\d{2}:\d{2}">💻 Syslog Format</option>
+            <option value="\d{10}">⏱️ UNIX Timestamp</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}">🪟 Windows Event Log</option>
+            <option value="\w{3}, \d{2} \w{3} \d{4} \d{2}:\d{2}:\d{2} [+-]\d{4}">📧 RFC 2822</option>
+            <option value="\d{4}/\d{2}/\d{2} \d{2}:\d{2}:\d{2}">📝 Custom (yyyy/MM/dd)</option>
+            <option value="\d{2}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📝 Short (yy-MM-dd)</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}">☕ Log4j Format</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="timelineLogTimeFormat">
+            Date/Time Format String
+            <span class="help-icon" onclick="toggleHelp('timelineFormatHelp')">?</span>
+          </label>
+          <div id="timelineFormatHelp" class="help-text">
+            Format string for parsing matched date/time stamps (using Luxon format tokens).
+          </div>
+          <input type="text" id="timelineLogTimeFormat" placeholder="e.g., yyyy-MM-dd HH:mm:ss"
+                 aria-label="Date time format string">
+          <select id="timelineLogTimeFormatSelect" aria-label="Preset format strings">
+            <option value="">-- Select a preset format --</option>
+            <option value="yyyy-MM-dd HH:mm:ss">📅 Standard</option>
+            <option value="yyyy-MM-dd'T'HH:mm:ss.SSSXXX">🌐 ISO 8601</option>
+            <option value="dd/MMM/yyyy:HH:mm:ss Z">🌐 Common Log</option>
+            <option value="[dd/MMM/yyyy:HH:mm:ss Z]">🔧 Apache Log</option>
+            <option value="MMM dd HH:mm:ss">💻 Syslog</option>
+            <option value="X">⏱️ UNIX Timestamp</option>
+            <option value="yyyy-MM-dd HH:mm:ss.SSS">🪟 Windows Event</option>
+            <option value="EEE, dd MMM yyyy HH:mm:ss Z">📧 RFC 2822</option>
+            <option value="yyyy/MM/dd HH:mm:ss">📝 Custom</option>
+            <option value="yy-MM-dd HH:mm:ss">📝 Short</option>
+            <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions Section -->
+    <div class="actions">
+      <div class="primary-action">
+        <button id="drawLogTimelineButton" aria-label="Draw log timeline">
+          <span class="button-icon">📈</span>
+          <span>Draw Timeline</span>
+        </button>
+      </div>
+      <div id="statusMessageTimeline" class="status-message" role="status" aria-live="polite"></div>
+    </div>
+
+    <!-- Results Info -->
+    <div style="margin-top: 20px; padding: 14px; background-color: var(--vscode-textBlockQuote-background); border-left: 3px solid #007acc; border-radius: 3px; font-size: 12px;">
+      <div style="font-weight: 600; margin-bottom: 6px;">📋 Results Display</div>
+      <div style="color: var(--vscode-descriptionForeground); line-height: 1.6;">
+        Timeline will open in a new editor tab showing a visual representation of log entries over time.
+      </div>
+    </div>
+  </div>
+
   <script>
     const vscode = acquireVsCodeApi();
     let isProcessing = false;
@@ -834,6 +1005,10 @@
         document.getElementById('logAnalysisTab').classList.add('active');
       } else if (tabName === 'patternSearch') {
         document.getElementById('patternSearchTab').classList.add('active');
+      } else if (tabName === 'similarLines') {
+        document.getElementById('similarLinesTab').classList.add('active');
+      } else if (tabName === 'timeline') {
+        document.getElementById('timelineTab').classList.add('active');
       }
     }
 
@@ -1187,6 +1362,20 @@
           if (message.searchTime !== undefined) {
             document.getElementById('searchTime').value = message.searchTime;
           }
+          // Similar Lines tab values
+          if (message.logTimeRegex !== undefined) {
+            document.getElementById('similarLinesLogTimeRegex').value = message.logTimeRegex;
+          }
+          if (message.logTimeFormat !== undefined) {
+            document.getElementById('similarLinesLogTimeFormat').value = message.logTimeFormat;
+          }
+          // Timeline tab values
+          if (message.logTimeRegex !== undefined) {
+            document.getElementById('timelineLogTimeRegex').value = message.logTimeRegex;
+          }
+          if (message.logTimeFormat !== undefined) {
+            document.getElementById('timelineLogTimeFormat').value = message.logTimeFormat;
+          }
           // Pattern Search values
           if (message.logFilePath !== undefined) {
             document.getElementById('logFilePath').value = message.logFilePath;
@@ -1210,9 +1399,37 @@
           if (message.success) {
             showStatus(message.message || 'Operation completed successfully', 'success');
             showStatusPatterns(message.message || 'Operation completed successfully', 'success');
+            // Show message on Similar Lines tab
+            const statusElSimilarLines = document.getElementById('statusMessageSimilarLines');
+            if (statusElSimilarLines) {
+              statusElSimilarLines.textContent = message.message || 'Operation completed successfully';
+              statusElSimilarLines.className = 'status-message visible success';
+              setTimeout(() => statusElSimilarLines.classList.remove('visible'), 3000);
+            }
+            // Show message on Timeline tab
+            const statusElTimeline = document.getElementById('statusMessageTimeline');
+            if (statusElTimeline) {
+              statusElTimeline.textContent = message.message || 'Operation completed successfully';
+              statusElTimeline.className = 'status-message visible success';
+              setTimeout(() => statusElTimeline.classList.remove('visible'), 3000);
+            }
           } else {
             showStatus(message.message || 'Operation failed', 'error');
             showStatusPatterns(message.message || 'Operation failed', 'error');
+            // Show error on Similar Lines tab
+            const statusElSimilarLines = document.getElementById('statusMessageSimilarLines');
+            if (statusElSimilarLines) {
+              statusElSimilarLines.textContent = message.message || 'Operation failed';
+              statusElSimilarLines.className = 'status-message visible error';
+              setTimeout(() => statusElSimilarLines.classList.remove('visible'), 3000);
+            }
+            // Show error on Timeline tab
+            const statusElTimeline = document.getElementById('statusMessageTimeline');
+            if (statusElTimeline) {
+              statusElTimeline.textContent = message.message || 'Operation failed';
+              statusElTimeline.className = 'status-message visible error';
+              setTimeout(() => statusElTimeline.classList.remove('visible'), 3000);
+            }
           }
           break;
 
@@ -1268,9 +1485,52 @@
       });
     });
 
+    // ====== Similar Lines Tab Event Listeners ======
+    
+    // Similar Lines regex select
+    document.getElementById('similarLinesLogTimeRegexSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('similarLinesLogTimeRegex').value = e.target.value;
+      }
+    });
+
+    // Similar Lines format select
+    document.getElementById('similarLinesLogTimeFormatSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('similarLinesLogTimeFormat').value = e.target.value;
+      }
+    });
+
+    // ====== Timeline Tab Event Listeners ======
+    
+    // Timeline regex select
+    document.getElementById('timelineLogTimeRegexSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('timelineLogTimeRegex').value = e.target.value;
+      }
+    });
+
+    // Timeline format select
+    document.getElementById('timelineLogTimeFormatSelect').addEventListener('change', (e) => {
+      if (e.target.value) {
+        document.getElementById('timelineLogTimeFormat').value = e.target.value;
+      }
+    });
+
     // Calculate similar lines button
     document.getElementById('calculateSimilarLineCountsButton').addEventListener('click', () => {
-      if (!validateForm() || isProcessing) return;
+      const logTimeRegex = document.getElementById('similarLinesLogTimeRegex').value;
+      const logTimeFormat = document.getElementById('similarLinesLogTimeFormat').value;
+      
+      if (!logTimeRegex || !logTimeFormat) {
+        const statusEl = document.getElementById('statusMessageSimilarLines');
+        statusEl.textContent = 'Please enter regex pattern and format string';
+        statusEl.className = 'status-message visible error';
+        setTimeout(() => statusEl.classList.remove('visible'), 3000);
+        return;
+      }
+      
+      if (isProcessing) return;
       
       const button = document.getElementById('calculateSimilarLineCountsButton');
       setButtonLoading(button, true);
@@ -1278,13 +1538,25 @@
 
       vscode.postMessage({
         command: 'calculateSimilarLineCounts',
-        ...getFormValues()
+        logTimeRegex,
+        logTimeFormat
       });
     });
 
     // Draw timeline button
     document.getElementById('drawLogTimelineButton').addEventListener('click', () => {
-      if (!validateForm() || isProcessing) return;
+      const logTimeRegex = document.getElementById('timelineLogTimeRegex').value;
+      const logTimeFormat = document.getElementById('timelineLogTimeFormat').value;
+      
+      if (!logTimeRegex || !logTimeFormat) {
+        const statusEl = document.getElementById('statusMessageTimeline');
+        statusEl.textContent = 'Please enter regex pattern and format string';
+        statusEl.className = 'status-message visible error';
+        setTimeout(() => statusEl.classList.remove('visible'), 3000);
+        return;
+      }
+      
+      if (isProcessing) return;
       
       const button = document.getElementById('drawLogTimelineButton');
       setButtonLoading(button, true);
@@ -1292,7 +1564,8 @@
 
       vscode.postMessage({
         command: 'drawLogTimeline',
-        ...getFormValues()
+        logTimeRegex,
+        logTimeFormat
       });
     });
 
@@ -1341,6 +1614,10 @@
             document.getElementById('searchButton').click();
           } else if (activeTab.id === 'patternSearchTab') {
             document.getElementById('searchPatternsButton').click();
+          } else if (activeTab.id === 'similarLinesTab') {
+            document.getElementById('calculateSimilarLineCountsButton').click();
+          } else if (activeTab.id === 'timelineTab') {
+            document.getElementById('drawLogTimelineButton').click();
           }
         }
       }
