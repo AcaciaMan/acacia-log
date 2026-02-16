@@ -4,6 +4,26 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.5.0] - 2026-02-16
+
+### Added
+- 📋 **File Info Tab** - New 5th tab in the unified view for file metadata
+  - Displays comprehensive file information: name, path, size, line count
+  - Shows creation, modification, and last access dates
+  - Displays error and warning counts for quick overview
+  - Convenient actions: Open File in Editor, Reveal in Explorer
+  - Accessible from Log Tree View with single-click
+
+### Enhanced
+- 🖱️ **Smart Click Detection in Log Tree View**
+  - Single-click: Shows File Info tab without opening the file
+  - Double-click: Opens file in editor
+  - Prevents accidental opening of large log files (performance improvement)
+  - Proper double-click detection with 300ms threshold
+  - Better user experience when browsing large log collections
+
+---
+
 ## [3.4.0] - 2026-02-16
 
 ### Added

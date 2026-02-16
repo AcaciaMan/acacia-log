@@ -619,6 +619,9 @@
     <button class="tab-button" data-tab="timeline" onclick="switchTab('timeline')" title="Timeline - Generate visual timeline of log events">
       <span class="tab-icon">📈</span>
     </button>
+    <button class="tab-button" data-tab="fileInfo" onclick="switchTab('fileInfo')" title="File Info - View file information and metadata">
+      <span class="tab-icon">📄</span>
+    </button>
   </div>
 
   <!-- Tab 1: Log Analysis -->
@@ -979,6 +982,81 @@
     </div>
   </div>
 
+  <!-- Tab 5: File Info -->
+  <div class="tab-content" id="fileInfoTab">
+    <h1>📄 File Information</h1>
+    
+    <div id="fileInfoContent" style="margin-top: 16px;">
+      <div style="padding: 20px; text-align: center; background-color: var(--vscode-textBlockQuote-background); border-radius: 3px;">
+        <div style="font-size: 48px; margin-bottom: 10px;">📂</div>
+        <div style="color: var(--vscode-descriptionForeground); font-size: 13px;">
+          Select a file from the Log Tree View to view its information
+        </div>
+      </div>
+    </div>
+
+    <!-- File Details Section (hidden until file is selected) -->
+    <div id="fileDetails" style="display: none;">
+      <div class="section">
+        <div class="section-header">
+          <span class="section-title">📋 File Details</span>
+        </div>
+        <div class="section-content">
+          <table style="width: 100%; border-collapse: collapse;">
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600; width: 140px;">File Name:</td>
+              <td style="padding: 10px;" id="fileName">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">File Path:</td>
+              <td style="padding: 10px; word-break: break-all;" id="filePath">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">File Size:</td>
+              <td style="padding: 10px;" id="fileSize">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Line Count:</td>
+              <td style="padding: 10px;" id="lineCount">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Created Date:</td>
+              <td style="padding: 10px;" id="createdDate">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Modified Date:</td>
+              <td style="padding: 10px;" id="modifiedDate">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Accessed Date:</td>
+              <td style="padding: 10px;" id="accessedDate">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Error Count:</td>
+              <td style="padding: 10px;" id="errorCount">-</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px; font-weight: 600;">Warning Count:</td>
+              <td style="padding: 10px;" id="warningCount">-</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="actions" style="margin-top: 16px;">
+        <button id="openFileButton" class="primary-btn" aria-label="Open file in editor">
+          <span class="button-icon">📂</span>
+          <span>Open File</span>
+        </button>
+        <button id="revealInExplorerButton" class="secondary-btn" aria-label="Reveal file in explorer">
+          <span class="button-icon">📁</span>
+          <span>Reveal in Explorer</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const vscode = acquireVsCodeApi();
     let isProcessing = false;
@@ -988,6 +1066,8 @@
 
     // Tab switching function
     function switchTab(tabName) {
+      console.log('[Webview] switchTab called with:', tabName);
+      
       // Update tab buttons
       document.querySelectorAll('.tab-button').forEach(btn => {
         btn.classList.remove('active');
@@ -1009,7 +1089,11 @@
         document.getElementById('similarLinesTab').classList.add('active');
       } else if (tabName === 'timeline') {
         document.getElementById('timelineTab').classList.add('active');
+      } else if (tabName === 'fileInfo') {
+        document.getElementById('fileInfoTab').classList.add('active');
       }
+      
+      console.log('[Webview] Tab switched to:', tabName);
     }
 
     // Toggle section collapse
@@ -1451,6 +1535,36 @@
           }
           showStatusPatterns('File path updated', 'info');
           break;
+
+        case 'showFileInfo':
+          console.log('[Webview] Received showFileInfo message:', message);
+          console.log('[Webview] Current active tab before switch:', document.querySelector('.tab-content.active')?.id);
+          
+          // Switch to file info tab
+          switchTab('fileInfo');
+          
+          console.log('[Webview] Current active tab after switch:', document.querySelector('.tab-content.active')?.id);
+          
+          // Show file details section and hide placeholder
+          document.getElementById('fileInfoContent').style.display = 'none';
+          document.getElementById('fileDetails').style.display = 'block';
+          
+          // Populate file information
+          document.getElementById('fileName').textContent = message.fileName || '-';
+          document.getElementById('filePath').textContent = message.filePath || '-';
+          document.getElementById('fileSize').textContent = message.fileSize || '-';
+          document.getElementById('lineCount').textContent = message.lineCount !== undefined ? message.lineCount.toLocaleString() : '-';
+          document.getElementById('createdDate').textContent = message.createdDate || '-';
+          document.getElementById('modifiedDate').textContent = message.modifiedDate || '-';
+          document.getElementById('accessedDate').textContent = message.accessedDate || '-';
+          document.getElementById('errorCount').textContent = message.errorCount !== undefined ? message.errorCount.toLocaleString() : '-';
+          document.getElementById('warningCount').textContent = message.warningCount !== undefined ? message.warningCount.toLocaleString() : '-';
+          
+          // Store file URI for actions
+          window.currentFileUri = message.fileUri;
+          
+          console.log('[Webview] File info populated successfully');
+          break;
       }
     });
 
@@ -1620,6 +1734,25 @@
             document.getElementById('drawLogTimelineButton').click();
           }
         }
+      }
+    });
+
+    // File Info Tab Event Listeners
+    document.getElementById('openFileButton').addEventListener('click', () => {
+      if (window.currentFileUri) {
+        vscode.postMessage({
+          command: 'openFile',
+          fileUri: window.currentFileUri
+        });
+      }
+    });
+
+    document.getElementById('revealInExplorerButton').addEventListener('click', () => {
+      if (window.currentFileUri) {
+        vscode.postMessage({
+          command: 'revealInExplorer',
+          fileUri: window.currentFileUri
+        });
       }
     });
 

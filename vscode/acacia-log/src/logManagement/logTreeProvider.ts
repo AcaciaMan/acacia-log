@@ -41,12 +41,12 @@ export class LogTreeItem extends vscode.TreeItem {
         // Add context value for context menu
         this.contextValue = isFolder ? 'logFolder' : 'logFile';
         
-        // Make files clickable to open them
+        // Set command to handle clicks - this fires on every click, even if item is already selected
         if (!isFolder && resourceUri) {
             this.command = {
-                command: 'vscode.open',
-                title: 'Open Log File',
-                arguments: [resourceUri]
+                command: 'acacia-log.logExplorer.onFileClick',
+                title: 'Handle File Click',
+                arguments: [this]
             };
         }
     }

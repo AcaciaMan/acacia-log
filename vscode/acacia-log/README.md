@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.4.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.5.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -18,7 +18,14 @@ Acacia Log is a powerful Visual Studio Code extension designed to make log file 
 ### 📁 **Log Tree View** _(New in 3.2.0)_
 Browse and manage log files from multiple folders with rich metadata display. Add custom log folders, view file statistics, and quickly access your logs.
 
-### 📑 **4-Tab Interface** _(Enhanced in 3.4.0)_
+- **Single-click**: Show file info tab with metadata _(New in 3.5.0)_
+- **Double-click**: Open file in editor
+- Smart click detection prevents accidentally opening large files
+
+### 📋 **File Info Tab** _(New in 3.5.0)_
+Quick access to file metadata without opening large log files. View file size, line count, creation/modification dates, and error/warning counts at a glance.
+
+### 📑 **5-Tab Interface** _(Enhanced in 3.5.0)_
 Clean, organized interface with dedicated tabs for each analysis tool. Icon-only navigation with descriptive tooltips saves space while keeping features easily accessible.
 
 ### 🎯 **Precise Date/Time Navigation**
@@ -54,11 +61,12 @@ Or search for "Acacia Log" in the Extensions view (`Ctrl+Shift+X`).
 1. **Open a log file** in VS Code
 2. **Click the Acacia Log icon** in the Activity Bar (left sidebar)
 3. **Browse log files** in the Log Files tree view, or add custom log folders
-4. **Use the 4-tab interface** for different analysis tools:
+4. **Use the 5-tab interface** for different analysis tools:
    - 🔍 **Log Analysis** - Navigate to date/time in log files
    - 🔎 **Pattern Search** - Search using regex patterns
    - 📊 **Similar Lines** - Analyze repetitive log patterns
    - 📈 **Timeline** - Generate visual timeline charts
+   - 📋 **File Info** - View file metadata and statistics _(New in 3.5.0)_
 5. **Results open in editor tabs** giving you full screen space to view and analyze data
 
 **Tip:** Hover over tab icons to see their full descriptions!

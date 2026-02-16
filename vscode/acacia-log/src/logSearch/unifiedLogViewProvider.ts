@@ -13,6 +13,7 @@ import { ResultDocumentProvider } from '../utils/resultDocumentProvider';
  */
 export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'acacia-log.unifiedView';
+  private _view?: vscode.WebviewView;
 
   constructor(private readonly context: vscode.ExtensionContext) {}
 
@@ -21,6 +22,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
     context: vscode.WebviewViewResolveContext,
     _token: vscode.CancellationToken
   ): void {
+    this._view = webviewView;
     webviewView.webview.options = {
       enableScripts: true,
       localResourceRoots: [this.context.extensionUri]
@@ -268,6 +270,23 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
                 });
               }
               return;
+
+            // ==== File Info Tab Commands ====
+            case 'openFile':
+              // Open file in editor
+              if (message.fileUri) {
+                const uri = vscode.Uri.parse(message.fileUri);
+                await vscode.commands.executeCommand('vscode.open', uri);
+              }
+              return;
+
+            case 'revealInExplorer':
+              // Reveal file in system explorer
+              if (message.fileUri) {
+                const uri = vscode.Uri.parse(message.fileUri);
+                await vscode.commands.executeCommand('revealFileInOS', uri);
+              }
+              return;
           }
         } catch (error) {
           // Handle any errors
@@ -403,5 +422,84 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
     }
   
     return result;
+  }
+
+  /**
+   * Show file information in the File Info tab
+   */
+  public async showFileInfo(fileUri: vscode.Uri, metadata?: {
+    lineCount?: number;
+    errorCount?: number;
+    warningCount?: number;
+    size?: number;
+    lastModified?: Date;
+  }): Promise<void> {
+    if (!this._view) {
+      console.log('[UnifiedLogView] View not initialized yet');
+      return;
+    }
+
+    // Reveal the view in the sidebar by focusing it
+    // This ensures the user sees the file info tab
+    try {
+      await vscode.commands.executeCommand('acacia-log.unifiedView.focus');
+    } catch (e) {
+      console.log('[UnifiedLogView] Could not focus view:', e);
+    }
+
+    try {
+      // Get file stats
+      const stats = await fs.promises.stat(fileUri.fsPath);
+      const fileName = path.basename(fileUri.fsPath);
+      
+      console.log('[UnifiedLogView] Showing file info for:', fileName);
+      console.log('[UnifiedLogView] Metadata:', metadata);
+      console.log('[UnifiedLogView] View visible:', this._view.visible);
+    
+    // Format file size
+    const formatSize = (bytes: number): string => {
+      if (bytes < 1024) {
+        return `${bytes} B`;
+      } else if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(2)} KB`;
+      } else if (bytes < 1024 * 1024 * 1024) {
+        return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+      } else {
+        return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+      }
+    };
+
+    // Format date
+    const formatDate = (date: Date): string => {
+      return date.toLocaleString();
+    };
+
+    // Send file info to webview
+    const messageData = {
+      command: 'showFileInfo',
+      fileUri: fileUri.toString(),
+      fileName: fileName,
+      filePath: fileUri.fsPath,
+      fileSize: formatSize(metadata?.size || stats.size),
+      lineCount: metadata?.lineCount,
+      createdDate: formatDate(stats.birthtime),
+      modifiedDate: formatDate(stats.mtime),
+      accessedDate: formatDate(stats.atime),
+      errorCount: metadata?.errorCount,
+      warningCount: metadata?.warningCount
+    };
+    
+    console.log('[UnifiedLogView] Sending message to webview:', messageData);
+    
+    // Small delay to ensure view is ready
+    await new Promise(resolve => setTimeout(resolve, 50));
+    
+    this._view.webview.postMessage(messageData);
+    
+    console.log('[UnifiedLogView] File info message sent to webview');
+    } catch (error) {
+      console.error('[UnifiedLogView] Error showing file info:', error);
+      vscode.window.showErrorMessage(`Failed to show file info: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   }
 }

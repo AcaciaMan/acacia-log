@@ -114,10 +114,11 @@ export function activate(context: vscode.ExtensionContext) {
   }));
 
   // Register the Unified Log View Provider (tabbed interface)
+	const unifiedLogViewProvider = new UnifiedLogViewProvider(context);
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
 		  UnifiedLogViewProvider.viewType,
-		  new UnifiedLogViewProvider(context)
+		  unifiedLogViewProvider
 		)
 	);
 
@@ -129,8 +130,67 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register the Log Tree Provider
 	const logTreeProvider = new LogTreeProvider(context);
+	const treeView = vscode.window.createTreeView('acacia-log.logExplorer', {
+		treeDataProvider: logTreeProvider,
+		showCollapseAll: true
+	});
+	context.subscriptions.push(treeView);
+
+	// Double-click detection for tree view clicks
+	let clickCount = 0;
+	let clickTimer: NodeJS.Timeout | undefined;
+	let lastClickedPath: string | undefined;
+	const DOUBLE_CLICK_TIME = 300; // milliseconds
+
+	// Register command that fires on every tree item click (even if already selected)
 	context.subscriptions.push(
-		vscode.window.registerTreeDataProvider('acacia-log.logExplorer', logTreeProvider)
+		vscode.commands.registerCommand('acacia-log.logExplorer.onFileClick', async (item: LogTreeItem) => {
+			if (item.isFolder || !item.resourceUri) {
+				return;
+			}
+			
+			const currentPath = item.resourceUri.fsPath;
+			
+			// If this is a different item, reset
+			if (lastClickedPath !== currentPath) {
+				clickCount = 0;
+				lastClickedPath = currentPath;
+				// Clear any existing timer
+				if (clickTimer) {
+					clearTimeout(clickTimer);
+					clickTimer = undefined;
+				}
+			}
+			
+			// Increment click count
+			clickCount++;
+			
+			console.log('[Extension] Click #' + clickCount + ' on:', currentPath);
+			
+			// Clear any existing timer
+			if (clickTimer) {
+				clearTimeout(clickTimer);
+				clickTimer = undefined;
+			}
+			
+			if (clickCount === 1) {
+				// First click - wait to see if there's a second click
+				console.log('[Extension] First click detected, waiting for potential double-click');
+				clickTimer = setTimeout(async () => {
+					// Single click confirmed
+					console.log('[Extension] Single-click confirmed - showing file info');
+					await unifiedLogViewProvider.showFileInfo(item.resourceUri!, item.metadata);
+					clickCount = 0;
+					lastClickedPath = undefined;
+				}, DOUBLE_CLICK_TIME);
+			} else if (clickCount >= 2) {
+				// Double click detected
+				console.log('[Extension] Double-click detected - opening file in editor');
+				await vscode.commands.executeCommand('vscode.open', item.resourceUri);
+				clickCount = 0;
+				lastClickedPath = undefined;
+			}
+		})
 	);
 
 	// Register tree view commands
@@ -155,6 +215,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('acacia-log.logExplorer.openFile', (item: LogTreeItem) => {
 			logTreeProvider.openFile(item);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.showFileInfo', async (item: LogTreeItem) => {
+			if (item.resourceUri) {
+				await unifiedLogViewProvider.showFileInfo(item.resourceUri, item.metadata);
+			}
 		})
 	);
 
