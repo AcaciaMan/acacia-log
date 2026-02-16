@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { DateTime } from 'luxon';
+import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
 
 interface TimelineEntry {
   timestamp: DateTime;
@@ -22,8 +23,17 @@ export async function drawLogTimeline(editor: vscode.TextEditor) {
   const document = editor.document;
   const text = document.getText();
   const lines = text.split('\n');
-  const logDateRegex = new RegExp(vscode.workspace.getConfiguration('acacia-log').get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}');
-  const logDateFormat = vscode.workspace.getConfiguration('acacia-log').get<string>('logDateFormat') || 'yyyy-MM-dd HH:mm:ss';
+  
+  // Try to auto-detect format first, fallback to config
+  const detection = await getOrDetectFormat(document);
+  const { regex: logDateRegex, format: logDateFormat, useDetected } = getRegexAndFormat(detection.format);
+  
+  if (useDetected) {
+    console.log('[Timeline] Using auto-detected timestamp pattern:', detection.format?.pattern);
+    vscode.window.showInformationMessage(`Using auto-detected timestamp format: ${detection.format?.pattern}`);
+  } else {
+    console.log('[Timeline] Using configured timestamp pattern');
+  }
 
   const entries: TimelineEntry[] = [];
 

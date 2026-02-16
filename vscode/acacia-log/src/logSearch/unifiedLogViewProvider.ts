@@ -6,6 +6,7 @@ import { calculateSimilarLineCounts } from '../utils/calculateSimilarLineCounts'
 import { drawLogTimeline } from '../utils/drawLogTimeline';
 import { readLogPatterns } from '../utils/readLogPatterns';
 import { ResultDocumentProvider } from '../utils/resultDocumentProvider';
+import { getOrDetectFormat, getRegexPatternString } from '../utils/format-cache';
 
 /**
  * Unified Log View Provider with tabbed interface
@@ -170,6 +171,70 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
                   command: 'operationComplete',
                   success: false,
                   message: 'No active editor found'
+                });
+              }
+              return;
+
+            case 'autoDetectTimestampFormat':
+              // Auto-detect timestamp format from current file
+              if (editor) {
+                try {
+                  const detection = await getOrDetectFormat(editor.document);
+                  
+                  if (detection.detected && detection.format) {
+                    const regexPattern = getRegexPatternString(detection.format);
+                    const formatMap: Record<string, string> = {
+                      'yyyy-MM-ddTHH:mm:ss.SSS': 'yyyy-MM-dd\'T\'HH:mm:ss.SSS',
+                      'yyyy-MM-dd HH:mm:ss.SSS': 'yyyy-MM-dd HH:mm:ss.SSS',
+                      'yyyy-MM-dd HH:mm:ss': 'yyyy-MM-dd HH:mm:ss',
+                      'yyyy-MM-dd': 'yyyy-MM-dd',
+                      'dd-MM-yyyy HH:mm': 'dd-MM-yyyy HH:mm',
+                      'MM-dd-yyyy HH:mm': 'MM-dd-yyyy HH:mm',
+                      'dd/MM/yyyy HH:mm:ss': 'dd/MM/yyyy HH:mm:ss',
+                      'dd/MM/yyyy HH:mm': 'dd/MM/yyyy HH:mm',
+                      'MM/dd/yyyy HH:mm:ss': 'MM/dd/yyyy HH:mm:ss',
+                      'MM/dd/yyyy HH:mm': 'MM/dd/yyyy HH:mm',
+                      'dd.MM.yyyy HH:mm:ss': 'dd.MM.yyyy HH:mm:ss',
+                      'dd.MM.yyyy HH:mm': 'dd.MM.yyyy HH:mm',
+                    };
+                    const format = formatMap[detection.format.pattern] || detection.format.pattern;
+                    
+                    webviewView.webview.postMessage({
+                      command: 'timestampFormatDetected',
+                      success: true,
+                      detected: true,
+                      regex: regexPattern,
+                      format: format,
+                      pattern: detection.format.pattern,
+                      totalLines: detection.totalLines,
+                      message: `✓ Detected: ${detection.format.pattern}`,
+                      tab: message.tab
+                    });
+                  } else {
+                    webviewView.webview.postMessage({
+                      command: 'timestampFormatDetected',
+                      success: false,
+                      detected: false,
+                      message: '✗ Could not detect timestamp format in this file',
+                      tab: message.tab
+                    });
+                  }
+                } catch (error) {
+                  webviewView.webview.postMessage({
+                    command: 'timestampFormatDetected',
+                    success: false,
+                    detected: false,
+                    message: `✗ Error detecting format: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                    tab: message.tab
+                  });
+                }
+              } else {
+                webviewView.webview.postMessage({
+                  command: 'timestampFormatDetected',
+                  success: false,
+                  detected: false,
+                  message: '✗ No active editor found',
+                  tab: message.tab
                 });
               }
               return;
@@ -428,11 +493,13 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
    * Show file information in the File Info tab
    */
   public async showFileInfo(fileUri: vscode.Uri, metadata?: {
-    lineCount?: number;
-    errorCount?: number;
-    warningCount?: number;
     size?: number;
     lastModified?: Date;
+    created?: Date;
+    totalLines?: number;
+    timestampPattern?: string;
+    timestampDetected?: boolean;
+    formatDisplay?: string;
   }): Promise<void> {
     if (!this._view) {
       console.log('[UnifiedLogView] View not initialized yet');
@@ -481,12 +548,13 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
       fileName: fileName,
       filePath: fileUri.fsPath,
       fileSize: formatSize(metadata?.size || stats.size),
-      lineCount: metadata?.lineCount,
       createdDate: formatDate(stats.birthtime),
       modifiedDate: formatDate(stats.mtime),
       accessedDate: formatDate(stats.atime),
-      errorCount: metadata?.errorCount,
-      warningCount: metadata?.warningCount
+      totalLines: metadata?.totalLines,
+      timestampPattern: metadata?.timestampPattern,
+      timestampDetected: metadata?.timestampDetected,
+      formatDisplay: metadata?.formatDisplay
     };
     
     console.log('[UnifiedLogView] Sending message to webview:', messageData);

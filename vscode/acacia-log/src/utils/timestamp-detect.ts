@@ -63,6 +63,32 @@ const CANDIDATE_FORMATS: CandidateFormat[] = [
       return isNaN(d.getTime()) ? null : d;
     },
   },
+  // dd-MM-yyyy HH:mm (European, no seconds)
+  {
+    pattern: "dd-MM-yyyy HH:mm",
+    regex: /^(\d{2}-\d{2}-\d{4})\s+(\d{2}:\d{2})/,
+    parseFunc: (m) => {
+      const p = m.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}:\d{2})/);
+      if (!p) {
+        return null;
+      }
+      const d = new Date(`${p[3]}-${p[2]}-${p[1]}T${p[4]}:00`);
+      return isNaN(d.getTime()) ? null : d;
+    },
+  },
+  // MM-dd-yyyy HH:mm (US, no seconds)
+  {
+    pattern: "MM-dd-yyyy HH:mm",
+    regex: /^(\d{2}-\d{2}-\d{4})\s+(\d{2}:\d{2})/,
+    parseFunc: (m) => {
+      const p = m.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}:\d{2})/);
+      if (!p) {
+        return null;
+      }
+      const d = new Date(`${p[3]}-${p[1]}-${p[2]}T${p[4]}:00`);
+      return isNaN(d.getTime()) ? null : d;
+    },
+  },
   // dd/MM/yyyy HH:mm:ss (European)
   {
     pattern: "dd/MM/yyyy HH:mm:ss",
@@ -73,6 +99,19 @@ const CANDIDATE_FORMATS: CandidateFormat[] = [
         return null;
       }
       const d = new Date(`${p[3]}-${p[2]}-${p[1]}T${p[4].replace(",", ".")}`);
+      return isNaN(d.getTime()) ? null : d;
+    },
+  },
+  // dd/MM/yyyy HH:mm (European, no seconds)
+  {
+    pattern: "dd/MM/yyyy HH:mm",
+    regex: /^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})(?:\s|$)/,
+    parseFunc: (m) => {
+      const p = m.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2})/);
+      if (!p) {
+        return null;
+      }
+      const d = new Date(`${p[3]}-${p[2]}-${p[1]}T${p[4]}:00`);
       return isNaN(d.getTime()) ? null : d;
     },
   },
@@ -89,6 +128,19 @@ const CANDIDATE_FORMATS: CandidateFormat[] = [
       return isNaN(d.getTime()) ? null : d;
     },
   },
+  // MM/dd/yyyy HH:mm (US, no seconds)
+  {
+    pattern: "MM/dd/yyyy HH:mm",
+    regex: /^(\d{2}\/\d{2}\/\d{4})\s+(\d{2}:\d{2})(?:\s|$)/,
+    parseFunc: (m) => {
+      const p = m.match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}:\d{2})/);
+      if (!p) {
+        return null;
+      }
+      const d = new Date(`${p[3]}-${p[1]}-${p[2]}T${p[4]}:00`);
+      return isNaN(d.getTime()) ? null : d;
+    },
+  },
   // dd.MM.yyyy HH:mm:ss (dot-separated, EU)
   {
     pattern: "dd.MM.yyyy HH:mm:ss",
@@ -99,6 +151,19 @@ const CANDIDATE_FORMATS: CandidateFormat[] = [
         return null;
       }
       const d = new Date(`${p[3]}-${p[2]}-${p[1]}T${p[4].replace(",", ".")}`);
+      return isNaN(d.getTime()) ? null : d;
+    },
+  },
+  // dd.MM.yyyy HH:mm (dot-separated, EU, no seconds)
+  {
+    pattern: "dd.MM.yyyy HH:mm",
+    regex: /^(\d{2}\.\d{2}\.\d{4})\s+(\d{2}:\d{2})(?:\s|$)/,
+    parseFunc: (m) => {
+      const p = m.match(/^(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}:\d{2})/);
+      if (!p) {
+        return null;
+      }
+      const d = new Date(`${p[3]}-${p[2]}-${p[1]}T${p[4]}:00`);
       return isNaN(d.getTime()) ? null : d;
     },
   },
@@ -277,14 +342,23 @@ function scoreDateInRange(parsed: Date, fileDates: FileDates): number {
     return 1.0;
   }
 
-  // Outside range — penalize by distance
+  // Outside range — penalize by distance, but don't completely reject old logs
   const distMs = p < rangeStart
     ? rangeStart - p
     : p - rangeEnd;
   const distDays = distMs / (1000 * 60 * 60 * 24);
 
+  // For very old logs (archived/test files), still give a minimal score
+  // if the date is reasonable (between 1970 and 50 years in the future)
+  const year = parsed.getFullYear();
+  if (year < 1970 || year > new Date().getFullYear() + 50) {
+    return 0; // Reject clearly invalid dates
+  }
+
+  // Even for very old logs, give a base score of 0.1 to allow detection
+  // This helps with archived logs and test files
   if (distDays > 365 * 2) {
-    return 0;
+    return 0.1; // Changed from 0 to 0.1 to allow archived logs
   }
   return 1 / (1 + distDays);
 }
@@ -438,11 +512,17 @@ export function detectTimestampFormat(
   const inRangeRate = best.inRangeCount / Math.max(best.matchCount, 1);
 
   // Combined confidence
+  // For archived/test logs (inRangeRate = 0), still detect if pattern is consistent
+  // Prioritize: matchRate (is format consistent?) > monoRatio (are timestamps ordered?)
+  // De-emphasize: inRangeRate and spanScore (for archived logs)
+  const consistencyScore = 0.5 + 0.5 * monoRatio; // 0.5 to 1.0
+  const rangeBonus = 0.3 + 0.35 * inRangeRate + 0.35 * spanScore; // 0.3 to 1.0
+  
   const confidence =
     best.totalScore
     * matchRate
-    * (0.3 + 0.35 * monoRatio + 0.35 * inRangeRate)
-    * (0.7 + 0.3 * spanScore);
+    * consistencyScore
+    * rangeBonus;
 
   // Detected range
   const sortedDates = [...best.parsedDates].sort((a, b) => a.getTime() - b.getTime());

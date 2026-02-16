@@ -27,10 +27,10 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 #### 2. **Rich Metadata Display**
 - **File size** - Shown in B, KB, or MB
 - **Line count** - Total number of lines in the file
-- **Error count** - Lines containing 'error', 'failed', 'exception', or 'fatal'
-- **Warning count** - Lines containing 'warning' or 'warn'
+- **Timestamp detection** - Visual indicators: 🟢 (detected) or 🔴 (not detected) _(New in 3.6.0)_
+- **Detected pattern** - Shows the timestamp format pattern in tooltips _(New in 3.6.0)_
 - **Last modified** - File modification timestamp
-- Tooltips with detailed statistics on hover
+- Tooltips with detailed statistics including detected format on hover
 
 #### 3. **Folder Management**
 - **Add Folder** - Browse and add custom log folders (persists across sessions)
@@ -44,9 +44,10 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 - **Refresh** - Manually refresh the entire tree view
 
 #### 5. **Performance Optimization**
-- Files under 10MB get full analysis (line count, error/warning detection)
+- Files under 10MB get full analysis (line count, timestamp detection) _(Updated in 3.6.0)_
 - Files over 10MB show only size and modification time
 - Smart caching and incremental updates
+- Timestamp detection results cached for 5 minutes _(New in 3.6.0)_
 
 ### Usage
 
@@ -143,11 +144,20 @@ Dedicated tab for generating visual timelines:
 ## Date/Time Navigation
 
 ### Overview
-Navigate to any timestamp in your log files with precision. The extension supports multiple date/time formats and provides an intuitive interface for quick searches.
+Navigate to any timestamp in your log files with precision. The extension supports multiple date/time formats and provides an intuitive interface for quick searches. Automatic timestamp detection makes configuration effortless.
 
 ### Key Features
 
-#### 1. **Format Configuration**
+#### 1. **Automatic Format Detection** _(New in 3.6.0)_
+- **Auto-Detect Button** - One-click timestamp pattern detection
+- **20+ Formats Supported** - ISO, dash/slash/dot separators, with/without seconds
+- **Real-time Status** - Success indicators with pattern details
+- **Smart Integration** - Auto-fills regex and format fields across all tabs
+- **Intelligent Caching** - 5-minute cache prevents repeated detection
+- Supports archived logs with dates outside file date range
+- Validates reasonable year ranges (1970-2076)
+
+#### 2. **Format Configuration**
 - **Regex Pattern**: Define how to extract timestamps from log lines
 - **Format String**: Specify how to parse the extracted timestamp
 - **Preset Formats**: 11 common formats built-in:

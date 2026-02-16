@@ -666,6 +666,14 @@
         </div>
 
         <div class="form-group">
+          <button id="autoDetectButton" class="secondary-btn" style="width: 100%; margin-bottom: 12px;" aria-label="Auto-detect timestamp format">
+            <span class="button-icon">🔍</span>
+            <span>Auto-Detect Timestamp Format</span>
+          </button>
+          <div id="autoDetectStatus" style="display: none; padding: 8px; margin-top: 8px; border-radius: 3px; font-size: 12px;"></div>
+        </div>
+
+        <div class="form-group">
           <label for="logTimeFormat">
             Date/Time Format String
             <span class="help-icon" onclick="toggleHelp('formatHelp')">?</span>
@@ -870,6 +878,14 @@
             <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <button id="autoDetectButtonSimilarLines" class="secondary-btn" style="width: 100%; margin-bottom: 12px;" aria-label="Auto-detect timestamp format">
+            <span class="button-icon">🔍</span>
+            <span>Auto-Detect Timestamp Format</span>
+          </button>
+          <div id="autoDetectStatusSimilarLines" style="display: none; padding: 8px; margin-top: 8px; border-radius: 3px; font-size: 12px;"></div>
+        </div>
       </div>
     </div>
 
@@ -959,6 +975,14 @@
             <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
           </select>
         </div>
+
+        <div class="form-group">
+          <button id="autoDetectButtonTimeline" class="secondary-btn" style="width: 100%; margin-bottom: 12px;" aria-label="Auto-detect timestamp format">
+            <span class="button-icon">🔍</span>
+            <span>Auto-Detect Timestamp Format</span>
+          </button>
+          <div id="autoDetectStatusTimeline" style="display: none; padding: 8px; margin-top: 8px; border-radius: 3px; font-size: 12px;"></div>
+        </div>
       </div>
     </div>
 
@@ -1016,8 +1040,22 @@
               <td style="padding: 10px;" id="fileSize">-</td>
             </tr>
             <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
-              <td style="padding: 10px; font-weight: 600;">Line Count:</td>
-              <td style="padding: 10px;" id="lineCount">-</td>
+              <td style="padding: 10px; font-weight: 600;">Total Lines:</td>
+              <td style="padding: 10px;" id="totalLines">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Timestamp Detected:</td>
+              <td style="padding: 10px;" id="timestampDetected">
+                <span id="timestampStatus">-</span>
+              </td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Timestamp Pattern:</td>
+              <td style="padding: 10px; font-family: monospace; font-size: 11px;" id="timestampPattern">-</td>
+            </tr>
+            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+              <td style="padding: 10px; font-weight: 600;">Format Details:</td>
+              <td style="padding: 10px; font-size: 11px;" id="formatDisplay">-</td>
             </tr>
             <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
               <td style="padding: 10px; font-weight: 600;">Created Date:</td>
@@ -1027,17 +1065,9 @@
               <td style="padding: 10px; font-weight: 600;">Modified Date:</td>
               <td style="padding: 10px;" id="modifiedDate">-</td>
             </tr>
-            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
+            <tr>
               <td style="padding: 10px; font-weight: 600;">Accessed Date:</td>
               <td style="padding: 10px;" id="accessedDate">-</td>
-            </tr>
-            <tr style="border-bottom: 1px solid var(--vscode-panel-border);">
-              <td style="padding: 10px; font-weight: 600;">Error Count:</td>
-              <td style="padding: 10px;" id="errorCount">-</td>
-            </tr>
-            <tr>
-              <td style="padding: 10px; font-weight: 600;">Warning Count:</td>
-              <td style="padding: 10px;" id="warningCount">-</td>
             </tr>
           </table>
         </div>
@@ -1471,6 +1501,57 @@
           }
           break;
 
+        case 'timestampFormatDetected':
+          console.log('[Webview] timestampFormatDetected received:', message);
+          
+          // Determine which status div and button to update based on tab parameter
+          let statusDiv, autoDetectBtn;
+          if (message.tab === 'similarLines') {
+            statusDiv = document.getElementById('autoDetectStatusSimilarLines');
+            autoDetectBtn = document.getElementById('autoDetectButtonSimilarLines');
+          } else if (message.tab === 'timeline') {
+            statusDiv = document.getElementById('autoDetectStatusTimeline');
+            autoDetectBtn = document.getElementById('autoDetectButtonTimeline');
+          } else {
+            // Default to Log Analysis tab
+            statusDiv = document.getElementById('autoDetectStatus');
+            autoDetectBtn = document.getElementById('autoDetectButton');
+          }
+          
+          setButtonLoading(autoDetectBtn, false);
+          
+          if (message.success && message.detected) {
+            // Update all regex and format fields
+            document.getElementById('logTimeRegex').value = message.regex;
+            document.getElementById('logTimeFormat').value = message.format;
+            document.getElementById('similarLinesLogTimeRegex').value = message.regex;
+            document.getElementById('similarLinesLogTimeFormat').value = message.format;
+            document.getElementById('timelineLogTimeRegex').value = message.regex;
+            document.getElementById('timelineLogTimeFormat').value = message.format;
+            
+            // Show success message
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = 'var(--vscode-testing-iconPassed, #73c991)';
+            statusDiv.style.color = 'var(--vscode-editor-background, #1e1e1e)';
+            statusDiv.innerHTML = `${message.message}<br><small>Pattern: ${message.pattern} | Lines: ${message.totalLines.toLocaleString()}</small>`;
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+              statusDiv.style.display = 'none';
+            }, 5000);
+          } else {
+            // Show error message
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = 'var(--vscode-testing-iconFailed, #f48771)';
+            statusDiv.style.color = 'var(--vscode-editor-background, #1e1e1e)';
+            statusDiv.textContent = message.message || 'Auto-detection failed';
+            
+            setTimeout(() => {
+              statusDiv.style.display = 'none';
+            }, 5000);
+          }
+          break;
+
         case 'operationComplete':
           console.log('[Webview] operationComplete received');
           isProcessing = false;
@@ -1553,12 +1634,32 @@
           document.getElementById('fileName').textContent = message.fileName || '-';
           document.getElementById('filePath').textContent = message.filePath || '-';
           document.getElementById('fileSize').textContent = message.fileSize || '-';
-          document.getElementById('lineCount').textContent = message.lineCount !== undefined ? message.lineCount.toLocaleString() : '-';
+          
+          // Total lines
+          document.getElementById('totalLines').textContent = 
+            message.totalLines !== undefined ? message.totalLines.toLocaleString() : '-';
+          
+          // Timestamp detection status with colored circle
+          const timestampStatusEl = document.getElementById('timestampStatus');
+          if (message.timestampDetected !== undefined) {
+            const circle = message.timestampDetected ? '🟢' : '🔴';
+            const status = message.timestampDetected ? 'Yes' : 'No';
+            timestampStatusEl.innerHTML = `${circle} ${status}`;
+          } else {
+            timestampStatusEl.textContent = '-';
+          }
+          
+          // Timestamp pattern
+          document.getElementById('timestampPattern').textContent = 
+            message.timestampPattern || '-';
+          
+          // Format display (detailed info)
+          document.getElementById('formatDisplay').textContent = 
+            message.formatDisplay || '-';
+          
           document.getElementById('createdDate').textContent = message.createdDate || '-';
           document.getElementById('modifiedDate').textContent = message.modifiedDate || '-';
           document.getElementById('accessedDate').textContent = message.accessedDate || '-';
-          document.getElementById('errorCount').textContent = message.errorCount !== undefined ? message.errorCount.toLocaleString() : '-';
-          document.getElementById('warningCount').textContent = message.warningCount !== undefined ? message.warningCount.toLocaleString() : '-';
           
           // Store file URI for actions
           window.currentFileUri = message.fileUri;
@@ -1583,6 +1684,16 @@
         document.getElementById('logTimeFormat').value = e.target.value;
         showStatus('Format string updated', 'info');
       }
+    });
+
+    // Auto-detect button
+    document.getElementById('autoDetectButton').addEventListener('click', () => {
+      const button = document.getElementById('autoDetectButton');
+      setButtonLoading(button, true);
+      
+      vscode.postMessage({
+        command: 'autoDetectTimestampFormat'
+      });
     });
 
     // Search button (Log Analysis)
@@ -1615,6 +1726,17 @@
       }
     });
 
+    // Auto-detect button for Similar Lines
+    document.getElementById('autoDetectButtonSimilarLines').addEventListener('click', () => {
+      const button = document.getElementById('autoDetectButtonSimilarLines');
+      setButtonLoading(button, true);
+      
+      vscode.postMessage({
+        command: 'autoDetectTimestampFormat',
+        tab: 'similarLines'
+      });
+    });
+
     // ====== Timeline Tab Event Listeners ======
     
     // Timeline regex select
@@ -1629,6 +1751,19 @@
       if (e.target.value) {
         document.getElementById('timelineLogTimeFormat').value = e.target.value;
       }
+    });
+    
+    // Timeline auto-detect button
+    document.getElementById('autoDetectButtonTimeline').addEventListener('click', () => {
+      if (isProcessing) return;
+      
+      const button = document.getElementById('autoDetectButtonTimeline');
+      setButtonLoading(button, true);
+      
+      vscode.postMessage({
+        command: 'autoDetectTimestampFormat',
+        tab: 'timeline'
+      });
     });
 
     // Calculate similar lines button

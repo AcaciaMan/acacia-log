@@ -1,11 +1,22 @@
 import * as vscode from 'vscode';
 import { ResultDocumentProvider } from './resultDocumentProvider';
+import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
 
 export async function calculateSimilarLineCounts(editor: vscode.TextEditor) {
   const document = editor.document;
   const text = document.getText();
   const lines = text.split('\n');
-  const logDateRegex = new RegExp(vscode.workspace.getConfiguration('acacia-log').get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}');
+  
+  // Try to auto-detect format first, fallback to config
+  const detection = await getOrDetectFormat(document);
+  const { regex: logDateRegex, useDetected } = getRegexAndFormat(detection.format);
+  
+  if (useDetected) {
+    console.log('[SimilarLines] Using auto-detected timestamp pattern:', detection.format?.pattern);
+  } else {
+    console.log('[SimilarLines] Using configured timestamp pattern');
+  }
+  
   const lineCounts: { [key: string]: number } = {};
 
   for (const line of lines) {

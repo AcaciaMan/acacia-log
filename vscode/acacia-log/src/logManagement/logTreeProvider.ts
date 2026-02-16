@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { LogFileHandler } from '../utils/log-file-reader';
+import { getFormatDisplayString } from '../utils/timestamp-detect';
 
 /**
  * Represents a log file or folder in the tree view
@@ -12,11 +14,13 @@ export class LogTreeItem extends vscode.TreeItem {
         public readonly resourceUri?: vscode.Uri,
         public readonly isFolder?: boolean,
         public readonly metadata?: {
-            lineCount?: number;
-            errorCount?: number;
-            warningCount?: number;
             size?: number;
             lastModified?: Date;
+            created?: Date;
+            totalLines?: number;
+            timestampPattern?: string;
+            timestampDetected?: boolean;
+            formatDisplay?: string;
         }
     ) {
         super(label, collapsibleState);
@@ -64,20 +68,26 @@ export class LogTreeItem extends vscode.TreeItem {
             tooltip.appendMarkdown(`📊 Size: ${this.formatSize(meta.size)}\n\n`);
         }
         
-        if (meta.lineCount !== undefined) {
-            tooltip.appendMarkdown(`📝 Lines: ${meta.lineCount.toLocaleString()}\n\n`);
+        if (meta.totalLines !== undefined) {
+            tooltip.appendMarkdown(`📝 Lines: ${meta.totalLines.toLocaleString()}\n\n`);
         }
         
-        if (meta.errorCount !== undefined && meta.errorCount > 0) {
-            tooltip.appendMarkdown(`❌ Errors: ${meta.errorCount.toLocaleString()}\n\n`);
-        }
-        
-        if (meta.warningCount !== undefined && meta.warningCount > 0) {
-            tooltip.appendMarkdown(`⚠️ Warnings: ${meta.warningCount.toLocaleString()}\n\n`);
+        if (meta.timestampDetected !== undefined) {
+            const icon = meta.timestampDetected ? '🟢' : '🔴';
+            const status = meta.timestampDetected ? 'Detected' : 'Not detected';
+            tooltip.appendMarkdown(`${icon} Timestamp: ${status}\n\n`);
+            
+            if (meta.timestampDetected && meta.timestampPattern) {
+                tooltip.appendMarkdown(`⏱️ Pattern: ${meta.timestampPattern}\n\n`);
+            }
         }
         
         if (meta.lastModified) {
             tooltip.appendMarkdown(`🕒 Modified: ${meta.lastModified.toLocaleString()}\n\n`);
+        }
+        
+        if (meta.created) {
+            tooltip.appendMarkdown(`📅 Created: ${meta.created.toLocaleString()}\n\n`);
         }
         
         return tooltip;
@@ -91,12 +101,13 @@ export class LogTreeItem extends vscode.TreeItem {
             parts.push(this.formatSize(meta.size));
         }
         
-        if (meta.lineCount !== undefined) {
-            parts.push(`${meta.lineCount.toLocaleString()} lines`);
+        if (meta.totalLines !== undefined) {
+            parts.push(`${meta.totalLines.toLocaleString()} lines`);
         }
         
-        if (meta.errorCount !== undefined && meta.errorCount > 0) {
-            parts.push(`${meta.errorCount} errors`);
+        if (meta.timestampDetected !== undefined) {
+            const icon = meta.timestampDetected ? '🟢' : '🔴';
+            parts.push(`${icon}`);
         }
         
         return parts.join(' • ');
@@ -295,39 +306,44 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
     }
     
     private async getFileMetadata(filePath: string): Promise<{
-        lineCount?: number;
-        errorCount?: number;
-        warningCount?: number;
         size?: number;
         lastModified?: Date;
+        created?: Date;
+        totalLines?: number;
+        timestampPattern?: string;
+        timestampDetected?: boolean;
+        formatDisplay?: string;
     }> {
         try {
             const stats = await fs.promises.stat(filePath);
             
-            // For large files, only get basic stats
-            if (stats.size > 10 * 1024 * 1024) { // 10 MB
-                return {
-                    size: stats.size,
-                    lastModified: stats.mtime
-                };
+            // Initialize LogFileHandler to detect timestamp format and get line count
+            let totalLines: number | undefined;
+            let timestampPattern: string | undefined;
+            let timestampDetected: boolean | undefined;
+            let formatDisplay: string | undefined;
+            
+            try {
+                const handler = new LogFileHandler(filePath);
+                const result = await handler.initialize();
+                
+                totalLines = handler.totalLines;
+                timestampDetected = result.detected;
+                timestampPattern = result.detected ? result.format?.pattern ?? undefined : undefined;
+                formatDisplay = result.detected ? getFormatDisplayString(result) : undefined;
+            } catch (detectionError) {
+                console.warn(`Timestamp detection failed for ${filePath}:`, detectionError);
+                // Continue with basic metadata even if detection fails
             }
             
-            // For smaller files, analyze content
-            const content = await fs.promises.readFile(filePath, 'utf-8');
-            const lines = content.split('\n');
-            const errorCount = lines.filter(line => 
-                /error|failed|exception|fatal/i.test(line)
-            ).length;
-            const warningCount = lines.filter(line => 
-                /warning|warn/i.test(line)
-            ).length;
-            
             return {
-                lineCount: lines.length,
-                errorCount,
-                warningCount,
                 size: stats.size,
-                lastModified: stats.mtime
+                lastModified: stats.mtime,
+                created: stats.birthtime,
+                totalLines,
+                timestampPattern,
+                timestampDetected,
+                formatDisplay
             };
         } catch (error) {
             console.error(`Error getting metadata for ${filePath}:`, error);

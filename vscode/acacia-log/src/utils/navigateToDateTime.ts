@@ -2,6 +2,7 @@
 
 import * as vscode from 'vscode';
 import { DateTime } from 'luxon';
+import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
 
 
 
@@ -11,9 +12,19 @@ export async function navigateToDateTime() {
     return;
   }
 
+  const document = editor.document;
+  
+  // Try to auto-detect format first, fallback to config
+  const detection = await getOrDetectFormat(document);
+  const { regex: dateRegexCompiled, format: logDateFormat, useDetected } = getRegexAndFormat(detection.format);
+  
+  if (useDetected) {
+    console.log('[NavigateToDateTime] Using auto-detected timestamp pattern:', detection.format?.pattern);
+  } else {
+    console.log('[NavigateToDateTime] Using configured timestamp pattern');
+  }
+
   const config = vscode.workspace.getConfiguration('acacia-log');
-  const logDateFormat = config.get<string>('logDateFormat') || 'yyyy-MM-dd HH:mm:ss';
-  const logDateRegex = config.get<string>('logDateRegex') || '\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}';
   const logSearchDate = config.get<string>('logSearchDate');
   const logSearchTime = config.get<string>('logSearchTime');
   const dateTimeInput = `${logSearchDate}T${logSearchTime}`;
@@ -24,11 +35,7 @@ export async function navigateToDateTime() {
     return;
   }
 
-  const document = editor.document;
   const totalLines = document.lineCount;
-
-  // Compile regex once outside the loop
-  const dateRegexCompiled = new RegExp(logDateRegex);
 
   let low = 0;
   let high = totalLines - 1;

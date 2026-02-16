@@ -4,6 +4,45 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.0] - 2026-02-17
+
+### Added
+- 🤖 **Automatic Timestamp Detection** - Intelligent pattern recognition for log files
+  - Detects 20+ timestamp formats automatically (ISO, dash/slash/dot separators, with/without seconds)
+  - Visual indicators in Log Tree View: 🟢 green circle (detected) / 🔴 red circle (not detected)
+  - Displays detected pattern and total line count in file tooltips
+  - 5-minute caching to prevent repeated detection operations
+  - Supports archived logs with dates outside file date range
+  - Validates reasonable year ranges (1970-2076)
+
+- 🔘 **Auto-Detect Buttons** - One-click timestamp configuration across all tabs
+  - Log Analysis tab: Auto-detect button populates regex and format fields
+  - Similar Lines tab: Auto-detect button for pattern configuration
+  - Timeline tab: Auto-detect button for timeline generation
+  - Real-time status feedback with success/error indicators
+  - Automatically fills all timestamp fields across tabs
+
+### Enhanced
+- 📊 **File Info Tab** - Optimized for performance
+  - Removed lengthy statistics calculations for large files
+  - Shows timestamp detection results with pattern details
+  - Displays format display string for detected patterns
+  - Instant loading with only basic file metadata (size, dates)
+
+- 🎯 **Smart Pattern Integration** - Auto-detected patterns used throughout
+  - Similar Lines analysis uses detected patterns automatically
+  - Timeline generation leverages auto-detection with user notification
+  - Navigate to DateTime feature uses detected formats
+  - Falls back to configuration if detection fails
+
+### Fixed
+- Timestamp detection now works correctly for archived logs (10+ years old)
+- Simple timestamp formats (yyyy-MM-dd HH:mm:ss.SSS) now detected properly
+- Added support for dash-separated dates without seconds (dd-MM-yyyy HH:mm, MM-dd-yyyy HH:mm)
+- Added support for HH:mm formats with slash and dot separators
+
+---
+
 ## [3.5.0] - 2026-02-16
 
 ### Added

@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.5.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.6.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -15,15 +15,24 @@ Acacia Log is a powerful Visual Studio Code extension designed to make log file 
 
 ## ✨ Key Features
 
+### 🤖 **Automatic Timestamp Detection** _(New in 3.6.0)_
+Intelligent pattern recognition that automatically detects timestamp formats in your log files. Visual indicators (🟢 green/🔴 red circles) show detection status in the tree view. One-click auto-detect buttons across all analysis tabs instantly configure timestamp patterns for you.
+
+- **20+ format patterns** - Supports ISO, dash/slash/dot separators, with/without seconds
+- **Visual indicators** - Green circle (detected) or red circle (not detected)
+- **Auto-detect buttons** - One-click configuration in Log Analysis, Similar Lines, and Timeline tabs
+- **Smart caching** - Prevents repeated detection with 5-minute cache
+
 ### 📁 **Log Tree View** _(New in 3.2.0)_
 Browse and manage log files from multiple folders with rich metadata display. Add custom log folders, view file statistics, and quickly access your logs.
 
+- **Timestamp detection** - Automatic pattern detection with visual indicators _(New in 3.6.0)_
 - **Single-click**: Show file info tab with metadata _(New in 3.5.0)_
 - **Double-click**: Open file in editor
 - Smart click detection prevents accidentally opening large files
 
-### 📋 **File Info Tab** _(New in 3.5.0)_
-Quick access to file metadata without opening large log files. View file size, line count, creation/modification dates, and error/warning counts at a glance.
+### 📋 **File Info Tab** _(Enhanced in 3.6.0)_
+Optimized for performance with instant loading. Shows detected timestamp pattern, format details, and total line count—all without lengthy statistics calculations.
 
 ### 📑 **5-Tab Interface** _(Enhanced in 3.5.0)_
 Clean, organized interface with dedicated tabs for each analysis tool. Icon-only navigation with descriptive tooltips saves space while keeping features easily accessible.
