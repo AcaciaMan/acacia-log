@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.6.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.6.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -34,8 +34,13 @@ Browse and manage log files from multiple folders with rich metadata display. Ad
 ### 📋 **File Info Tab** _(Enhanced in 3.6.0)_
 Optimized for performance with instant loading. Shows detected timestamp pattern, format details, and total line count—all without lengthy statistics calculations.
 
-### 📑 **5-Tab Interface** _(Enhanced in 3.5.0)_
-Clean, organized interface with dedicated tabs for each analysis tool. Icon-only navigation with descriptive tooltips saves space while keeping features easily accessible.
+### 📑 **5-Tab Interface** _(Enhanced in 3.6.1)_
+Clean, organized interface with dedicated tabs for each analysis tool. Native VS Code toolbar buttons provide quick access to all features with standard icons and tooltips.
+
+- **Native toolbar navigation** - 5 buttons integrated with VS Code's view title bar _(New in 3.6.1)_
+- **Compact layout** - Optimized spacing for maximum data visibility _(New in 3.6.1)_
+- **Quick switching** - One-click access to Log Analysis, Similar Lines, Timeline, Pattern Search, and File Info
+- **Standard icons** - VS Code icons for familiar navigation experience
 
 ### 🎯 **Precise Date/Time Navigation**
 Jump directly to any timestamp in your log files with intelligent date parsing and format detection.
@@ -49,8 +54,13 @@ Search for multiple patterns simultaneously across large log files with visual r
 ### 📈 **Similar Line Analysis**
 Identify repetitive patterns and group similar log entries to understand what's happening most frequently.
 
-### 🎨 **Modern UI**
+### 🎨 **Modern UI** _(Enhanced in 3.6.1)_
 Beautifully designed interface that respects VS Code themes and provides an intuitive user experience.
+
+- **Native integration** - Toolbar buttons in VS Code's standard location
+- **Compact view** - Reduced padding and spacing for more visible data
+- **Optimized layout** - 30-40% space savings in sidebar display
+- **Clean design** - Streamlined interface with efficient information density
 
 ---
 
@@ -70,15 +80,15 @@ Or search for "Acacia Log" in the Extensions view (`Ctrl+Shift+X`).
 1. **Open a log file** in VS Code
 2. **Click the Acacia Log icon** in the Activity Bar (left sidebar)
 3. **Browse log files** in the Log Files tree view, or add custom log folders
-4. **Use the 5-tab interface** for different analysis tools:
+4. **Use the toolbar buttons** in the Log Analysis view to switch between tools:
    - 🔍 **Log Analysis** - Navigate to date/time in log files
    - 🔎 **Pattern Search** - Search using regex patterns
    - 📊 **Similar Lines** - Analyze repetitive log patterns
    - 📈 **Timeline** - Generate visual timeline charts
-   - 📋 **File Info** - View file metadata and statistics _(New in 3.5.0)_
+   - 📋 **File Info** - View file metadata and statistics
 5. **Results open in editor tabs** giving you full screen space to view and analyze data
 
-**Tip:** Hover over tab icons to see their full descriptions!
+**Tip:** All navigation buttons are located in the view title bar for quick access!
 
 ---
 

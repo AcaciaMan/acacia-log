@@ -72,29 +72,38 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 ## Unified Tabbed Interface
 
 ### Overview
-Version 3.4.0 expands the tabbed interface to 4 dedicated tabs, each focused on a specific analysis tool. The icon-only navigation design saves space while providing clear tooltips on hover.
+Version 3.6.1 introduces native VS Code toolbar navigation for all tabs. Buttons are integrated into the view title bar for quick access to all analysis tools with standard VS Code icons.
 
 ### Key Features
 
-#### 1. **Icon-Only Tab Navigation** _(New in 3.4.0)_
-- Four tabs with clear icon-based navigation:
-  - 🔍 **Log Analysis** - Navigate to date/time in log files
-  - 🔎 **Pattern Search** - Search log files using regex patterns
-  - 📊 **Similar Lines** - Analyze and count similar log lines
-  - 📈 **Timeline** - Generate visual timeline of log events
-- Hover tooltips show full descriptions
-- Larger 18px icons for better visibility
-- Visual indicators for active tab
-- Keyboard accessible
+#### 1. **Native Toolbar Navigation** _(New in 3.6.1)_
+- Five toolbar buttons in the Log Analysis view title bar:
+  - 🔍 **Log Analysis** (Search icon) - Navigate to date/time in log files
+  - 📊 **Similar Lines** (Graph icon) - Analyze and count similar log lines
+  - 📈 **Timeline** (Graph-line icon) - Generate visual timeline of log events
+  - 🔎 **Pattern Search** (Search-fuzzy icon) - Search log files using regex patterns
+  - ℹ️ **File Info** (Info icon) - View file metadata and statistics
+- Standard VS Code icons for familiar navigation
+- Integrated with native view title bar
+- Clean, professional interface without duplicate controls
+- One-click switching between analysis modes
 
-#### 2. **Tab 1: Log Analysis**
+#### 2. **Compact View Layout** _(New in 3.6.1)_
+- Optimized spacing and padding throughout
+- 30-40% space savings for more visible data
+- Reduced section padding (16px → 10px)
+- Smaller input fields and buttons
+- Tighter margins and gaps
+- More information density without clutter
+
+#### 3. **Tab 1: Log Analysis**
 Tools for navigating to specific dates/times in the currently open log file:
 - Date/Time Navigation with calendar picker
 - Format Configuration (11 preset formats)
 - Quick actions: Today, Now, Clear
 - Keyboard shortcuts (Press Enter to search)
 
-#### 3. **Tab 2: Pattern Search**
+#### 4. **Tab 2: Pattern Search**
 Tools for searching patterns across log files:
 - Log file selection with file browser
 - Pattern file (JSON) configuration
@@ -104,34 +113,47 @@ Tools for searching patterns across log files:
 - Comprehensive statistics dashboard
 - Sortable detailed results with expandable line matches
 
-#### 4. **Tab 3: Similar Lines** _(New in 3.4.0)_
+#### 5. **Tab 3: Similar Lines**
 Dedicated tab for analyzing repetitive log patterns:
 - Format Configuration (11 preset formats)
+- Auto-detect button for timestamp format _(New in 3.6.0)_
 - Calculate similar line counts for current file
 - **Results open in editor result tab**
 - Groups similar patterns with occurrence counts
 - Full editor features for results analysis
 
-#### 5. **Tab 4: Timeline** _(New in 3.4.0)_
+#### 6. **Tab 4: Timeline**
 Dedicated tab for generating visual timelines:
 - Format Configuration (11 preset formats)
+- Auto-detect button for timestamp format _(New in 3.6.0)_
 - Generate interactive timeline for current file
 - Multiple chart types: Bar, Area, Line
 - Automatic log level detection (ERROR, WARN, INFO, DEBUG)
 - Click-to-navigate to specific log entries
 - CSV export functionality
 
-#### 6. **Space-Efficient Design**
-- Single compact webview with 4 organized tabs
+#### 7. **Tab 5: File Info** _(New in 3.5.0)_
+View comprehensive file metadata:
+- File name, path, and size
+- Total line count
+- Timestamp detection status with visual indicators
+- Detected pattern and format details
+- Created, modified, and accessed dates
+- Quick action buttons to open or reveal file
+
+#### 8. **Space-Efficient Design**
+- Single compact webview with 5 organized tabs
+- Native toolbar buttons for quick access
 - Results display in editor tabs (not in sidebar)
 - More room for the Log Files tree view
+- Optimized spacing for maximum data visibility _(Enhanced in 3.6.1)_
 - Better organization: sidebar for controls, editor for results
 
 ### Usage
 
 **Switch between tabs:**
-- Click on the icon buttons at the top of the view
-- Hover over icons to see descriptive tooltips
+- Click on the toolbar buttons at the top of the Log Analysis view
+- Standard VS Code icons for familiar navigation
 - Tabs remember your settings when switching
 
 **Tab persistence:**

@@ -232,6 +232,37 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
+	// Register unified view tab switching commands
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.unifiedView.switchToLogAnalysis', () => {
+			unifiedLogViewProvider.switchTab('logAnalysis');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.unifiedView.switchToSimilarLines', () => {
+			unifiedLogViewProvider.switchTab('similarLines');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.unifiedView.switchToTimeline', () => {
+			unifiedLogViewProvider.switchTab('timeline');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.unifiedView.switchToPatternSearch', () => {
+			unifiedLogViewProvider.switchTab('patternSearch');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.unifiedView.switchToFileInfo', () => {
+			unifiedLogViewProvider.switchTab('fileInfo');
+		})
+	);
+
 	// Dispose tree provider on deactivation
 	context.subscriptions.push({
 		dispose: () => logTreeProvider.dispose()

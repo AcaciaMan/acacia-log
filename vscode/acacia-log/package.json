@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.6.0",
+  "version": "3.6.1",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -100,6 +100,36 @@
         "command": "acacia-log.logExplorer.revealInExplorer",
         "title": "Reveal in File Explorer",
         "category": "Acacia Log"
+      },
+      {
+        "command": "acacia-log.unifiedView.switchToLogAnalysis",
+        "title": "Log Analysis",
+        "category": "Acacia Log",
+        "icon": "$(search)"
+      },
+      {
+        "command": "acacia-log.unifiedView.switchToSimilarLines",
+        "title": "Similar Lines",
+        "category": "Acacia Log",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "acacia-log.unifiedView.switchToTimeline",
+        "title": "Timeline",
+        "category": "Acacia Log",
+        "icon": "$(graph-line)"
+      },
+      {
+        "command": "acacia-log.unifiedView.switchToPatternSearch",
+        "title": "Pattern Search",
+        "category": "Acacia Log",
+        "icon": "$(search-fuzzy)"
+      },
+      {
+        "command": "acacia-log.unifiedView.switchToFileInfo",
+        "title": "File Info",
+        "category": "Acacia Log",
+        "icon": "$(info)"
       }
     ],
     "viewsContainers": {
@@ -137,6 +167,31 @@
           "command": "acacia-log.logExplorer.addFolder",
           "when": "view == acacia-log.logExplorer",
           "group": "navigation"
+        },
+        {
+          "command": "acacia-log.unifiedView.switchToLogAnalysis",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "acacia-log.unifiedView.switchToSimilarLines",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "acacia-log.unifiedView.switchToTimeline",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "acacia-log.unifiedView.switchToPatternSearch",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@4"
+        },
+        {
+          "command": "acacia-log.unifiedView.switchToFileInfo",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@5"
         }
       ],
       "view/item/context": [

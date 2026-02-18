@@ -570,4 +570,16 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
       vscode.window.showErrorMessage(`Failed to show file info: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
+
+  /**
+   * Switch to a specific tab in the webview
+   */
+  public switchTab(tabName: 'logAnalysis' | 'patternSearch' | 'similarLines' | 'timeline' | 'fileInfo'): void {
+    if (this._view) {
+      this._view.webview.postMessage({
+        command: 'switchTab',
+        tabName: tabName
+      });
+    }
+  }
 }

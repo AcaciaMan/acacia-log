@@ -4,6 +4,26 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.1] - 2026-02-18
+
+### Enhanced
+- 🎨 **Native Toolbar Navigation** - Tab controls moved to VS Code view title bar
+  - 5 toolbar buttons for quick navigation: Log Analysis, Similar Lines, Timeline, Pattern Search, File Info
+  - Integrated with VS Code's native toolbar system
+  - Removed duplicate internal tab navigation for cleaner interface
+  - Standard VS Code icons for better integration
+
+- 📐 **Compact View Mode** - Reduced padding and spacing throughout
+  - Optimized tab content padding (16px → 8px)
+  - Reduced section padding and margins for more visible data
+  - Smaller input fields, buttons, and form elements
+  - Compressed info boxes and status messages
+  - Tighter table cells in File Info tab
+  - Chart containers optimized (350px → 300px height)
+  - Overall 30-40% space savings for more data visibility in sidebar
+
+---
+
 ## [3.6.0] - 2026-02-17
 
 ### Added
