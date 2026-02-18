@@ -4,6 +4,21 @@ import * as path from 'path';
 import { LogFileHandler } from '../utils/log-file-reader';
 import { getFormatDisplayString } from '../utils/timestamp-detect';
 
+/** Filter options applied to the Log Files tree view */
+export interface FilterOptions {
+    /** Date-based filter.
+     *  A file passes when its modified date OR created date falls in the range. */
+    dateFilter?: {
+        /** Preset range or custom start date */
+        range: 'today' | 'yesterday' | 'last7days' | 'last30days' | 'custom';
+        /** Used only when range === 'custom'. Start of the day to include files from. */
+        customDate?: Date;
+    };
+    /** Limit to these file extensions (e.g. ['.log', '.txt']).
+     *  Empty / undefined means all supported types. */
+    fileTypes?: string[];
+}
+
 /**
  * Represents a log file or folder in the tree view
  */
@@ -36,10 +51,8 @@ export class LogTreeItem extends vscode.TreeItem {
         
         // Add custom tooltip with metadata
         if (metadata) {
-            this.tooltip = this.createTooltip();
-            
-            // Add description with key metadata
-            this.description = this.createDescription();
+            this.tooltip = this._buildTooltip(metadata);
+            this.description = this._buildDescription(metadata);
         }
         
         // Add context value for context menu
@@ -54,64 +67,76 @@ export class LogTreeItem extends vscode.TreeItem {
             };
         }
     }
-    
-    private createTooltip(): vscode.MarkdownString {
-        const meta = this.metadata!;
+
+    /** Whether full metadata (line count, timestamp detection) has been loaded */
+    public initialized: boolean = false;
+
+    /**
+     * Apply full metadata to this item, updating tooltip and description.
+     * Called lazily on hover or click.
+     */
+    applyFullMetadata(metadata: {
+        size?: number;
+        lastModified?: Date;
+        created?: Date;
+        totalLines?: number;
+        timestampPattern?: string;
+        timestampDetected?: boolean;
+        formatDisplay?: string;
+    }): void {
+        // Merge into existing metadata
+        const merged = Object.assign({}, this.metadata ?? {}, metadata);
+        // Re-build tooltip and description using private helpers via cast
+        (this as unknown as { metadata: typeof merged }).metadata = merged;
+        this.tooltip = this._buildTooltip(merged);
+        this.description = this._buildDescription(merged);
+        this.initialized = true;
+    }
+
+    private _buildTooltip(meta: NonNullable<LogTreeItem['metadata']>): vscode.MarkdownString {
         const tooltip = new vscode.MarkdownString();
         tooltip.appendMarkdown(`**${this.label}**\n\n`);
-        
         if (this.resourceUri) {
             tooltip.appendMarkdown(`📁 ${this.resourceUri.fsPath}\n\n`);
         }
-        
         if (meta.size !== undefined) {
             tooltip.appendMarkdown(`📊 Size: ${this.formatSize(meta.size)}\n\n`);
         }
-        
         if (meta.totalLines !== undefined) {
             tooltip.appendMarkdown(`📝 Lines: ${meta.totalLines.toLocaleString()}\n\n`);
         }
-        
         if (meta.timestampDetected !== undefined) {
             const icon = meta.timestampDetected ? '🟢' : '🔴';
             const status = meta.timestampDetected ? 'Detected' : 'Not detected';
             tooltip.appendMarkdown(`${icon} Timestamp: ${status}\n\n`);
-            
             if (meta.timestampDetected && meta.timestampPattern) {
                 tooltip.appendMarkdown(`⏱️ Pattern: ${meta.timestampPattern}\n\n`);
             }
         }
-        
         if (meta.lastModified) {
             tooltip.appendMarkdown(`🕒 Modified: ${meta.lastModified.toLocaleString()}\n\n`);
         }
-        
         if (meta.created) {
             tooltip.appendMarkdown(`📅 Created: ${meta.created.toLocaleString()}\n\n`);
         }
-        
         return tooltip;
     }
-    
-    private createDescription(): string {
-        const meta = this.metadata!;
+
+    private _buildDescription(meta: NonNullable<LogTreeItem['metadata']>): string {
         const parts: string[] = [];
-        
         if (meta.size !== undefined) {
             parts.push(this.formatSize(meta.size));
         }
-        
         if (meta.totalLines !== undefined) {
             parts.push(`${meta.totalLines.toLocaleString()} lines`);
         }
-        
         if (meta.timestampDetected !== undefined) {
             const icon = meta.timestampDetected ? '🟢' : '🔴';
             parts.push(`${icon}`);
         }
-        
         return parts.join(' • ');
     }
+    
     
     private formatSize(bytes: number): string {
         if (bytes < 1024) {
@@ -133,19 +158,160 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
     
     private watchedFolders: Set<string> = new Set();
     private fileWatchers: vscode.FileSystemWatcher[] = [];
-    
+    /** Cache of fully-loaded metadata keyed by file path */
+    private metadataCache = new Map<string, Awaited<ReturnType<LogTreeProvider['getFileMetadata']>>>();
+    /** Currently active filter */
+    private currentFilter: FilterOptions = {};
+
     constructor(private context: vscode.ExtensionContext) {
         this.loadWatchedFolders();
     }
     
     refresh(): void {
+        this.metadataCache.clear();
         this._onDidChangeTreeData.fire();
     }
     
     getTreeItem(element: LogTreeItem): vscode.TreeItem {
         return element;
     }
+
+    /**
+     * Called by VS Code when a tree item is about to be shown (e.g. on hover).
+     * Used to lazily load full metadata (line count + timestamp detection) for
+     * log files that were not initialised on first render.
+     */
+    async resolveTreeItem(
+        item: LogTreeItem,
+        element: LogTreeItem,
+        token: vscode.CancellationToken
+    ): Promise<LogTreeItem> {
+        if (!element.initialized && element.resourceUri && !element.isFolder) {
+            const filePath = element.resourceUri.fsPath;
+            let metadata = this.metadataCache.get(filePath);
+            if (!metadata) {
+                metadata = await this.getFileMetadata(filePath);
+                if (!token.isCancellationRequested) {
+                    this.metadataCache.set(filePath, metadata);
+                }
+            }
+            if (!token.isCancellationRequested) {
+                element.applyFullMetadata(metadata);
+                // Notify the tree view to re-render this item with the updated description/tooltip
+                this._onDidChangeTreeData.fire(element);
+            }
+        }
+        return element;
+    }
     
+    /**
+     * Public helper to eagerly load full metadata for a given item.
+     * Call this from the click handler so metadata is up-to-date before
+     * it is passed to other providers.
+     */
+    async loadMetadata(item: LogTreeItem): Promise<void> {
+        if (item.initialized || item.isFolder || !item.resourceUri) {
+            return;
+        }
+        const filePath = item.resourceUri.fsPath;
+        let metadata = this.metadataCache.get(filePath);
+        if (!metadata) {
+            metadata = await this.getFileMetadata(filePath);
+            this.metadataCache.set(filePath, metadata);
+        }
+        item.applyFullMetadata(metadata);
+        // Notify the tree view to re-render this item with the updated description/tooltip
+        this._onDidChangeTreeData.fire(item);
+    }
+
+    // ── Filter ────────────────────────────────────────────────────────────────
+
+    /** Replace the active filter and rebuild the tree. */
+    setFilter(options: FilterOptions): void {
+        this.currentFilter = options;
+        vscode.commands.executeCommand('setContext', 'acacia-log.filterActive', this.hasActiveFilter());
+        this.refresh();
+    }
+
+    /** Return the currently active filter (read-only copy). */
+    getFilter(): FilterOptions {
+        return { ...this.currentFilter };
+    }
+
+    /** True when at least one filter criterion is enabled. */
+    hasActiveFilter(): boolean {
+        return !!(
+            this.currentFilter.dateFilter ||
+            (this.currentFilter.fileTypes && this.currentFilter.fileTypes.length > 0)
+        );
+    }
+
+    /**
+     * Check whether a file's basic metadata passes the currently active date filter.
+     * A file passes when its modified date OR created date falls in the range.
+     * Returns true when no date filter is set.
+     */
+    private matchesDateFilter(meta: { lastModified?: Date; created?: Date }): boolean {
+        const filter = this.currentFilter.dateFilter;
+        if (!filter) {
+            return true;
+        }
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        const inRange = (fileDate: Date): boolean => {
+            switch (filter.range) {
+                case 'today':
+                    return fileDate >= startOfToday;
+                case 'yesterday': {
+                    const startOfYesterday = new Date(startOfToday);
+                    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+                    return fileDate >= startOfYesterday && fileDate < startOfToday;
+                }
+                case 'last7days': {
+                    const cutoff = new Date(startOfToday);
+                    cutoff.setDate(cutoff.getDate() - 7);
+                    return fileDate >= cutoff;
+                }
+                case 'last30days': {
+                    const cutoff = new Date(startOfToday);
+                    cutoff.setDate(cutoff.getDate() - 30);
+                    return fileDate >= cutoff;
+                }
+                case 'custom':
+                    return filter.customDate ? fileDate >= filter.customDate : true;
+            }
+            return true;
+        };
+
+        // Pass when either modified or created date matches
+        if (meta.lastModified && inRange(meta.lastModified)) { return true; }
+        if (meta.created && inRange(meta.created)) { return true; }
+        // If neither date is available, show the file
+        if (!meta.lastModified && !meta.created) { return true; }
+        return false;
+    }
+
+    /**
+     * Check whether a filename passes the active file-type filter.
+     * Returns true when no file-type filter is set.
+     */
+    private matchesFileTypeFilter(filename: string): boolean {
+        const types = this.currentFilter.fileTypes;
+        if (!types || types.length === 0) {
+            return true;
+        }
+        const lower = filename.toLowerCase();
+        const ext = path.extname(lower);
+        // Support compound extensions like "app.log.1"
+        if (types.includes('.log') && lower.includes('.log.')) {
+            return true;
+        }
+        return types.includes(ext);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+
     async getChildren(element?: LogTreeItem): Promise<LogTreeItem[]> {
         if (!element) {
             // Root level: show watched folders
@@ -225,6 +391,9 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
                 return a.name.localeCompare(b.name);
             });
             
+            // Track whether we have already fully-initialised the first log file
+            let firstLogFileInitialized = false;
+
             for (const entry of sortedEntries) {
                 const entryPath = path.join(folderPath, entry.name);
                 const uri = vscode.Uri.file(entryPath);
@@ -241,15 +410,46 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
                         ));
                     }
                 } else if (this.isLogFile(entry.name)) {
-                    // Get file metadata
-                    const metadata = await this.getFileMetadata(entryPath);
-                    items.push(new LogTreeItem(
-                        entry.name,
-                        vscode.TreeItemCollapsibleState.None,
-                        uri,
-                        false,
-                        metadata
-                    ));
+                    // ── File-type filter (no I/O) ──────────────────────────
+                    if (!this.matchesFileTypeFilter(entry.name)) {
+                        continue;
+                    }
+
+                    // ── Basic stat (cheap) for date filter check ───────────
+                    const basicMeta = await this.getBasicFileMetadata(entryPath);
+                    if (!this.matchesDateFilter(basicMeta)) {
+                        continue;
+                    }
+
+                    // ── Build tree item ────────────────────────────────────
+                    let fileItem: LogTreeItem;
+                    if (!firstLogFileInitialized) {
+                        // Fully initialise the first matching log file immediately
+                        const metadata = await this.getFileMetadata(entryPath);
+                        this.metadataCache.set(entryPath, metadata);
+                        fileItem = new LogTreeItem(
+                            entry.name,
+                            vscode.TreeItemCollapsibleState.None,
+                            uri,
+                            false,
+                            metadata
+                        );
+                        fileItem.initialized = true;
+                        firstLogFileInitialized = true;
+                    } else {
+                        // Lazy: reuse the basicMeta already fetched above;
+                        // full metadata (line count + timestamp) is loaded on
+                        // hover (resolveTreeItem) or on click.
+                        fileItem = new LogTreeItem(
+                            entry.name,
+                            vscode.TreeItemCollapsibleState.None,
+                            uri,
+                            false,
+                            basicMeta
+                        );
+                        // initialized stays false → resolveTreeItem will hydrate it
+                    }
+                    items.push(fileItem);
                 }
             }
         } catch (error) {
@@ -305,6 +505,27 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
         return logExtensions.some(ext => lowerFilename.endsWith(ext)) || lowerFilename.includes('.log.');
     }
     
+    /**
+     * Fast metadata: only file-system stats, no LogFileHandler.
+     * Used for log files 2..N so the tree renders immediately.
+     */
+    private async getBasicFileMetadata(filePath: string): Promise<{
+        size?: number;
+        lastModified?: Date;
+        created?: Date;
+    }> {
+        try {
+            const stats = await fs.promises.stat(filePath);
+            return {
+                size: stats.size,
+                lastModified: stats.mtime,
+                created: stats.birthtime
+            };
+        } catch (error) {
+            return {};
+        }
+    }
+
     private async getFileMetadata(filePath: string): Promise<{
         size?: number;
         lastModified?: Date;

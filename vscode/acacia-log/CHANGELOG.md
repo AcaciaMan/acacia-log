@@ -4,6 +4,28 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.4] - 2026-02-19
+
+### Added
+- ⚡ **Lazy Initialization for Log Tree View** - Dramatically faster folder expansion for directories with many log files
+  - Only the first log file is fully initialized (line count + timestamp detection) when a folder expands
+  - All other log files load instantly with basic file-system stats only
+  - Full metadata is fetched automatically on hover (tooltip) or on click
+  - Tree item description and tooltip update in real time once lazy loading completes
+  - Metadata cache avoids redundant analysis across hover/click events
+
+- 🔍 **Log Files View Filter** - Filter the Log Tree View by date range or file type
+  - Filter icon in the view toolbar: `$(filter)` when inactive, `$(filter-filled)` when active
+  - **Date filter** - Show only files whose modified or created date falls in a selected range:
+    - Today, Yesterday, Last 7 days, Last 30 days, Custom date (YYYY-MM-DD input)
+    - Checks both modified and created dates (file passes if either matches)
+  - **File type filter** - Multi-select from `.log`, `.txt`, `.out`, `.err`, `.trace`
+  - Active filter summary shown in the toolbar icon description
+  - Clear All Filters option to reset in one click
+  - Filter state persists until manually cleared or the view is refreshed
+
+---
+
 ## [3.6.3] - 2026-02-18
 
 ### Added

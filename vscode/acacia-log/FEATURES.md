@@ -44,10 +44,30 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 - **Reveal in Explorer** - Show file in system file explorer
 - **Refresh** - Manually refresh the entire tree view
 
-#### 5. **Performance Optimization**
-- Files under 10MB get full analysis (line count, timestamp detection) _(Updated in 3.6.0)_
-- Files over 10MB show only size and modification time
-- Smart caching and incremental updates
+#### 5. **Filter Log Files** _(New in 3.6.4)_
+A filter icon in the Log Files view title bar lets you narrow down which files are shown.
+
+**Filter by date range:**
+- **Today** — files modified or created today
+- **Yesterday** — files modified or created yesterday
+- **Last 7 days** / **Last 30 days** — rolling windows
+- **Custom date** — enter any YYYY-MM-DD start date; files on or after that date are shown
+- Both the modified date and created date are checked; a file passes if either falls in the range
+
+**Filter by file type:**
+- Multi-select from `.log`, `.txt`, `.out`, `.err`, `.trace`
+- Deselecting all types of a kind reverts to showing all types
+
+**Toolbar behaviour:**
+- `$(filter)` icon (outline) — no filter active
+- `$(filter-filled)` icon — at least one filter active; click to open the dialog where you can change or clear filters
+- Active filter summary is shown as the button description
+
+#### 6. **Performance Optimization** _(Enhanced in 3.6.4)_
+- **Lazy initialization** — only the first log file in a folder is fully analysed (line count + timestamp detection) when the folder expands; all other files load instantly with basic stats _(New in 3.6.4)_
+- Full metadata is fetched lazily on hover (tooltip appears) or on single-click
+- Tree item description and tooltip update in real time once lazy loading completes _(New in 3.6.4)_
+- Metadata cache prevents redundant analysis; cache cleared on Refresh
 - Timestamp detection results cached for 5 minutes _(New in 3.6.0)_
 
 ### Usage
