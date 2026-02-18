@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.6.1",
+  "version": "3.6.2",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -102,6 +102,12 @@
         "category": "Acacia Log"
       },
       {
+        "command": "acacia-log.logExplorer.generateGapReport",
+        "title": "HTML Report",
+        "category": "Acacia Log",
+        "icon": "$(graph-scatter)"
+      },
+      {
         "command": "acacia-log.unifiedView.switchToLogAnalysis",
         "title": "Log Analysis",
         "category": "Acacia Log",
@@ -192,6 +198,11 @@
           "command": "acacia-log.unifiedView.switchToFileInfo",
           "when": "view == acacia-log.unifiedView",
           "group": "navigation@5"
+        },
+        {
+          "command": "acacia-log.logExplorer.generateGapReport",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@6"
         }
       ],
       "view/item/context": [

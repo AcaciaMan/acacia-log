@@ -7,6 +7,7 @@
 - [Timeline Visualization](#timeline-visualization)
 - [Pattern Search](#pattern-search)
 - [Similar Line Analysis](#similar-line-analysis)
+- [HTML Gap Report](#html-gap-report) _(New in 3.6.2)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
 
@@ -597,6 +598,150 @@ Line: DEBUG: Retrying operation, attempt 2
 2. **Look for anomalies**: Very high counts may indicate issues
 3. **Compare time periods**: Run on different log sections to spot changes
 4. **Combine with timeline**: Use timeline to see when peaks occurred
+
+---
+
+## HTML Gap Report
+
+### Overview _(New in 3.6.2)_
+The HTML Gap Report analyzes time gaps between consecutive log entries to identify delays, timeouts, periods of inactivity, or processing bottlenecks. It generates an interactive HTML report showing the top 10 longest gaps.
+
+### How It Works
+
+1. **Initialization**: Loads the log file and detects timestamp format automatically
+2. **Indexing**: Builds a sparse index of line positions and timestamps
+   - For large files (>10,000 lines): samples every 1000th line
+   - For small files (<10,000 lines): samples every 10th line for precision
+3. **Fast Pass**: Scans the in-memory index to find approximate top gaps
+4. **Refinement**: Reads only relevant chunks from disk to pinpoint exact line and text
+5. **Report Generation**: Creates interactive HTML with VS Code theme integration
+
+### Accessing the Report
+
+**Method 1: From Log Analysis View**
+1. Select a log file in the Log Files tree view (single-click)
+2. Navigate to the Log Analysis view
+3. Click the **HTML Report** button (📊 graph-scatter icon) in the view toolbar
+4. Wait for analysis (progress notifications displayed)
+5. Report opens in a webview panel
+
+**Method 2: From Active Editor**
+- If no file is selected in the tree view, the command uses the currently active editor file
+
+### Report Features
+
+#### 1. **Interactive Visualization**
+- Beautiful card-based layout for each gap
+- Ranked list from longest to shortest gap
+- Color-coded rank badges (1-10)
+- Hover effects on gap cards
+- VS Code theme integration (dark/light mode)
+
+#### 2. **Metadata Section**
+Displays key information about the analysis:
+- **File Name**: Name of the analyzed log file
+- **Total Records**: Number of timestamped entries found
+- **Log Time Span**: Duration covered by the log (formatted as ms/s/m/h)
+- **Gaps Analyzed**: Number of gaps found (up to 10)
+
+#### 3. **Gap Details**
+Each gap card shows:
+- **Rank Badge**: Position in top 10 (circular numbered badge)
+- **Duration**: Gap length formatted intelligently:
+  - `123ms` for milliseconds
+  - `45.23s` for seconds
+  - `5m 30.2s` for minutes
+  - `2h 15m` for hours
+- **Line Number**: Where the gap-causing log entry occurs (1-based)
+- **Timestamps**: Start and end times in ISO 8601 format
+- **Log Text**: The actual log line that preceded the gap
+
+#### 4. **Export Capability**
+- **Export HTML Button**: Located in the report header
+- One-click export to standalone HTML file
+- Opens save dialog with suggested filename (`logfile_gap_report.html`)
+- Exported file works in any browser
+- Perfect for sharing with team members or archiving
+
+### Use Cases
+
+#### 1. **Application Performance Analysis**
+Identify slow operations or processing delays:
+```
+Gap Duration: 5m 32.1s
+Line 1523: [2024-02-18 10:15:00] INFO Processing batch job 4523
+→ [2024-02-18 10:20:32] INFO Batch job 4523 completed
+```
+
+#### 2. **Timeout Detection**
+Find where connections or requests timed out:
+```
+Gap Duration: 30.05s
+Line 892: [2024-02-18 08:30:15] DEBUG Sending request to external API
+→ [2024-02-18 08:30:45] ERROR Request timeout after 30s
+```
+
+#### 3. **Service Downtime**
+Detect periods when a service was not logging:
+```
+Gap Duration: 2h 15m
+Line 3421: [2024-02-18 02:00:00] INFO System health check OK
+→ [2024-02-18 04:15:00] WARN Service restarted
+```
+
+#### 4. **Monitoring Data Gaps**
+Find missing data points in monitoring logs:
+```
+Gap Duration: 1m 30.0s
+Line 7845: [2024-02-18 15:00:00] METRIC cpu_usage=45%
+→ [2024-02-18 15:01:30] METRIC cpu_usage=78%
+```
+
+#### 5. **Queue Processing Analysis**
+Identify bottlenecks in event or message processing:
+```
+Gap Duration: 45.89s
+Line 2301: [2024-02-18 11:23:10] INFO Processing message ID 8823
+→ [2024-02-18 11:24:56] INFO Message 8823 completed
+```
+
+### Technical Details
+
+#### Smart Indexing
+- **Large files**: Default step of 1000 lines for speed
+- **Small files**: Automatic step of 10 lines for precision
+- **Memory efficient**: Sparse index keeps memory usage low
+- **Fast searches**: Binary search on indexed timestamps
+
+#### Performance
+- Initial indexing: O(n) where n = file size
+- Gap finding: O(m log m) where m = number of indexed entries
+- Refinement: Reads only ~10 small chunks from disk
+- Typical analysis time: 1-5 seconds for multi-MB files
+
+#### Supported Timestamp Formats
+Uses the same auto-detection as other features:
+- ISO 8601
+- Apache/Common Log Format
+- Syslog
+- Log4j
+- Windows Event Log
+- And 15+ other common formats
+
+### Best Practices
+
+1. **Select appropriate files**: Works best with files that have consistent timestamps
+2. **Check detection**: Ensure timestamps are detected (🟢 indicator in tree view)
+3. **Export for sharing**: Use Export HTML to share findings with team
+4. **Combine with timeline**: Use Timeline view to see overall patterns, then drill into gaps
+5. **Look for patterns**: Multiple similar-duration gaps might indicate configuration issues
+
+### Limitations
+
+- Requires timestamps to be detected in the log file
+- Maximum of 10 gaps reported (top longest)
+- Continuation lines without timestamps are not considered gap boundaries
+- Gap analysis based on timestamp differences, not actual processing time
 
 ---
 

@@ -4,6 +4,21 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.2] - 2026-02-18
+
+### Added
+- 📊 **HTML Gap Report** - Interactive gap analysis with export capability
+  - Analyzes top 10 time gaps in log files
+  - Beautiful HTML report with VS Code theme integration
+  - Shows gap duration, timestamps, and log line text
+  - One-click export to standalone HTML file
+  - Accessible via toolbar button in Log Analysis view
+  - Smart indexing: automatically uses finer granularity for small files (<10,000 lines)
+  - Progress notifications during analysis
+  - Rendered in webview panel for interactive viewing
+
+---
+
 ## [3.6.1] - 2026-02-18
 
 ### Enhanced

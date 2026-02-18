@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.6.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.6.2-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -23,7 +23,16 @@ Intelligent pattern recognition that automatically detects timestamp formats in 
 - **Auto-detect buttons** - One-click configuration in Log Analysis, Similar Lines, and Timeline tabs
 - **Smart caching** - Prevents repeated detection with 5-minute cache
 
-### 📁 **Log Tree View** _(New in 3.2.0)_
+### � **HTML Gap Report** _(New in 3.6.2)_
+Analyze time gaps between log entries with an interactive HTML report. Identifies the top 10 longest gaps in your log files, helping you spot delays, timeouts, or periods of inactivity.
+
+- **Interactive visualization** - Beautiful HTML report with VS Code theme integration
+- **Export capability** - One-click export to standalone HTML file
+- **Smart analysis** - Automatic fine-grained indexing for small files
+- **Comprehensive details** - Shows gap duration, timestamps, and log line text
+- **Progress tracking** - Real-time progress notifications during analysis
+
+### �📁 **Log Tree View** _(New in 3.2.0)_
 Browse and manage log files from multiple folders with rich metadata display. Add custom log folders, view file statistics, and quickly access your logs.
 
 - **Timestamp detection** - Automatic pattern detection with visual indicators _(New in 3.6.0)_
@@ -229,6 +238,42 @@ Find and count similar lines to identify patterns and repetitions.
 - Identify repeated warnings
 - Detect spam or retry patterns
 - Understand common operations
+
+---
+
+### 📊 HTML Gap Report _(New in 3.6.2)_
+
+Analyze time gaps between log entries to identify delays, timeouts, or periods of inactivity.
+
+**Features:**
+- 📈 **Top 10 Gaps** - Identifies the longest time gaps in your log file
+- 🎨 **Interactive HTML Report** - Beautiful visualization with VS Code theme integration
+- 💾 **Export Capability** - One-click export to standalone HTML file
+- ⚡ **Smart Indexing** - Automatically uses fine-grained analysis for small files
+- 📊 **Comprehensive Details** - Shows gap duration, timestamps, line numbers, and log text
+- 🔄 **Progress Tracking** - Real-time notifications during analysis
+
+**How to Use:**
+1. Select a log file in the Log Files tree view
+2. Click the **HTML Report** icon (📊) in the Log Analysis view toolbar
+3. Wait for analysis to complete (with progress notifications)
+4. View the interactive report in a new webview panel
+5. Click **Export HTML** button to save as standalone file
+
+**Report Contents:**
+- File metadata (name, total records, log time span)
+- Ranked list of gaps with:
+  - Gap duration (formatted as ms/s/m/h)
+  - Start and end timestamps
+  - Line number where the gap occurs
+  - The actual log line text
+
+**Use Cases:**
+- Identify application hangs or delays
+- Find timeout periods in service logs
+- Detect gaps in monitoring data
+- Analyze processing bottlenecks
+- Spot periods of inactivity
 
 ---
 

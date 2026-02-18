@@ -10,6 +10,7 @@ import { createLogPatterns } from './utils/createLogPatterns';
 import { LogTreeProvider, LogTreeItem } from './logManagement/logTreeProvider';
 import { UnifiedLogViewProvider } from './logSearch/unifiedLogViewProvider';
 import { ResultDocumentProvider } from './utils/resultDocumentProvider';
+import { LogGapReportProvider } from './logSearch/logGapReportProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -136,6 +137,12 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 	context.subscriptions.push(treeView);
 
+	// Register the Log Gap Report Provider
+	const logGapReportProvider = new LogGapReportProvider(context.extensionPath);
+
+	// Track the currently selected/active log file
+	let currentLogFile: string | undefined;
+
 	// Double-click detection for tree view clicks
 	let clickCount = 0;
 	let clickTimer: NodeJS.Timeout | undefined;
@@ -150,6 +157,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			
 			const currentPath = item.resourceUri.fsPath;
+			
+			// Update the current log file
+			currentLogFile = currentPath;
 			
 			// If this is a different item, reset
 			if (lastClickedPath !== currentPath) {
@@ -229,6 +239,35 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('acacia-log.logExplorer.revealInExplorer', (item: LogTreeItem) => {
 			logTreeProvider.revealInExplorer(item);
+		})
+	);
+
+	// Register gap report generation command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.generateGapReport', async () => {
+			// Get the currently selected file from tree view or active editor
+			let filePath: string | undefined = currentLogFile;
+
+			// If no file selected in tree, try to get from active editor
+			if (!filePath) {
+				const selection = treeView.selection[0];
+				if (selection && selection.resourceUri && !selection.isFolder) {
+					filePath = selection.resourceUri.fsPath;
+				} else {
+					const activeEditor = vscode.window.activeTextEditor;
+					if (activeEditor) {
+						filePath = activeEditor.document.uri.fsPath;
+					}
+				}
+			}
+
+			if (!filePath) {
+				vscode.window.showErrorMessage('Please select a log file first');
+				return;
+			}
+
+			// Generate the gap report
+			await logGapReportProvider.generateReport(filePath);
 		})
 	);
 

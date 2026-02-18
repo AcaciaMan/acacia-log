@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Gap Analysis Report</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            line-height: 1.6;
+        }
+        
+        h1 {
+            color: var(--vscode-foreground);
+            border-bottom: 2px solid var(--vscode-panel-border);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .metadata {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--vscode-textLink-foreground);
+        }
+        
+        .metadata-item {
+            margin: 5px 0;
+        }
+        
+        .metadata-label {
+            font-weight: bold;
+            color: var(--vscode-textLink-foreground);
+        }
+        
+        .gap-container {
+            margin-bottom: 30px;
+        }
+        
+        .gap-card {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 15px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .gap-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gap-rank {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background-color: var(--vscode-textLink-foreground);
+            color: var(--vscode-editor-background);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .gap-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .gap-duration {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--vscode-textLink-activeForeground);
+        }
+        
+        .gap-details {
+            margin-left: 40px;
+            font-size: 0.9em;
+            color: var(--vscode-descriptionForeground);
+        }
+        
+        .gap-detail-row {
+            margin: 5px 0;
+        }
+        
+        .gap-text {
+            margin-left: 40px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: var(--vscode-textCodeBlock-background);
+            border-left: 3px solid var(--vscode-textLink-foreground);
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            word-wrap: break-word;
+        }
+        
+        .no-gaps {
+            text-align: center;
+            padding: 40px;
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+        
+        .icon {
+            margin-right: 5px;
+        }
+        
+        .error-message {
+            background-color: var(--vscode-inputValidation-errorBackground);
+            border: 1px solid var(--vscode-inputValidation-errorBorder);
+            color: var(--vscode-errorForeground);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .export-button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        
+        .export-button:hover {
+            background-color: var(--vscode-button-hoverBackground);
+        }
+        
+        .export-button:active {
+            transform: translateY(1px);
+        }
+    </style>
+</head>
+<body>
+    <div class="header-actions">
+        <h1 style="margin: 0;">📊 Log Gap Analysis Report</h1>
+        <button class="export-button" id="exportButton">
+            <span>💾</span>
+            <span>Export HTML</span>
+        </button>
+    </div>
+    
+    <div class="metadata" id="metadata">
+        <div class="metadata-item">
+            <span class="metadata-label">📁 File:</span>
+            <span id="fileName">Loading...</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">📝 Total Records:</span>
+            <span id="totalRecords">-</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">⏱️ Log Time Span:</span>
+            <span id="logSpan">-</span>
+        </div>
+        <div class="metadata-item">
+            <span class="metadata-label">🔍 Gaps Analyzed:</span>
+            <span id="gapsAnalyzed">-</span>
+        </div>
+    </div>
+    
+    <div class="gap-container" id="gapContainer">
+        <div class="no-gaps">Loading gap analysis...</div>
+    </div>
+    
+    <script>
+        (function() {
+            // Data will be injected here by the extension
+            const data = window.REPORT_DATA || {};
+            
+            if (data.error) {
+                document.getElementById('gapContainer').innerHTML = `
+                    <div class="error-message">
+                        <strong>❌ Error:</strong> ${data.error}
+                    </div>
+                `;
+                return;
+            }
+            
+            // Update metadata
+            document.getElementById('fileName').textContent = data.fileName || 'Unknown';
+            document.getElementById('totalRecords').textContent = (data.totalRecords || 0).toLocaleString();
+            document.getElementById('logSpan').textContent = data.logSpan || '-';
+            document.getElementById('gapsAnalyzed').textContent = (data.gaps && data.gaps.length) || 0;
+            
+            // Render gaps
+            const gapContainer = document.getElementById('gapContainer');
+            
+            if (!data.gaps || data.gaps.length === 0) {
+                gapContainer.innerHTML = '<div class="no-gaps">No gaps found in the log file.</div>';
+                return;
+            }
+            
+            gapContainer.innerHTML = '';
+            
+            data.gaps.forEach((gap, index) => {
+                const gapCard = document.createElement('div');
+                gapCard.className = 'gap-card';
+                
+                const rank = index + 1;
+                const rankBadge = `<span class="gap-rank">${rank}</span>`;
+                
+                gapCard.innerHTML = `
+                    <div class="gap-header">
+                        ${rankBadge}
+                        <span class="gap-duration">${gap.duration}</span>
+                    </div>
+                    <div class="gap-details">
+                        <div class="gap-detail-row">
+                            <span class="icon">📍</span>
+                            <strong>Line:</strong> ${gap.line}
+                        </div>
+                        <div class="gap-detail-row">
+                            <span class="icon">⏰</span>
+                            <strong>From:</strong> ${gap.timestamp}
+                        </div>
+                        <div class="gap-detail-row">
+                            <span class="icon">⏰</span>
+                            <strong>To:</strong> ${gap.nextTimestamp}
+                        </div>
+                    </div>
+                    <div class="gap-text">${escapeHtml(gap.text)}</div>
+                `;
+                
+                gapContainer.appendChild(gapCard);
+            });
+            
+            function escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+        })();
+        
+        // Export functionality
+        const vscode = acquireVsCodeApi();
+        
+        document.getElementById('exportButton').addEventListener('click', () => {
+            vscode.postMessage({
+                command: 'exportHtml'
+            });
+        });
+    </script>
+</body>
+</html>
