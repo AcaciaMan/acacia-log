@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { LogFileHandler, getFileDates, buildLineIndex } from '../utils/log-file-reader';
 import { findTopGapsFromIndex, findSlowestRecords, formatDuration } from '../utils/log-gap-finder';
+import { findTopSimilarLines } from '../utils/similar-lines-analyzer';
 
 /**
  * Provider for generating HTML gap analysis reports
@@ -74,10 +75,20 @@ export class LogGapReportProvider {
                     10
                 );
 
+                progress.report({ increment: 60, message: "Analyzing similar lines..." });
+
+                // Analyze similar lines (top 20)
+                const similarLines = await findTopSimilarLines(
+                    filePath,
+                    handler.format,
+                    fileDates,
+                    20
+                );
+
                 progress.report({ increment: 80, message: "Generating HTML report..." });
 
                 // Generate HTML content
-                const htmlContent = this.generateHtmlContent(filePath, precise);
+                const htmlContent = this.generateHtmlContent(filePath, precise, similarLines);
 
                 // Store for export
                 this.currentHtmlContent = htmlContent;
@@ -101,7 +112,7 @@ export class LogGapReportProvider {
     /**
      * Generate HTML content for the gap report
      */
-    private generateHtmlContent(filePath: string, result: any): string {
+    private generateHtmlContent(filePath: string, result: any, similarLines: any): string {
         const templatePath = path.join(this.extensionPath, 'resources', 'logGapReport.html');
         
         if (!fs.existsSync(templatePath)) {
@@ -121,7 +132,18 @@ export class LogGapReportProvider {
                 nextTimestamp: gap.nextTimestamp.toISOString(),
                 duration: formatDuration(gap.durationMs),
                 text: gap.text
-            }))
+            })),
+            similarLines: {
+                lines: similarLines.lines.map((line: any) => ({
+                    pattern: line.pattern,
+                    count: line.count,
+                    firstTimestamp: line.firstTimestamp.toISOString(),
+                    lastTimestamp: line.lastTimestamp.toISOString(),
+                    exampleLine: line.exampleLine
+                })),
+                totalLinesAnalyzed: similarLines.totalLinesAnalyzed,
+                totalUniquePatterns: similarLines.totalUniquePatterns
+            }
         };
 
         // Inject data into HTML

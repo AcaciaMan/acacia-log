@@ -7,7 +7,7 @@
 - [Timeline Visualization](#timeline-visualization)
 - [Pattern Search](#pattern-search)
 - [Similar Line Analysis](#similar-line-analysis)
-- [HTML Gap Report](#html-gap-report) _(New in 3.6.2)_
+- [HTML Gap Report](#html-gap-report) _(New in 3.6.2, Enhanced in 3.6.3)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
 
@@ -603,18 +603,34 @@ Line: DEBUG: Retrying operation, attempt 2
 
 ## HTML Gap Report
 
-### Overview _(New in 3.6.2)_
-The HTML Gap Report analyzes time gaps between consecutive log entries to identify delays, timeouts, periods of inactivity, or processing bottlenecks. It generates an interactive HTML report showing the top 10 longest gaps.
+### Overview _(New in 3.6.2, Enhanced in 3.6.3)_
+The HTML Gap Report provides comprehensive log analysis with two powerful features:
+1. **Time Gap Analysis** - Identifies the top 10 longest time gaps between consecutive log entries
+2. **Similar Lines Analysis** - Discovers the top 20 most frequently occurring log patterns _(New in 3.6.3)_
+
+Together, these features help identify delays, timeouts, processing bottlenecks, repeated errors, and common operations in your log files.
 
 ### How It Works
 
+**Time Gap Analysis:**
 1. **Initialization**: Loads the log file and detects timestamp format automatically
 2. **Indexing**: Builds a sparse index of line positions and timestamps
    - For large files (>10,000 lines): samples every 1000th line
    - For small files (<10,000 lines): samples every 10th line for precision
 3. **Fast Pass**: Scans the in-memory index to find approximate top gaps
 4. **Refinement**: Reads only relevant chunks from disk to pinpoint exact line and text
-5. **Report Generation**: Creates interactive HTML with VS Code theme integration
+
+**Similar Lines Analysis:** _(New in 3.6.3)_
+1. **Pattern Normalization**: Removes variable data (numbers, IDs, timestamps) from log lines
+2. **High-Performance Scanning**: Uses ripgrep for fast pattern matching
+   - Primary: System ripgrep (if available)
+   - Fallback 1: VS Code's bundled ripgrep
+   - Fallback 2: Node.js streaming method
+3. **Pattern Aggregation**: Groups similar lines and counts occurrences
+4. **Timestamp Tracking**: Records first and last occurrence of each pattern
+5. **Ranking**: Displays top 20 patterns sorted by frequency
+
+**Report Generation**: Creates interactive HTML with VS Code theme integration
 
 ### Accessing the Report
 
@@ -656,7 +672,20 @@ Each gap card shows:
 - **Timestamps**: Start and end times in ISO 8601 format
 - **Log Text**: The actual log line that preceded the gap
 
-#### 4. **Export Capability**
+#### 4. **Similar Lines Analysis** _(New in 3.6.3)_
+Purple-themed section displaying the most frequently occurring log patterns:
+- **Count Badge**: Number of times the pattern appears
+- **Time Range**: First and last occurrence timestamps
+- **Normalized Pattern**: Log line with variable data replaced by placeholders
+  - Numbers replaced with `###`
+  - Common ID patterns replaced with `[ID]`
+  - Timestamps removed for better grouping
+- **Smart Pattern Detection**: 
+  - Groups lines with different numbers/IDs as the same pattern
+  - Example: `User 123 logged in` and `User 456 logged in` → `User ### logged in` (2 occurrences)
+- **Performance-Optimized**: Uses ripgrep for fast processing of large files
+
+#### 5. **Export Capability**
 - **Export HTML Button**: Located in the report header
 - One-click export to standalone HTML file
 - Opens save dialog with suggested filename (`logfile_gap_report.html`)
@@ -705,18 +734,55 @@ Line 2301: [2024-02-18 11:23:10] INFO Processing message ID 8823
 → [2024-02-18 11:24:56] INFO Message 8823 completed
 ```
 
+#### 6. **Repeated Error Detection** _(New in 3.6.3)_
+Find the most common errors or warnings:
+```
+Count: 347 occurrences
+First: 2024-02-18 08:00:00 | Last: 2024-02-18 18:45:32
+Pattern: ERROR Failed to connect to database pool ###
+```
+
+#### 7. **Common Operations Analysis** _(New in 3.6.3)_
+Identify frequently performed actions:
+```
+Count: 1,523 occurrences
+First: 2024-02-18 00:00:15 | Last: 2024-02-18 23:59:48
+Pattern: INFO User [ID] logged in successfully
+```
+
+#### 8. **Problem Pattern Recognition** _(New in 3.6.3)_
+Spot recurring issues that need attention:
+```
+Count: 89 occurrences
+First: 2024-02-18 09:12:05 | Last: 2024-02-18 16:30:22
+Pattern: WARN Retry attempt ### for request [ID]
+```
+
 ### Technical Details
 
-#### Smart Indexing
+#### Smart Indexing (Time Gaps)
 - **Large files**: Default step of 1000 lines for speed
 - **Small files**: Automatic step of 10 lines for precision
 - **Memory efficient**: Sparse index keeps memory usage low
 - **Fast searches**: Binary search on indexed timestamps
 
+#### Pattern Analysis (Similar Lines) _(New in 3.6.3)_
+- **Three-tier ripgrep strategy**:
+  1. Primary: System ripgrep (if installed and in PATH)
+  2. Fallback 1: VS Code's bundled ripgrep (@vscode/ripgrep package)
+  3. Fallback 2: Node.js streaming method (pure JavaScript, always works)
+- **Normalization rules**:
+  - Numbers: `\d+` → `###`
+  - Common IDs: `[A-Fa-f0-9]{8,}` → `[ID]`
+  - Timestamps: Removed using detected format regex
+  - Special characters: Preserved for pattern accuracy
+- **Performance**: Sub-second analysis on most files with ripgrep
+
 #### Performance
 - Initial indexing: O(n) where n = file size
 - Gap finding: O(m log m) where m = number of indexed entries
 - Refinement: Reads only ~10 small chunks from disk
+- Similar lines: O(n) with ripgrep, cached in memory
 - Typical analysis time: 1-5 seconds for multi-MB files
 
 #### Supported Timestamp Formats
@@ -735,13 +801,22 @@ Uses the same auto-detection as other features:
 3. **Export for sharing**: Use Export HTML to share findings with team
 4. **Combine with timeline**: Use Timeline view to see overall patterns, then drill into gaps
 5. **Look for patterns**: Multiple similar-duration gaps might indicate configuration issues
+6. **Use Similar Lines for error tracking**: The pattern analysis helps identify recurring issues _(New in 3.6.3)_
+7. **Install ripgrep for best performance**: While not required, ripgrep significantly speeds up pattern analysis _(New in 3.6.3)_
 
 ### Limitations
 
+**Time Gap Analysis:**
 - Requires timestamps to be detected in the log file
 - Maximum of 10 gaps reported (top longest)
 - Continuation lines without timestamps are not considered gap boundaries
 - Gap analysis based on timestamp differences, not actual processing time
+
+**Similar Lines Analysis:** _(New in 3.6.3)_
+- Maximum of 20 patterns reported (top most frequent)
+- Pattern normalization may group unrelated lines if they have similar structure
+- Very large files (>100MB) may take longer to analyze without ripgrep
+- Works on any log file, even without timestamps (timestamps are removed during normalization)
 
 ---
 

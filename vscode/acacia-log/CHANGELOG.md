@@ -4,6 +4,29 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.3] - 2026-02-18
+
+### Added
+- 📋 **Similar Lines Analysis in HTML Report** - Enhanced gap report with pattern analysis
+  - Displays top 20 most frequent similar lines
+  - Smart pattern normalization: removes numbers, IDs, and variable data
+  - Shows occurrence count for each pattern
+  - Tracks first and last timestamp for each pattern
+  - Uses ripgrep for high performance on large files
+  - Automatic fallback to VS Code's bundled ripgrep if system ripgrep unavailable
+  - Final fallback to Node.js streaming method ensures compatibility
+  - Purple-themed UI section separate from time gaps
+  - Helps identify repeated errors, warnings, and common operations
+
+### Enhanced
+- 🔧 **Improved ripgrep integration**
+  - Automatically detects and uses VS Code's internal ripgrep
+  - Three-tier fallback: system ripgrep → VS Code ripgrep → streaming
+  - Better error handling and diagnostic logging
+  - Fixed regex pattern extraction for proper ripgrep usage
+
+---
+
 ## [3.6.2] - 2026-02-18
 
 ### Added

@@ -151,6 +151,79 @@
         .export-button:active {
             transform: translateY(1px);
         }
+        
+        .section-title {
+            color: var(--vscode-foreground);
+            border-bottom: 2px solid var(--vscode-panel-border);
+            padding-bottom: 10px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+        
+        .similar-line-card {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 5px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .similar-line-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .similar-line-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .similar-line-rank {
+            display: inline-block;
+            min-width: 28px;
+            height: 28px;
+            background-color: var(--vscode-charts-purple);
+            color: var(--vscode-editor-background);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9em;
+        }
+        
+        .similar-line-count {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--vscode-charts-purple);
+        }
+        
+        .similar-line-details {
+            margin-left: 38px;
+            font-size: 0.85em;
+            color: var(--vscode-descriptionForeground);
+        }
+        
+        .similar-line-pattern {
+            margin-left: 38px;
+            margin-top: 8px;
+            padding: 8px;
+            background-color: var(--vscode-textCodeBlock-background);
+            border-left: 3px solid var(--vscode-charts-purple);
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            word-wrap: break-word;
+        }
+        
+        .time-range {
+            display: inline-block;
+            margin-right: 15px;
+        }
     </style>
 </head>
 <body>
@@ -179,10 +252,20 @@
             <span class="metadata-label">🔍 Gaps Analyzed:</span>
             <span id="gapsAnalyzed">-</span>
         </div>
+        <div class="metadata-item">
+            <span class="metadata-label">📋 Unique Patterns:</span>
+            <span id="uniquePatterns">-</span>
+        </div>
     </div>
     
+    <h2 class="section-title">⏱️ Top Time Gaps</h2>
     <div class="gap-container" id="gapContainer">
         <div class="no-gaps">Loading gap analysis...</div>
+    </div>
+    
+    <h2 class="section-title">📋 Top Similar Lines</h2>
+    <div id="similarLinesContainer">
+        <div class="no-gaps">Loading similar lines analysis...</div>
     </div>
     
     <script>
@@ -204,6 +287,7 @@
             document.getElementById('totalRecords').textContent = (data.totalRecords || 0).toLocaleString();
             document.getElementById('logSpan').textContent = data.logSpan || '-';
             document.getElementById('gapsAnalyzed').textContent = (data.gaps && data.gaps.length) || 0;
+            document.getElementById('uniquePatterns').textContent = (data.similarLines && data.similarLines.totalUniquePatterns) || '-';
             
             // Render gaps
             const gapContainer = document.getElementById('gapContainer');
@@ -251,6 +335,44 @@
                 const div = document.createElement('div');
                 div.textContent = text;
                 return div.innerHTML;
+            }
+            
+            // Render similar lines
+            const similarLinesContainer = document.getElementById('similarLinesContainer');
+            
+            if (!data.similarLines || !data.similarLines.lines || data.similarLines.lines.length === 0) {
+                similarLinesContainer.innerHTML = '<div class="no-gaps">No similar lines found.</div>';
+            } else {
+                similarLinesContainer.innerHTML = '';
+                
+                data.similarLines.lines.forEach((line, index) => {
+                    const lineCard = document.createElement('div');
+                    lineCard.className = 'similar-line-card';
+                    
+                    const rank = index + 1;
+                    const rankBadge = `<span class="similar-line-rank">${rank}</span>`;
+                    
+                    // Format time range
+                    const firstTime = new Date(line.firstTimestamp).toLocaleString();
+                    const lastTime = new Date(line.lastTimestamp).toLocaleString();
+                    const timeRange = line.firstTimestamp === line.lastTimestamp 
+                        ? `<div class="time-range">⏰ <strong>Time:</strong> ${firstTime}</div>`
+                        : `<div class="time-range">⏰ <strong>First:</strong> ${firstTime}</div>
+                           <div class="time-range">⏰ <strong>Last:</strong> ${lastTime}</div>`;
+                    
+                    lineCard.innerHTML = `
+                        <div class="similar-line-header">
+                            ${rankBadge}
+                            <span class="similar-line-count">${line.count.toLocaleString()} occurrences</span>
+                        </div>
+                        <div class="similar-line-details">
+                            ${timeRange}
+                        </div>
+                        <div class="similar-line-pattern">${escapeHtml(line.pattern)}</div>
+                    `;
+                    
+                    similarLinesContainer.appendChild(lineCard);
+                });
             }
         })();
         

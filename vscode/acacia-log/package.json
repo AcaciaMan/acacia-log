@@ -1,12 +1,12 @@
 {
   "name": "acacia-log",
   "displayName": "acacia-log",
-  "description": "log files processing, similar lines, patterns",
+  "description": "Advanced log file analyzer with time gap detection, pattern search, similar line analysis, timeline visualization, and HTML reports. Navigate by date/time, find repeated errors, and identify processing bottlenecks.",
   "repository": {
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.6.2",
+  "version": "3.6.3",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -19,13 +19,12 @@
     "log viewer",
     "log analyzer",
     "log file",
-    "log patterns",
-    "log search",
-    "log timeline",
+    "time gap analysis",
+    "pattern detection",
     "similar lines",
-    "log processing",
-    "log navigation",
-    "datetime search"
+    "log timeline",
+    "error tracking",
+    "debugging"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
