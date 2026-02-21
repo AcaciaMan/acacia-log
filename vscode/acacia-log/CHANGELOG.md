@@ -4,6 +4,26 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.6] - 2026-02-21
+
+### Changed
+- 🔧 **Dependency Updates** — all devDependencies bumped to their latest versions
+  - `@types/jest` 29.5.14 → 30.0.0
+  - `@types/luxon` 3.4.2 → 3.7.1
+  - `@types/node` 20.x → 22.x
+  - `@types/vscode` 1.96.0 → 1.109.0
+  - `@typescript-eslint/eslint-plugin` 6.15.0 → 8.56.0
+  - `@typescript-eslint/parser` 6.15.0 → 8.56.0
+  - `@vscode/test-cli` 0.0.10 → 0.0.12
+  - `@vscode/test-electron` 2.4.1 → 2.5.2
+  - `jest` 19.0.2 → 30.2.0
+  - `npm-run-all` 1.1.3 → 4.1.5
+  - `ts-jest` 27.0.3 → 29.4.6
+  - `typescript` 5.7.2 → 5.9.3
+  - `luxon` 3.5.0 → 3.7.2
+
+---
+
 ## [3.6.5] - 2026-02-21
 
 ### Added
