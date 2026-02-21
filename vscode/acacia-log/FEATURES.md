@@ -10,6 +10,7 @@
 - [HTML Gap Report](#html-gap-report) _(New in 3.6.2, Enhanced in 3.6.3)_
 - [Chunk Duration Statistics Report](#chunk-duration-statistics-report) _(New in 3.6.5)_
 - [Multi-File Chunk Statistics Comparison](#multi-file-chunk-statistics-comparison) _(New in 3.6.5)_
+- [JSONL / NDJSON Support](#jsonl--ndjson-support) _(New in 3.6.7)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
 
@@ -23,7 +24,7 @@ The Log Tree View provides a hierarchical interface for browsing and managing lo
 ### Key Features
 
 #### 1. **Automatic Log File Detection**
-- Automatically finds files with extensions: `.log`, `.txt`, `.out`, `.err`, `.trace`
+- Automatically finds files with extensions: `.log`, `.txt`, `.out`, `.err`, `.trace`, `.jsonl`, `.ndjson`
 - Works in workspace folders and custom added folders
 - Hierarchical folder structure with expandable/collapsible sections
 
@@ -57,7 +58,7 @@ A filter icon in the Log Files view title bar lets you narrow down which files a
 - Both the modified date and created date are checked; a file passes if either falls in the range
 
 **Filter by file type:**
-- Multi-select from `.log`, `.txt`, `.out`, `.err`, `.trace`
+- Multi-select from `.log`, `.txt`, `.out`, `.err`, `.trace`, `.jsonl`, `.ndjson`
 - Deselecting all types of a kind reverts to showing all types
 
 **Toolbar behaviour:**
@@ -960,6 +961,55 @@ Analyses chunk-duration statistics for 2–20 log files simultaneously and prese
 - A/B compare before and after a performance optimisation
 - Identify which service instance has the most erratic latency
 - Benchmark processing speed across different application versions
+
+---
+
+## JSONL / NDJSON Support
+
+_(New in 3.6.7)_
+
+### Overview
+Acacia Log recognises `.jsonl` and `.ndjson` files (JSON Lines / Newline-Delimited JSON) alongside traditional plain-text log files. A built-in converter turns structured JSONL files into plain-text log files so every existing analysis feature (gap reports, chunk statistics, timeline, similar lines, pattern search, date navigation) works on them without modification.
+
+### Automatic File Discovery
+- `.jsonl` and `.ndjson` files appear in the **Log Files** tree automatically
+- Included in all file-type filter options (Filter by File Type dialog)
+- Treated identically to `.log` files for all tree actions (open, reveal, file info, context menu)
+
+### Convert JSONL to Log Command
+
+**Access:**
+- `$(file-code)` icon in the **Log Analysis** panel toolbar (`navigation@8`)
+- Right-click any file in the **Log Files** tree → **Convert JSONL to Log**
+
+**4-Step Field Mapping Wizard:**
+
+1. **Timestamp field** — pick the JSON key holding the timestamp (e.g. `timestamp`, `time`, `ts`, `@timestamp`)
+2. **Log level field** — pick the severity key (e.g. `level`, `severity`, `lvl`) or skip
+3. **Message field** — pick the primary message key (e.g. `message`, `msg`, `text`) or skip
+4. **Extra fields** — multi-select any additional keys to append (e.g. `service`, `trace_id`)
+
+**Smart Field Detection:**
+- Scans the first 50 lines of the file and collects every JSON key, sorted by occurrence frequency
+- Automatically highlights recommended fields for each role based on common naming conventions
+- Works with deeply nested keys if the value is a primitive
+
+**Output Format:**
+```
+2026-02-21T10:00:00Z [ERROR] Connection timeout service=api trace_id=abc123
+```
+- Each JSONL line becomes one plain-text log line
+- Non-JSON lines are passed through unchanged
+- The output file is written as a sibling with a `.log` extension (e.g. `app.jsonl` → `app.log`)
+- Prompts before overwriting an existing file
+- Progress notification shown for large files
+- Offers to open the resulting file on completion
+
+### Typical Workflow
+1. Add the folder containing your `.jsonl` files via **Add Log Folder** in the Log Files tree
+2. Select the `.jsonl` file and right-click → **Convert JSONL to Log**
+3. Complete the 4-step wizard
+4. The new `.log` file appears in the tree; use any Acacia Log analysis feature on it
 
 ---
 

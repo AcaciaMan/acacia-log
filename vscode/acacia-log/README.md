@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.6.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.6.7-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -14,6 +14,17 @@ Acacia Log is a powerful Visual Studio Code extension designed to make log file 
 ---
 
 ## ✨ Key Features
+
+### 🔄 **JSONL / NDJSON Support** _(New in 3.6.7)_
+Convert structured JSON-Lines log files into plain-text format so every existing analysis feature works on them instantly.
+
+- **Auto-discovery** — `.jsonl` and `.ndjson` files appear in the Log Files tree alongside `.log` / `.txt` files
+- **File-type filter** — filter the tree by `.jsonl` or `.ndjson` in the Filter by File Type dialog
+- **Convert JSONL to Log** — `$(file-code)` toolbar icon (Log Analysis panel) and right-click context menu
+  - 4-step wizard: pick **timestamp** field → **level** field → **message** field → optional **extra fields**
+  - Auto-detects all JSON keys from the first 50 lines, sorted by frequency; highlights recommended fields
+  - Output: `2026-02-21T10:00:00Z [ERROR] Connection timeout service=api`
+  - Non-JSON lines passed through unchanged; overwite prompt for existing `.log` sibling
 
 ### 🤖 **Automatic Timestamp Detection** _(New in 3.6.0)_
 Intelligent pattern recognition that automatically detects timestamp formats in your log files. Visual indicators (🟢 green/🔴 red circles) show detection status in the tree view. One-click auto-detect buttons across all analysis tabs instantly configure timestamp patterns for you.
@@ -55,10 +66,11 @@ Browse and manage log files from multiple folders with rich metadata display. Ad
 
 - **Timestamp detection** - Automatic pattern detection with visual indicators _(New in 3.6.0)_
 - **Single-click**: Show file info tab with metadata _(New in 3.5.0)_
-- **Double-click**: Open file in editor- **Filter by date or file type** - Toolbar filter icon with date range presets and file type selection _(New in 3.6.4)_
-- **Lazy initialization** - Instant folder expansion; metadata loads progressively on hover/click _(New in 3.6.4)_- Smart click detection prevents accidentally opening large files
-
-### 📋 **File Info Tab** _(Enhanced in 3.6.0)_
+  - **Double-click**: Open file in editor
+- **Supports `.log`, `.txt`, `.out`, `.err`, `.trace`, `.jsonl`, `.ndjson`** _(`.jsonl`/`.ndjson` new in 3.6.7)_
+- **Filter by date or file type** - Toolbar filter icon with date range presets and file type selection _(New in 3.6.4)_
+- **Lazy initialization** - Instant folder expansion; metadata loads progressively on hover/click _(New in 3.6.4)_
+- Smart click detection prevents accidentally opening large files
 Optimized for performance with instant loading. Shows detected timestamp pattern, format details, and total line count—all without lengthy statistics calculations.
 
 ### 📑 **5-Tab Interface** _(Enhanced in 3.6.1)_

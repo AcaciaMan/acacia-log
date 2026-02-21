@@ -14,7 +14,7 @@ export interface FilterOptions {
         /** Used only when range === 'custom'. Start of the day to include files from. */
         customDate?: Date;
     };
-    /** Limit to these file extensions (e.g. ['.log', '.txt']).
+    /** Limit to these file extensions (e.g. ['.log', '.txt', '.jsonl']).
      *  Empty / undefined means all supported types. */
     fileTypes?: string[];
 }
@@ -500,7 +500,7 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
     }
     
     private isLogFile(filename: string): boolean {
-        const logExtensions = ['.log', '.txt', '.out', '.err', '.trace'];
+        const logExtensions = ['.log', '.txt', '.out', '.err', '.trace', '.jsonl', '.ndjson'];
         const lowerFilename = filename.toLowerCase();
         return logExtensions.some(ext => lowerFilename.endsWith(ext)) || lowerFilename.includes('.log.');
     }

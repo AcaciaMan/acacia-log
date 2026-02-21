@@ -13,6 +13,7 @@ import { ResultDocumentProvider } from './utils/resultDocumentProvider';
 import { LogGapReportProvider } from './logSearch/logGapReportProvider';
 import { LogChunkStatsProvider } from './logSearch/logChunkStatsProvider';
 import { LogChunkStatsComparisonProvider } from './logSearch/logChunkStatsComparisonProvider';
+import { convertJsonlToLog } from './utils/jsonl-to-log';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -347,6 +348,30 @@ export function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
+	// Register JSONL → Log converter command
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.convertJsonlToLog',
+			async (_item?: LogTreeItem, _allItems?: LogTreeItem[]) => {
+				// Resolve target file: tree selection → active editor
+				let filePath: string | undefined;
+				const selection = treeView.selection[0];
+				if (selection && selection.resourceUri && !selection.isFolder) {
+					filePath = selection.resourceUri.fsPath;
+				} else if (currentLogFile) {
+					filePath = currentLogFile;
+				} else {
+					const activeEditor = vscode.window.activeTextEditor;
+					if (activeEditor) { filePath = activeEditor.document.uri.fsPath; }
+				}
+				if (!filePath) {
+					vscode.window.showErrorMessage('Please select a JSONL file first.');
+					return;
+				}
+				await convertJsonlToLog(filePath);
+			}
+		)
+	);
+
 	// Register unified view tab switching commands
 	context.subscriptions.push(
 		vscode.commands.registerCommand('acacia-log.unifiedView.switchToLogAnalysis', () => {
@@ -478,7 +503,7 @@ async function showFilterDialog(provider: LogTreeProvider): Promise<void> {
 
 	// ── File-type filter ──────────────────────────────────────────────────────
 	if (action.value === 'type') {
-		const allTypes = ['.log', '.txt', '.out', '.err', '.trace'];
+		const allTypes = ['.log', '.txt', '.out', '.err', '.trace', '.jsonl', '.ndjson'];
 		const activeTypes = current.fileTypes ?? [];
 		const typeItems: ValuedQuickPickItem[] = allTypes.map(ext => ({
 			label: `*${ext}`,

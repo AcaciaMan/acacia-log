@@ -4,6 +4,24 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.7] - 2026-02-21
+
+### Added
+- 📄 **JSONL / NDJSON Support** — `.jsonl` and `.ndjson` files are now recognised as log files throughout the extension
+  - Appear automatically in the **Log Files** tree view without any configuration
+  - Selectable as a file type in the **Filter by File Type** dialog (alongside `.log`, `.txt`, `.out`, `.err`, `.trace`)
+- 🔄 **Convert JSONL to Log** command — turn structured JSON-Lines files into plain-text log files that all existing analysis features can process immediately
+  - `$(file-code)` icon in the **Log Analysis** panel toolbar
+  - Available in the right-click context menu on any file in the **Log Files** tree
+  - **4-step field-mapping wizard**: pick timestamp field → log level field → message field → optional extra fields (multi-select)
+  - Auto-detects JSON field names from the first 50 lines, sorted by frequency; highlights recommended fields for each role based on common naming conventions (`timestamp`/`time`/`ts`/`@timestamp`, `level`/`severity`, `message`/`msg`, …)
+  - Output format: `2026-02-21T10:00:00Z [ERROR] Connection timeout service=api`
+  - Non-JSON lines are passed through unchanged
+  - Prompts before overwriting an existing `.log` sibling file
+  - Progress notification for large files; opens the resulting file on completion
+
+---
+
 ## [3.6.6] - 2026-02-21
 
 ### Changed

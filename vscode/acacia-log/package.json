@@ -1,12 +1,12 @@
 {
   "name": "acacia-log",
   "displayName": "acacia-log",
-  "description": "Advanced log file analyzer with time gap detection, pattern search, similar line analysis, timeline visualization, and HTML reports. Navigate by date/time, find repeated errors, and identify processing bottlenecks.",
+  "description": "Advanced log file analyzer with time gap detection, pattern search, similar line analysis, timeline visualization, and HTML reports. Navigate by date/time, find repeated errors, and identify processing bottlenecks. Supports plain text, JSONL, and NDJSON log files.",
   "repository": {
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.6.6",
+  "version": "3.6.7",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -19,6 +19,10 @@
     "log viewer",
     "log analyzer",
     "log file",
+    "jsonl",
+    "ndjson",
+    "structured logs",
+    "jsonl converter",
     "time gap analysis",
     "pattern detection",
     "similar lines",
@@ -117,6 +121,12 @@
         "title": "Compare Chunk Statistics (multi-file)",
         "category": "Acacia Log",
         "icon": "$(diff-multiple)"
+      },
+      {
+        "command": "acacia-log.logExplorer.convertJsonlToLog",
+        "title": "Convert JSONL to Log",
+        "category": "Acacia Log",
+        "icon": "$(file-code)"
       },
       {
         "command": "acacia-log.logExplorer.filter",
@@ -243,6 +253,11 @@
           "group": "navigation@7"
         },
         {
+          "command": "acacia-log.logExplorer.convertJsonlToLog",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@8"
+        },
+        {
           "command": "acacia-log.logExplorer.compareChunkStats",
           "when": "view == acacia-log.logExplorer",
           "group": "navigation"
@@ -271,6 +286,11 @@
         },
         {
           "command": "acacia-log.logExplorer.compareChunkStats",
+          "when": "view == acacia-log.logExplorer && viewItem == logFile",
+          "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.convertJsonlToLog",
           "when": "view == acacia-log.logExplorer && viewItem == logFile",
           "group": "navigation"
         }
