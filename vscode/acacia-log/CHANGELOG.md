@@ -313,7 +313,7 @@ No migration needed. All existing configurations and workflows continue to work.
 
 ---
 
-## [2.0.0] - Previous Version
+## [2.0.0] - 2025-09-01
 
 ### Added
 - Initial sidebar panel implementation
@@ -331,7 +331,7 @@ No migration needed. All existing configurations and workflows continue to work.
 
 ---
 
-## [1.0.0] - Initial Release
+## [1.0.0] - 2025-08-01
 
 ### Added
 - Command-based log navigation
@@ -345,20 +345,25 @@ No migration needed. All existing configurations and workflows continue to work.
 
 Ideas for upcoming versions:
 
+### Shipped ✅
+- ✅ ~~Multi-file log analysis and comparison~~ → shipped in 3.6.5
+- ✅ ~~Anomaly/outlier detection~~ → IQR-based outlier detection shipped in 3.6.5
+- ✅ ~~Advanced filtering (by time range / file type)~~ → shipped in 3.6.4
+- ✅ ~~Export charts / reports~~ → standalone HTML export shipped in 3.6.2–3.6.5
+
 ### Planned Features
 - 🔄 Real-time log monitoring with watch mode
 - 📚 Pattern template library for common formats
 - 🎨 Custom color scheme preferences
-- 🖼️ Export charts as PNG/SVG images
-- 📁 Multi-file log analysis and comparison
-- 🔔 Anomaly detection and alerting
-- 📊 Performance metrics dashboard
-- 🔍 Advanced filtering (by log level, time range)
+- 🖼️ Export timeline chart as PNG/SVG image
+- 🔔 Anomaly spike alerting on timeline
+- 📊 Log-level filter on timeline chart
 - 💾 Save/load search configurations
 - 🌐 Remote log file support
 - 🤖 AI-powered log analysis suggestions
-- 📱 Better mobile/tablet support
+- 📱 Better mobile/tablet sidebar layout
 - 🔌 Plugin system for custom parsers
+- 🧭 VS Code walkthrough for first-run onboarding
 
 ### Community Requests
 See [GitHub Issues](https://github.com/AcaciaMan/acacia-log/issues) for feature requests and vote on your favorites!
@@ -369,9 +374,18 @@ See [GitHub Issues](https://github.com/AcaciaMan/acacia-log/issues) for feature 
 
 | Version | Release Date | Highlights |
 |---------|--------------|------------|
+| 3.6.5 | 2026-02-21 | Chunk duration statistics report, multi-file chunk comparison |
+| 3.6.4 | 2026-02-19 | Lazy tree initialization, log file filter by date & type |
+| 3.6.3 | 2026-02-18 | Similar lines analysis in HTML gap report |
+| 3.6.2 | 2026-02-18 | Interactive HTML gap report with export |
+| 3.6.1 | 2026-02-18 | Native VS Code toolbar navigation, compact view |
+| 3.6.0 | 2026-02-17 | Automatic timestamp detection, auto-detect buttons |
+| 3.5.0 | 2026-02-16 | File Info tab, smart single/double-click in tree view |
+| 3.4.0 | 2026-02-16 | Expanded 4-tab interface, icon-only tab navigation |
+| 3.2.0 | 2026-02-14 | Log Tree View, unified tabbed webview, editor-tab results |
 | 2.1.1 | 2025-10-05 | Major UI/UX overhaul, interactive charts, enhanced features |
-| 2.0.0 | - | Sidebar panels, pattern search, basic timeline |
-| 1.0.0 | - | Initial release with command-based navigation |
+| 2.0.0 | 2025-09-01 | Sidebar panels, pattern search, basic timeline |
+| 1.0.0 | 2025-08-01 | Initial release with command-based navigation |
 
 ---
 
