@@ -9,7 +9,7 @@
   "version": "3.6.6",
   "publisher": "manacacia",
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.109.0"
   },
   "categories": [
     "Other"
