@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.6.4-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.6.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -31,7 +31,25 @@ Analyze time gaps between log entries with an interactive HTML report. Identifie
 - **Smart analysis** - Automatic fine-grained indexing for small files
 - **Comprehensive details** - Shows gap duration, timestamps, and log line text
 - **Progress tracking** - Real-time progress notifications during analysis
+### 📈 **Chunk Duration Statistics Report** _(New in 3.6.5)_
+Full descriptive statistics over every inter-entry time gap ("chunk") in the sparse line index. Launched from the `$(pulse)` icon in the Log Analysis toolbar.
 
+- **DescriptiveStats** — count, mean, median, min, max, P90/P95/P99, std dev, skewness, excess kurtosis
+- **Min & Max chunks** — refined to show the actual log line text
+- **IQR outlier detection** — Tukey fences identify anomalously long or short chunks
+- **Distribution histogram** — approximated normal curve for visual spread
+- **Shape annotations** — skewness and kurtosis explained in plain English
+- **Export capability** — one-click standalone HTML export
+
+### 🔬 **Multi-File Chunk Statistics Comparison** _(New in 3.6.5)_
+Compare chunk-duration statistics across 2–20 log files simultaneously. Select files with Ctrl/Cmd+click in the Log Files tree, then click the `$(diff-multiple)` icon.
+
+- **Natural language summary** — auto-generated paragraphs covering throughput, tail latency, consistency (CV), distribution shape, outlier density, worst-case chunk, and an overall verdict
+- **Side-by-side table** — 16 metrics × N files with green/red best/worst highlighting
+- **6 visual bar charts** — Mean, Median, P99, Std Dev, CV, Outlier %
+- **6 dimension rankings** — gold/silver/bronze medals per metric
+- **Colour-coded legend** — each file gets a distinct colour throughout the report
+- **Export capability** — one-click standalone HTML export
 ### �📁 **Log Tree View** _(New in 3.2.0)_
 Browse and manage log files from multiple folders with rich metadata display. Add custom log folders, view file statistics, and quickly access your logs.
 
@@ -274,6 +292,55 @@ Analyze time gaps between log entries to identify delays, timeouts, or periods o
 - Detect gaps in monitoring data
 - Analyze processing bottlenecks
 - Spot periods of inactivity
+
+---
+
+### 📈 Chunk Duration Statistics Report _(New in 3.6.5)_
+
+Compute full descriptive statistics over every inter-entry time gap in the sparse line index.
+
+**How to Use:**
+1. Select a log file in the Log Files tree view (or keep one open in the editor)
+2. Click the **Chunk Stats** icon (`$(pulse)`) in the Log Analysis view toolbar
+3. Wait for analysis to complete
+4. View the report in a new webview panel; click **Export HTML** to save
+
+**Report Contents:**
+- **Descriptive statistics table** — count, mean, median, min, max, P90/P95/P99, std dev, skewness (with shape annotation), excess kurtosis (with shape annotation)
+- **Distribution histogram** — approximated normal curve centred on the mean
+- **Min & Max chunk cards** — the fastest and slowest chunks with timestamps and log line text
+- **Outlier table** — up to 25 IQR-detected outliers with timestamps and log text
+
+**Use Cases:**
+- Understand the statistical shape of processing throughput
+- Identify P99 tail latency for performance SLA analysis
+- Spot skewed distributions that may indicate bursty activity
+- Pin-point specific outlier entries for root-cause investigation
+
+---
+
+### 🔬 Multi-File Chunk Statistics Comparison _(New in 3.6.5)_
+
+Compare chunk-duration statistics across multiple log files in a single interactive report.
+
+**How to Use:**
+1. In the **Log Files** tree, hold **Ctrl** (Windows/Linux) or **Cmd** (macOS) and click to select 2–20 log files
+2. Click the **Compare Chunk Stats** icon (`$(diff-multiple)`) in the Log Files toolbar, _or_ right-click any selected file → **Compare Chunk Statistics (multi-file)**
+3. Wait for analysis to complete (each file analysed sequentially with progress)
+4. View the comparison report and click **Export HTML** to save
+
+**Report Contents:**
+- **Analysis Summary** — paragraphs in plain English covering: throughput (mean/median ratio), tail latency (P99), processing consistency (CV), distribution shape, outlier density, worst-case chunk, overall verdict
+- **Side-by-side statistics table** — 16 metrics with green (best) / red (worst) highlighting
+- **6 visual bar charts** — Mean, Median, P99, Std Dev, CV %, Outlier %
+- **Rankings** — 6 league tables with gold/silver/bronze medals
+- **Colour-coded legend** — each file assigned a distinct colour throughout the report
+
+**Use Cases:**
+- Compare log throughput across different environments (dev / staging / prod)
+- A/B compare before and after a performance optimisation
+- Identify which service instance has the most erratic latency
+- Benchmark processing speed across different application versions
 
 ---
 

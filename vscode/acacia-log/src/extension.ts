@@ -11,6 +11,8 @@ import { LogTreeProvider, LogTreeItem, FilterOptions } from './logManagement/log
 import { UnifiedLogViewProvider } from './logSearch/unifiedLogViewProvider';
 import { ResultDocumentProvider } from './utils/resultDocumentProvider';
 import { LogGapReportProvider } from './logSearch/logGapReportProvider';
+import { LogChunkStatsProvider } from './logSearch/logChunkStatsProvider';
+import { LogChunkStatsComparisonProvider } from './logSearch/logChunkStatsComparisonProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -135,12 +137,19 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.commands.executeCommand('setContext', 'acacia-log.filterActive', false);
 	const treeView = vscode.window.createTreeView('acacia-log.logExplorer', {
 		treeDataProvider: logTreeProvider,
-		showCollapseAll: true
+		showCollapseAll: true,
+		canSelectMany: true
 	});
 	context.subscriptions.push(treeView);
 
 	// Register the Log Gap Report Provider
 	const logGapReportProvider = new LogGapReportProvider(context.extensionPath);
+
+	// Register the Log Chunk Statistics Provider
+	const logChunkStatsProvider = new LogChunkStatsProvider(context.extensionPath);
+
+	// Register the Log Chunk Statistics Comparison Provider
+	const logChunkStatsComparisonProvider = new LogChunkStatsComparisonProvider(context.extensionPath);
 
 	// Track the currently selected/active log file
 	let currentLogFile: string | undefined;
@@ -283,6 +292,58 @@ export function activate(context: vscode.ExtensionContext) {
 
 			// Generate the gap report
 			await logGapReportProvider.generateReport(filePath);
+		})
+	);
+
+	// Register chunk statistics comparison command (multi-file)
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.compareChunkStats',
+			async (_item?: LogTreeItem, allItems?: LogTreeItem[]) => {
+				// When invoked from context menu, allItems holds all selected items.
+				// When invoked from toolbar, fall back to treeView.selection.
+				const selected: LogTreeItem[] =
+					(allItems && allItems.length > 0)
+						? allItems
+						: (treeView.selection as LogTreeItem[]);
+
+				const filePaths = selected
+					.filter(i => !i.isFolder && i.resourceUri)
+					.map(i => i.resourceUri!.fsPath);
+
+				if (filePaths.length < 2) {
+					vscode.window.showWarningMessage(
+						'Select at least 2 log files in the Log Files tree (hold Ctrl/Cmd to multi-select), then run this command.'
+					);
+					return;
+				}
+
+				await logChunkStatsComparisonProvider.generateComparison(filePaths);
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.generateChunkStatsReport', async () => {
+			// Resolve the target log file (same resolution order as gap report)
+			let filePath: string | undefined = currentLogFile;
+
+			if (!filePath) {
+				const selection = treeView.selection[0];
+				if (selection && selection.resourceUri && !selection.isFolder) {
+					filePath = selection.resourceUri.fsPath;
+				} else {
+					const activeEditor = vscode.window.activeTextEditor;
+					if (activeEditor) {
+						filePath = activeEditor.document.uri.fsPath;
+					}
+				}
+			}
+
+			if (!filePath) {
+				vscode.window.showErrorMessage('Please select a log file first');
+				return;
+			}
+
+			await logChunkStatsProvider.generateReport(filePath);
 		})
 	);
 

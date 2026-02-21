@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.6.4",
+  "version": "3.6.5",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.96.0"
@@ -105,6 +105,18 @@
         "title": "HTML Report",
         "category": "Acacia Log",
         "icon": "$(graph-scatter)"
+      },
+      {
+        "command": "acacia-log.logExplorer.generateChunkStatsReport",
+        "title": "Chunk Statistics Report",
+        "category": "Acacia Log",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "acacia-log.logExplorer.compareChunkStats",
+        "title": "Compare Chunk Statistics (multi-file)",
+        "category": "Acacia Log",
+        "icon": "$(diff-multiple)"
       },
       {
         "command": "acacia-log.logExplorer.filter",
@@ -224,6 +236,16 @@
           "command": "acacia-log.logExplorer.generateGapReport",
           "when": "view == acacia-log.unifiedView",
           "group": "navigation@6"
+        },
+        {
+          "command": "acacia-log.logExplorer.generateChunkStatsReport",
+          "when": "view == acacia-log.unifiedView",
+          "group": "navigation@7"
+        },
+        {
+          "command": "acacia-log.logExplorer.compareChunkStats",
+          "when": "view == acacia-log.logExplorer",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -245,6 +267,11 @@
         {
           "command": "acacia-log.logExplorer.removeFolder",
           "when": "view == acacia-log.logExplorer && viewItem == logFolder",
+          "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.compareChunkStats",
+          "when": "view == acacia-log.logExplorer && viewItem == logFile",
           "group": "navigation"
         }
       ]

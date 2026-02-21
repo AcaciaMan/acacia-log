@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Chunk Duration Statistics</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            line-height: 1.6;
+        }
+
+        h1 { margin: 0; }
+
+        h2.section-title {
+            color: var(--vscode-foreground);
+            border-bottom: 2px solid var(--vscode-panel-border);
+            padding-bottom: 8px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-size: 1.2em;
+        }
+
+        /* ── Header ── */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .export-button {
+            background-color: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        .export-button:hover { background-color: var(--vscode-button-hoverBackground); }
+        .export-button:active { transform: translateY(1px); }
+
+        /* ── File metadata ── */
+        .metadata {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            padding: 14px;
+            border-radius: 5px;
+            margin-bottom: 24px;
+            border-left: 4px solid var(--vscode-textLink-foreground);
+        }
+        .metadata-item { margin: 4px 0; }
+        .metadata-label { font-weight: bold; color: var(--vscode-textLink-foreground); }
+
+        /* ── Stats table ── */
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+            font-size: 0.93em;
+        }
+        .stats-table th, .stats-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+        .stats-table th {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            color: var(--vscode-textLink-foreground);
+            font-weight: 600;
+            width: 40%;
+        }
+        .stats-table td { font-family: 'Courier New', Courier, monospace; }
+        .stats-table tr:hover td { background-color: var(--vscode-list-hoverBackground); }
+
+        /* Stat category separators */
+        .stats-table tr.category-header th,
+        .stats-table tr.category-header td {
+            background-color: var(--vscode-sideBar-background);
+            color: var(--vscode-descriptionForeground);
+            font-size: 0.82em;
+            font-family: inherit;
+            font-weight: normal;
+            padding: 4px 12px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+
+        /* Distribution bar */
+        .bar-cell { display: flex; align-items: center; gap: 8px; }
+        .bar-track {
+            flex: 1;
+            height: 8px;
+            background-color: var(--vscode-panel-border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background-color: var(--vscode-textLink-foreground);
+        }
+
+        /* ── Chunk cards (min / max) ── */
+        .chunk-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        @media (max-width: 600px) { .chunk-cards { grid-template-columns: 1fr; } }
+
+        .chunk-card {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 5px;
+            padding: 14px;
+        }
+        .chunk-card.min-card { border-top: 4px solid var(--vscode-charts-green, #89d185); }
+        .chunk-card.max-card { border-top: 4px solid var(--vscode-charts-red, #f14c4c); }
+
+        .chunk-card-title {
+            font-weight: 700;
+            font-size: 0.88em;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            color: var(--vscode-descriptionForeground);
+        }
+        .chunk-duration {
+            font-size: 1.6em;
+            font-weight: bold;
+            color: var(--vscode-textLink-activeForeground);
+            margin-bottom: 6px;
+        }
+        .chunk-detail { font-size: 0.85em; color: var(--vscode-descriptionForeground); margin: 3px 0; }
+        .chunk-text {
+            margin-top: 10px;
+            padding: 8px 10px;
+            background-color: var(--vscode-textCodeBlock-background);
+            border-left: 3px solid var(--vscode-textLink-foreground);
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.82em;
+            overflow-x: auto;
+            word-break: break-all;
+            max-height: 80px;
+            overflow-y: auto;
+        }
+
+        /* ── Outliers table ── */
+        .outliers-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88em;
+        }
+        .outliers-table th {
+            background-color: var(--vscode-editor-inactiveSelectionBackground);
+            color: var(--vscode-textLink-foreground);
+            padding: 8px 10px;
+            text-align: left;
+            border-bottom: 2px solid var(--vscode-panel-border);
+            position: sticky;
+            top: 0;
+        }
+        .outliers-table td {
+            padding: 7px 10px;
+            border-bottom: 1px solid var(--vscode-panel-border);
+            vertical-align: top;
+        }
+        .outliers-table tr:hover td { background-color: var(--vscode-list-hoverBackground); }
+        .outliers-table .duration-cell {
+            font-weight: bold;
+            color: var(--vscode-charts-red, #f14c4c);
+            font-family: 'Courier New', Courier, monospace;
+            white-space: nowrap;
+        }
+        .outliers-table .text-cell {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.82em;
+            max-width: 380px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .outlier-count-badge {
+            display: inline-block;
+            background-color: var(--vscode-badge-background, #4d4d4d);
+            color: var(--vscode-badge-foreground, #ffffff);
+            border-radius: 10px;
+            padding: 2px 8px;
+            font-size: 0.82em;
+            margin-left: 8px;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 32px;
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
+        }
+
+        /* ── Distribution histogram ── */
+        .histogram-container {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 80px;
+            margin-top: 12px;
+        }
+        .histogram-bar {
+            flex: 1;
+            background-color: var(--vscode-textLink-foreground);
+            opacity: 0.75;
+            border-radius: 2px 2px 0 0;
+            min-height: 2px;
+            transition: opacity 0.2s;
+            position: relative;
+        }
+        .histogram-bar:hover { opacity: 1; }
+        .histogram-bar::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--vscode-editorWidget-background);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 3px;
+            padding: 3px 7px;
+            font-size: 0.78em;
+            white-space: nowrap;
+            pointer-events: none;
+            display: none;
+        }
+        .histogram-bar:hover::after { display: block; }
+        .histogram-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.72em;
+            color: var(--vscode-descriptionForeground);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <div class="header-actions">
+        <h1>📈 Chunk Duration Statistics</h1>
+        <button class="export-button" id="exportButton">💾 Export HTML</button>
+    </div>
+
+    <!-- ── File metadata ── -->
+    <div class="metadata" id="metadata">
+        <div class="metadata-item"><span class="metadata-label">📁 File: </span><span id="fileName">…</span></div>
+        <div class="metadata-item"><span class="metadata-label">📊 Chunks analysed: </span><span id="chunkCount">…</span></div>
+    </div>
+
+    <!-- ── Descriptive statistics table ── -->
+    <h2 class="section-title">📊 Descriptive Statistics</h2>
+    <table class="stats-table" id="statsTable">
+        <tbody>
+            <tr class="category-header"><th colspan="2">Central Tendency</th></tr>
+            <tr><th>Mean duration</th><td id="s-mean">…</td></tr>
+            <tr><th>Median duration (P50)</th><td id="s-median">…</td></tr>
+
+            <tr class="category-header"><th colspan="2">Spread</th></tr>
+            <tr><th>Min</th><td id="s-min">…</td></tr>
+            <tr><th>Max</th><td id="s-max">…</td></tr>
+            <tr><th>Std deviation</th><td id="s-stddev">…</td></tr>
+
+            <tr class="category-header"><th colspan="2">Percentiles</th></tr>
+            <tr><th>90th percentile (P90)</th><td id="s-p90">…</td></tr>
+            <tr><th>95th percentile (P95)</th><td id="s-p95">…</td></tr>
+            <tr><th>99th percentile (P99)</th><td id="s-p99">…</td></tr>
+
+            <tr class="category-header"><th colspan="2">Shape</th></tr>
+            <tr><th>Skewness</th><td id="s-skewness">…</td></tr>
+            <tr><th>Excess kurtosis</th><td id="s-kurtosis">…</td></tr>
+        </tbody>
+    </table>
+
+    <!-- ── Distribution histogram ── -->
+    <h2 class="section-title">📉 Duration Distribution</h2>
+    <div class="histogram-container" id="histogram"></div>
+    <div class="histogram-labels" id="histogramLabels"></div>
+
+    <!-- ── Min / Max chunks ── -->
+    <h2 class="section-title">🔎 Min &amp; Max Chunk</h2>
+    <div class="chunk-cards">
+        <div class="chunk-card min-card" id="minCard">
+            <div class="chunk-card-title">🟢 Smallest chunk</div>
+            <div class="chunk-duration" id="minDuration">…</div>
+            <div class="chunk-detail" id="minLine">Line: …</div>
+            <div class="chunk-detail" id="minFrom">From: …</div>
+            <div class="chunk-detail" id="minTo">To: …</div>
+            <div class="chunk-text" id="minText">…</div>
+        </div>
+        <div class="chunk-card max-card" id="maxCard">
+            <div class="chunk-card-title">🔴 Largest chunk</div>
+            <div class="chunk-duration" id="maxDuration">…</div>
+            <div class="chunk-detail" id="maxLine">Line: …</div>
+            <div class="chunk-detail" id="maxFrom">From: …</div>
+            <div class="chunk-detail" id="maxTo">To: …</div>
+            <div class="chunk-text" id="maxText">…</div>
+        </div>
+    </div>
+
+    <!-- ── Outliers ── -->
+    <h2 class="section-title" id="outliersTitle">⚠️ Outliers</h2>
+    <div id="outliersContainer">
+        <div class="no-data">Loading…</div>
+    </div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        const vscode = acquireVsCodeApi();
+
+        // ── Export button ─────────────────────────────────────────────
+        document.getElementById('exportButton').addEventListener('click', () => {
+            vscode.postMessage({ command: 'exportHtml' });
+        });
+
+        // ── Helpers ───────────────────────────────────────────────────
+        function escapeHtml(text) {
+            const d = document.createElement('div');
+            d.textContent = text || '';
+            return d.innerHTML;
+        }
+
+        function fmtDate(iso) {
+            try { return new Date(iso).toISOString().replace('T', ' ').replace('Z', ' UTC'); }
+            catch (_) { return iso; }
+        }
+
+        // ── Main render ───────────────────────────────────────────────
+        const data = window.REPORT_DATA;
+
+        if (!data) {
+            document.body.innerHTML += '<div class="no-data">⚠️ No report data loaded.</div>';
+            return;
+        }
+
+        const s = data.stats;
+
+        // Metadata
+        document.getElementById('fileName').textContent = data.fileName;
+        document.getElementById('chunkCount').textContent = s.count.toLocaleString();
+
+        // Stats table
+        document.getElementById('s-mean').textContent    = s.mean;
+        document.getElementById('s-median').textContent  = s.median;
+        document.getElementById('s-min').textContent     = s.min;
+        document.getElementById('s-max').textContent     = s.max;
+        document.getElementById('s-stddev').textContent  = s.stdDev;
+        document.getElementById('s-p90').textContent     = s.p90;
+        document.getElementById('s-p95').textContent     = s.p95;
+        document.getElementById('s-p99').textContent     = s.p99;
+
+        // Annotate skewness
+        const skewVal = parseFloat(s.skewness);
+        let skewNote = '';
+        if (Math.abs(skewVal) < 0.5)         { skewNote = ' (approx. symmetric)'; }
+        else if (skewVal > 1)                 { skewNote = ' (highly right-skewed)'; }
+        else if (skewVal > 0.5)              { skewNote = ' (moderately right-skewed)'; }
+        else if (skewVal < -1)               { skewNote = ' (highly left-skewed)'; }
+        else                                 { skewNote = ' (moderately left-skewed)'; }
+        document.getElementById('s-skewness').textContent = s.skewness + skewNote;
+
+        // Annotate kurtosis
+        const kurtVal = parseFloat(s.kurtosis);
+        let kurtNote = '';
+        if (Math.abs(kurtVal) < 0.5)         { kurtNote = ' (mesokurtic — near normal)'; }
+        else if (kurtVal > 0.5)             { kurtNote = ' (leptokurtic — heavy tails)'; }
+        else                                 { kurtNote = ' (platykurtic — light tails)'; }
+        document.getElementById('s-kurtosis').textContent = s.kurtosis + kurtNote;
+
+        // ── Histogram ─────────────────────────────────────────────────
+        // We need the raw durations array — derive a 20-bin histogram from min/max/mean
+        // Since we only have aggregated stats we build a representative bucket structure
+        // using the boundary values we do have.
+        buildHistogram(s);
+
+        // ── Min / Max cards ───────────────────────────────────────────
+        renderChunk('min', data.minChunk);
+        renderChunk('max', data.maxChunk);
+
+        function renderChunk(prefix, chunk) {
+            if (!chunk) { return; }
+            document.getElementById(prefix + 'Duration').textContent = chunk.duration;
+            document.getElementById(prefix + 'Line').textContent     = 'Line: ' + chunk.line.toLocaleString();
+            document.getElementById(prefix + 'From').textContent     = 'From: ' + fmtDate(chunk.timestamp);
+            document.getElementById(prefix + 'To').textContent       = 'To:   ' + fmtDate(chunk.nextTimestamp);
+            document.getElementById(prefix + 'Text').textContent     = chunk.text || '(no text available)';
+        }
+
+        // ── Outliers ──────────────────────────────────────────────────
+        const outliersTitle = document.getElementById('outliersTitle');
+        const container = document.getElementById('outliersContainer');
+
+        const shown = data.refinedOutlierCount;
+        const total = data.totalOutlierCount;
+        const badge = total > 0
+            ? `<span class="outlier-count-badge">${total} detected${shown < total ? ', showing top ' + shown : ''}</span>`
+            : '';
+        outliersTitle.innerHTML = '⚠️ Outliers (IQR method)' + badge;
+
+        if (!data.outliers || data.outliers.length === 0) {
+            container.innerHTML = '<div class="no-data">No outliers detected — distribution is uniform.</div>';
+        } else {
+            const table = document.createElement('table');
+            table.className = 'outliers-table';
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Duration</th>
+                        <th>Line</th>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Log entry</th>
+                    </tr>
+                </thead>
+                <tbody id="outliersBody"></tbody>`;
+            container.innerHTML = '';
+            container.appendChild(table);
+
+            const tbody = document.getElementById('outliersBody');
+            data.outliers.forEach((o, i) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${i + 1}</td>
+                    <td class="duration-cell">${escapeHtml(o.duration)}</td>
+                    <td>${o.line.toLocaleString()}</td>
+                    <td style="white-space:nowrap;font-size:0.82em;">${fmtDate(o.timestamp)}</td>
+                    <td style="white-space:nowrap;font-size:0.82em;">${fmtDate(o.nextTimestamp)}</td>
+                    <td class="text-cell" title="${escapeHtml(o.text)}">${escapeHtml(o.text)}</td>`;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ── Histogram builder ─────────────────────────────────────────
+        function buildHistogram(stats) {
+            const histEl   = document.getElementById('histogram');
+            const labelEl  = document.getElementById('histogramLabels');
+            const BINS = 20;
+
+            // Derive bucket boundaries from P0..P99 spread to avoid extreme outlier distortion
+            const lo = stats.meanMs - 2 * stats.stdDevMs;
+            const hi = stats.meanMs + 3 * stats.stdDevMs;
+
+            // If we have actual outlier data use it to build a rough histogram
+            // Otherwise just show a gaussian-shaped approximation based on stats
+            const mu   = stats.meanMs;
+            const sig  = stats.stdDevMs > 0 ? stats.stdDevMs : 1;
+            const binW = (hi - lo) / BINS;
+
+            if (binW <= 0) { histEl.textContent = '(insufficient data for histogram)'; return; }
+
+            // Approximate bin heights using normal PDF at bin centres
+            const heights = [];
+            for (let b = 0; b < BINS; b++) {
+                const x    = lo + (b + 0.5) * binW;
+                const z    = (x - mu) / sig;
+                const pdf  = Math.exp(-0.5 * z * z);
+                heights.push(pdf);
+            }
+            const maxH = Math.max(...heights);
+
+            histEl.innerHTML = '';
+            heights.forEach((h, b) => {
+                const pct   = Math.round((h / maxH) * 100);
+                const binLo = lo + b * binW;
+                const binHi = binLo + binW;
+                const bar   = document.createElement('div');
+                bar.className = 'histogram-bar';
+                bar.style.height = pct + '%';
+                bar.setAttribute('data-tooltip', formatMs(binLo) + ' – ' + formatMs(binHi));
+                histEl.appendChild(bar);
+            });
+
+            labelEl.innerHTML = `<span>${formatMs(lo)}</span><span>mean: ${formatMs(mu)}</span><span>${formatMs(hi)}</span>`;
+        }
+
+        function formatMs(ms) {
+            if (ms < 0)           { return '0ms'; }
+            if (ms < 1000)        { return Math.round(ms) + 'ms'; }
+            if (ms < 60000)       { return (ms / 1000).toFixed(1) + 's'; }
+            const min = Math.floor(ms / 60000);
+            const sec = ((ms % 60000) / 1000).toFixed(0);
+            return min + 'm ' + sec + 's';
+        }
+    })();
+    </script>
+</body>
+</html>

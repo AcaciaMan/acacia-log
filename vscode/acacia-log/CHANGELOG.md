@@ -4,6 +4,42 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.6.5] - 2026-02-21
+
+### Added
+- 📈 **Chunk Duration Statistics Report** — new `$(pulse)` icon in the Log Analysis view toolbar
+  - Analyses every inter-entry gap in the sparse line index as a "chunk" duration
+  - Computes full **descriptive statistics**: count, mean, median, min, max, P90, P95, P99, standard deviation, Fisher–Pearson skewness, and excess kurtosis (0 = normal)
+  - Identifies and refines the **min chunk** and **max chunk** entries to surface the actual log line text
+  - **IQR-based outlier detection** (Tukey fences, multiplier 1.5) with up to 25 refined outlier records
+  - Annotated skewness and kurtosis values with plain-English shape descriptions
+  - Approximated normal-distribution histogram for visual duration spread
+  - Interactive HTML report with VS Code theme integration
+  - One-click export to standalone HTML file
+  - Progress notifications during analysis; graceful message for files with insufficient timestamps
+
+- 🔬 **Multi-File Chunk Statistics Comparison** — new `$(diff-multiple)` icon in the Log Files tree toolbar and in the file context menu
+  - **Multi-select** log files in the Log Files tree (Ctrl/Cmd+click) — `canSelectMany` enabled on the tree view
+  - Compare 2–20 files in a single report; files beyond 20 are silently truncated
+  - **Side-by-side statistics table** covering all 16 metrics (central tendency, spread, percentiles, shape, outliers) with **green/red best/worst cell highlighting**
+  - **6 visual bar charts**: Mean, Median, P99 tail latency, Std Dev, CV (coefficient of variation), Outlier %
+  - **6 dimension rankings** with gold / silver / bronze medals and per-file colour coding
+  - **Natural language analysis summary** automatically generated, covering:
+    - Overview of what a "chunk" means in this context
+    - Throughput comparison (fastest/slowest by mean, with ratio; median comment)
+    - Tail-latency comparison (best/worst P99)
+    - Consistency analysis (CV with categorical labels: highly consistent → highly variable)
+    - Distribution shape per file (skewness magnitude and direction in plain English)
+    - Outlier density per file (IQR method, count and percent)
+    - Worst-case single chunk with bottleneck severity assessment
+    - Overall assessment verdict identifying the best-overall file
+  - Colour-coded file legend (20-colour palette auto-assigned)
+  - Coefficient of variation (CV) included as an additional comparative metric
+  - Error section for files whose timestamp format could not be detected
+  - One-click export to standalone HTML file
+
+---
+
 ## [3.6.4] - 2026-02-19
 
 ### Added

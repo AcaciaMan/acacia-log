@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log Chunk Statistics — Comparison Report</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 20px;
+            background-color: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            line-height: 1.55;
+        }
+
+        /* ── Layout helpers ── */
+        .header-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 22px; flex-wrap: wrap; gap: 10px;
+        }
+
+        h1  { font-size: 1.35em; }
+        h2  { font-size: 1.12em; border-bottom: 2px solid var(--vscode-panel-border);
+               padding-bottom: 7px; margin: 28px 0 14px; }
+        h3  { font-size: 0.97em; margin-bottom: 8px; color: var(--vscode-descriptionForeground); }
+
+        /* ── Export button ── */
+        .export-btn {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+            border: none; padding: 7px 14px; border-radius: 4px; cursor: pointer;
+            font-size: 0.88em; display: flex; align-items: center; gap: 5px;
+            transition: background 0.15s;
+        }
+        .export-btn:hover { background: var(--vscode-button-hoverBackground); }
+        .export-btn:active { transform: translateY(1px); }
+
+        /* ── Meta strip ── */
+        .meta-strip {
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-left: 4px solid var(--vscode-textLink-foreground);
+            padding: 10px 14px; border-radius: 4px; margin-bottom: 20px;
+            font-size: 0.88em; color: var(--vscode-descriptionForeground);
+        }
+
+        /* ── File legend ── */
+        .legend {
+            display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px;
+        }
+        .legend-item {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.85em; background: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 4px; padding: 4px 10px;
+        }
+        .legend-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ── Natural language description ── */
+        .description-section {
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 6px; padding: 16px 18px; margin-bottom: 20px;
+        }
+        .description-section p {
+            margin-bottom: 10px; font-size: 0.93em; line-height: 1.65;
+        }
+        .description-section p:last-child { margin-bottom: 0; }
+
+        /* ── Comparison table ── */
+        .table-scroll { overflow-x: auto; }
+        table.cmp {
+            width: 100%; min-width: 480px; border-collapse: collapse;
+            font-size: 0.87em;
+        }
+        table.cmp th, table.cmp td {
+            padding: 7px 10px; text-align: right;
+            border-bottom: 1px solid var(--vscode-panel-border);
+        }
+        table.cmp th { font-weight: 600; white-space: nowrap; }
+        table.cmp td:first-child, table.cmp th:first-child {
+            text-align: left; min-width: 130px; white-space: nowrap;
+            font-weight: 600; color: var(--vscode-descriptionForeground);
+        }
+        table.cmp .file-header {
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 160px; display: block;
+        }
+        table.cmp tr.category-sep td, table.cmp tr.category-sep th {
+            background: var(--vscode-sideBar-background);
+            color: var(--vscode-descriptionForeground);
+            font-size: 0.78em; text-transform: uppercase; letter-spacing: 0.06em;
+            padding: 4px 10px; font-weight: normal;
+        }
+        table.cmp td.best  { color: var(--vscode-charts-green, #89d185); font-weight: 700; }
+        table.cmp td.worst { color: var(--vscode-charts-red,   #f14c4c); font-weight: 700; }
+        table.cmp td.error-cell { color: var(--vscode-errorForeground); font-style: italic; }
+        table.cmp tr:hover td { background: var(--vscode-list-hoverBackground); }
+
+        /* ── Bar charts ── */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 16px; margin-bottom: 8px;
+        }
+        .chart-card {
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 6px; padding: 12px 14px;
+        }
+        .chart-card h3 { margin-bottom: 10px; font-size: 0.88em; }
+        .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+        .bar-label {
+            width: 110px; font-size: 0.78em; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0;
+            color: var(--vscode-foreground);
+        }
+        .bar-track {
+            flex: 1; height: 14px; background: var(--vscode-panel-border);
+            border-radius: 3px; overflow: hidden;
+        }
+        .bar-fill { height: 100%; border-radius: 3px; opacity: 0.85; transition: width 0.4s ease; }
+        .bar-value { font-size: 0.75em; white-space: nowrap; min-width: 48px; text-align: right;
+                     color: var(--vscode-descriptionForeground); }
+
+        /* ── Rankings ── */
+        .rankings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 14px;
+        }
+        .ranking-card {
+            background: var(--vscode-editor-inactiveSelectionBackground);
+            border-radius: 6px; padding: 12px 14px;
+        }
+        .ranking-card h3 { margin-bottom: 8px; font-size: 0.88em; }
+        .rank-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 4px 0; border-bottom: 1px solid var(--vscode-panel-border);
+            font-size: 0.83em;
+        }
+        .rank-row:last-child { border-bottom: none; }
+        .rank-num {
+            width: 20px; height: 20px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-weight: 700;
+            font-size: 0.78em; flex-shrink: 0;
+            background: var(--vscode-badge-background, #4d4d4d);
+            color: var(--vscode-badge-foreground, #fff);
+        }
+        .rank-num.gold   { background: #c9a227; color: #1e1e1e; }
+        .rank-num.silver { background: #8a9199; color: #1e1e1e; }
+        .rank-num.bronze { background: #a0522d; color: #fff;    }
+        .rank-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rank-val  { color: var(--vscode-textLink-activeForeground); white-space: nowrap; }
+
+        /* ── Error files section ── */
+        .error-card {
+            background: var(--vscode-inputValidation-errorBackground);
+            border: 1px solid var(--vscode-inputValidation-errorBorder);
+            border-radius: 4px; padding: 10px 14px; margin-bottom: 8px;
+            font-size: 0.88em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── Header ── -->
+    <div class="header-row">
+        <h1>🔬 Chunk Duration — Comparison Report</h1>
+        <button class="export-btn" id="exportBtn">💾 Export HTML</button>
+    </div>
+    <div class="meta-strip" id="metaStrip">Loading…</div>
+
+    <!-- ── File colour legend ── -->
+    <div class="legend" id="legend"></div>
+
+    <!-- ── Natural language description ── -->
+    <h2>📝 Analysis Summary</h2>
+    <div class="description-section" id="description"></div>
+
+    <!-- ── Errors ── -->
+    <div id="errorsSection"></div>
+
+    <!-- ── Comparison table ── -->
+    <h2>📊 Side-by-Side Statistics</h2>
+    <div class="table-scroll">
+        <table class="cmp" id="cmpTable"></table>
+    </div>
+
+    <!-- ── Bar charts ── -->
+    <h2>📈 Visual Comparison</h2>
+    <div class="charts-grid" id="chartsGrid"></div>
+
+    <!-- ── Rankings ── -->
+    <h2>🏆 Rankings (best → worst)</h2>
+    <p style="font-size:0.83em;color:var(--vscode-descriptionForeground);margin-bottom:14px;">
+        Lower value = better for all dimensions except chunk count.
+    </p>
+    <div class="rankings-grid" id="rankingsGrid"></div>
+
+    <script>
+    (function () {
+        'use strict';
+
+        // ── Colour palette ─────────────────────────────────────────────
+        const PALETTE = [
+            '#4fc3f7','#81c784','#ffb74d','#e57373','#ce93d8',
+            '#4db6ac','#f06292','#a1887f','#90a4ae','#fff176',
+            '#80cbc4','#b39ddb','#ffcc80','#ef9a9a','#c5e1a5',
+            '#80deea','#ffab91','#ffe082','#bcaaa4','#b0bec5'
+        ];
+
+        const vscode = acquireVsCodeApi();
+        document.getElementById('exportBtn').addEventListener('click', () =>
+            vscode.postMessage({ command: 'exportHtml' })
+        );
+
+        const D = window.COMPARISON_DATA;
+        if (!D) { document.body.innerHTML += '<p style="color:red">No data loaded.</p>'; return; }
+
+        const files  = D.files;
+        const valid  = files.filter(f => !f.error);
+        const colors = files.map((_, i) => PALETTE[i % PALETTE.length]);
+
+        // ── Meta strip ─────────────────────────────────────────────────
+        document.getElementById('metaStrip').textContent =
+            `${files.length} file${files.length > 1 ? 's' : ''} compared  •  ` +
+            `${valid.length} analysed successfully  •  Generated ${fmtDate(D.generatedAt)}`;
+
+        // ── Legend ─────────────────────────────────────────────────────
+        const legend = document.getElementById('legend');
+        files.forEach((f, i) => {
+            const item = document.createElement('div');
+            item.className = 'legend-item';
+            item.innerHTML = `<div class="legend-dot" style="background:${colors[i]}"></div>
+                              <span title="${esc(f.filePath)}">${esc(f.fileName)}</span>`;
+            legend.appendChild(item);
+        });
+
+        // ── Description ────────────────────────────────────────────────
+        const descEl = document.getElementById('description');
+        (D.description || []).forEach(p => {
+            const el = document.createElement('p');
+            el.textContent = p;
+            descEl.appendChild(el);
+        });
+        if ((D.description || []).length === 0) {
+            descEl.textContent = 'Not enough valid files to produce an analysis summary.';
+        }
+
+        // ── Error files ────────────────────────────────────────────────
+        const errSec = document.getElementById('errorsSection');
+        const errFiles = files.filter(f => f.error);
+        if (errFiles.length > 0) {
+            const h = document.createElement('h2');
+            h.textContent = '⚠️ Files That Could Not Be Analysed';
+            errSec.appendChild(h);
+            errFiles.forEach(f => {
+                const card = document.createElement('div');
+                card.className = 'error-card';
+                card.innerHTML = `<strong>${esc(f.fileName)}</strong>: ${esc(f.error || 'Unknown error')}`;
+                errSec.appendChild(card);
+            });
+        }
+
+        // ── Comparison table ───────────────────────────────────────────
+        buildTable(files, colors);
+
+        // ── Charts ─────────────────────────────────────────────────────
+        buildCharts(valid, colors);
+
+        // ── Rankings ───────────────────────────────────────────────────
+        buildRankings(D.rankings, colors, files);
+
+        // ==============================================================
+        function buildTable(files, colors) {
+            const table = document.getElementById('cmpTable');
+
+            // Header row: metric | file1 | file2 …
+            const thead = table.createTHead();
+            const hr = thead.insertRow();
+            addTH(hr, 'Metric');
+            files.forEach((f, i) => {
+                const th = document.createElement('th');
+                th.innerHTML = `<span class="file-header" style="color:${colors[i]}" title="${esc(f.filePath)}">${esc(f.fileName)}</span>`;
+                hr.appendChild(th);
+            });
+
+            const tbody = table.createTBody();
+
+            // Row definitions: [ label, getter(stats), isHigherBetter? ]
+            // isHigherBetter: false means lower is better (marked green when lowest)
+            const rows = [
+                { sep: 'Central Tendency' },
+                { label: 'Chunks analysed', get: s => s.count, fmt: v => v.toLocaleString(), neutral: true },
+                { label: 'Mean duration',   get: s => s.meanMs,   fmt: s => s.mean,   lower: true },
+                { label: 'Median (P50)',     get: s => s.medianMs, fmt: s => s.median, lower: true },
+                { sep: 'Spread' },
+                { label: 'Min',    get: s => s.minMs,    fmt: s => s.min,    neutral: true },
+                { label: 'Max',    get: s => s.maxMs,    fmt: s => s.max,    lower: true },
+                { label: 'Std Dev',get: s => s.stdDevMs, fmt: s => s.stdDev, lower: true },
+                { label: 'CV (%)', get: s => parseFloat(s.cv), fmt: s => s.cv + ' %', lower: true },
+                { sep: 'Percentiles' },
+                { label: 'P90',    get: s => s.p90Ms,    fmt: s => s.p90, lower: true },
+                { label: 'P95',    get: s => s.p95Ms,    fmt: s => s.p95, lower: true },
+                { label: 'P99',    get: s => s.p99Ms,    fmt: s => s.p99, lower: true },
+                { sep: 'Shape' },
+                { label: 'Skewness',  get: s => Math.abs(parseFloat(s.skewness)), fmt: s => s.skewness, neutral: true },
+                { label: 'Kurtosis',  get: s => Math.abs(parseFloat(s.kurtosis)), fmt: s => s.kurtosis, neutral: true },
+                { sep: 'Outliers' },
+                { label: 'Outlier count',  get: s => s.outlierCount, fmt: s => s.outlierCount.toLocaleString(), lower: true },
+                { label: 'Outlier %',      get: s => parseFloat(s.outlierPct), fmt: s => s.outlierPct + ' %',    lower: true },
+            ];
+
+            rows.forEach(def => {
+                if (def.sep) {
+                    const tr = tbody.insertRow();
+                    const td = tr.insertCell();
+                    td.colSpan = files.length + 1;
+                    tr.className = 'category-sep';
+                    td.textContent = def.sep;
+                    return;
+                }
+
+                const tr = tbody.insertRow();
+                addTD(tr, def.label, 'th');
+
+                // Gather numeric values for best/worst highlighting
+                const vals = files.map(f => f.error ? null : def.get(f.stats));
+                const numVals = vals.filter(v => v !== null);
+                const minVal = Math.min(...numVals);
+                const maxVal = Math.max(...numVals);
+
+                files.forEach((f, i) => {
+                    const td = tr.insertCell();
+                    if (f.error) { td.className = 'error-cell'; td.textContent = '—'; return; }
+                    td.textContent = def.fmt(f.stats);
+                    if (!def.neutral && numVals.length > 1) {
+                        const v = def.get(f.stats);
+                        if (def.lower) {
+                            if (v === minVal) { td.className = 'best'; }
+                            else if (v === maxVal) { td.className = 'worst'; }
+                        }
+                    }
+                });
+            });
+        }
+
+        function buildCharts(valid, colors) {
+            const grid = document.getElementById('chartsGrid');
+
+            const charts = [
+                { title: '📊 Mean Duration',   key: 'meanMs',   fmt: 'mean'   },
+                { title: '📊 Median (P50)',     key: 'medianMs', fmt: 'median' },
+                { title: '📊 P99 Tail Latency', key: 'p99Ms',    fmt: 'p99'    },
+                { title: '📉 Std Deviation',    key: 'stdDevMs', fmt: 'stdDev' },
+                { title: '📈 CV (%)',            key: 'cvNum',    fmt: 'cv'     },
+                { title: '⚠️ Outlier %',        key: 'outlierPctNum', fmt: 'outlierPct' },
+            ];
+
+            // Resolve file index to color (valid files may be a subset of all files)
+            const colorOf = (fn) => {
+                const idx = window.COMPARISON_DATA.files.findIndex(f => f.fileName === fn);
+                return idx >= 0 ? colors[idx] : '#888';
+            };
+
+            charts.forEach(ch => {
+                const vals = valid.map(f => {
+                    const raw = ch.key === 'cvNum'
+                        ? parseFloat(f.stats.cv)
+                        : ch.key === 'outlierPctNum'
+                        ? parseFloat(f.stats.outlierPct)
+                        : f.stats[ch.key];
+                    return { name: f.fileName, value: raw, label: f.stats[ch.fmt] };
+                });
+                if (vals.length === 0) { return; }
+
+                const maxVal = Math.max(...vals.map(v => v.value));
+
+                const card = document.createElement('div');
+                card.className = 'chart-card';
+                card.innerHTML = `<h3>${ch.title}</h3>`;
+
+                vals.forEach(v => {
+                    const pct = maxVal > 0 ? Math.round((v.value / maxVal) * 100) : 0;
+                    const c = colorOf(v.name);
+                    const row = document.createElement('div');
+                    row.className = 'bar-row';
+                    row.innerHTML = `
+                        <div class="bar-label" title="${esc(v.name)}">${esc(v.name)}</div>
+                        <div class="bar-track">
+                            <div class="bar-fill" style="width:${pct}%;background:${c}"></div>
+                        </div>
+                        <div class="bar-value">${esc(String(v.label))}</div>`;
+                    card.appendChild(row);
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        function buildRankings(rankings, colors, allFiles) {
+            const colorOf = (fn) => {
+                const idx = allFiles.findIndex(f => f.fileName === fn);
+                return idx >= 0 ? colors[idx] : '#888';
+            };
+            const medal = (i) =>
+                i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+
+            const grid = document.getElementById('rankingsGrid');
+            const defs = [
+                { title: '⚡ Fastest (Mean)',     key: 'byMean'   },
+                { title: '⏱ Median Speed',        key: 'byMedian' },
+                { title: '🎯 Best Tail (P99)',     key: 'byP99'    },
+                { title: '📐 Most Consistent (CV)',key: 'byCv'     },
+                { title: '📉 Lowest Std Dev',      key: 'byStdDev' },
+                { title: '⚠️ Fewest Outliers',    key: 'byOutlierPct' },
+            ];
+
+            defs.forEach(def => {
+                const list = rankings[def.key];
+                if (!list || list.length === 0) { return; }
+
+                const card = document.createElement('div');
+                card.className = 'ranking-card';
+                card.innerHTML = `<h3>${def.title}</h3>`;
+
+                list.forEach((item, i) => {
+                    const row = document.createElement('div');
+                    row.className = 'rank-row';
+                    const c = colorOf(item.fileName);
+                    row.innerHTML = `
+                        <div class="rank-num ${medal(i)}">${i + 1}</div>
+                        <div class="rank-name" style="color:${c}" title="${esc(item.fileName)}">${esc(item.fileName)}</div>
+                        <div class="rank-val">${esc(item.label)}</div>`;
+                    card.appendChild(row);
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        // ── Utilities ──────────────────────────────────────────────────
+        function esc(s) {
+            const d = document.createElement('div'); d.textContent = String(s || ''); return d.innerHTML;
+        }
+
+        function fmtDate(iso) {
+            try { return new Date(iso).toLocaleString(); } catch (_) { return iso; }
+        }
+
+        function addTH(row, text) {
+            const th = document.createElement('th'); th.textContent = text; row.appendChild(th);
+        }
+
+        function addTD(row, text, tag) {
+            const el = document.createElement(tag || 'td'); el.textContent = text; row.appendChild(el);
+        }
+    })();
+    </script>
+</body>
+</html>

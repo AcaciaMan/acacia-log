@@ -8,6 +8,8 @@
 - [Pattern Search](#pattern-search)
 - [Similar Line Analysis](#similar-line-analysis)
 - [HTML Gap Report](#html-gap-report) _(New in 3.6.2, Enhanced in 3.6.3)_
+- [Chunk Duration Statistics Report](#chunk-duration-statistics-report) _(New in 3.6.5)_
+- [Multi-File Chunk Statistics Comparison](#multi-file-chunk-statistics-comparison) _(New in 3.6.5)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
 
@@ -837,6 +839,127 @@ Uses the same auto-detection as other features:
 - Pattern normalization may group unrelated lines if they have similar structure
 - Very large files (>100MB) may take longer to analyze without ripgrep
 - Works on any log file, even without timestamps (timestamps are removed during normalization)
+
+---
+
+## Chunk Duration Statistics Report
+
+### Overview _(New in 3.6.5)_
+Computes full descriptive statistics over every inter-entry time gap in the sparse line index of a single log file, producing an interactive HTML report with histogram, outlier table, and min/max chunk cards.
+
+### Key Features
+
+1. **Full `DescriptiveStats` Suite**
+   - Count, mean, median, min, max
+   - Percentiles: P90, P95, P99
+   - Standard deviation, skewness (with plain-English shape annotation), excess kurtosis (with shape annotation)
+
+2. **Distribution Histogram**
+   - 20-bin bar chart approximated via normal PDF centred on the mean
+   - Visual sense of spread and modality
+
+3. **Min & Max Chunk Cards**
+   - Green-bordered card for the fastest chunk
+   - Red-bordered card for the slowest chunk
+   - Each card shows duration, timestamps, and the actual log line text
+
+4. **Outlier Table**
+   - Tukey IQR fences (1.5× multiplier) detect unusual gaps
+   - Up to 25 outliers refined to exact line text from disk
+   - Badge shows refined count vs total detected count
+   - Columns: duration, line number, from/to timestamps, log text
+
+5. **Export Capability**
+   - One-click **Export HTML** button
+   - Saves a fully standalone report file
+
+### How to Use
+1. Select a log file in the **Log Files** tree view (single-click), or have one open in the editor
+2. Navigate to the **Log Analysis** view
+3. Click the **Chunk Stats** (`$(pulse)`) icon in the Log Analysis view toolbar
+4. Wait for analysis to complete
+5. The report opens in a new webview panel
+6. Click **Export HTML** to save as a standalone file
+
+### Technical Details
+- Re-indexes with step=10 for files smaller than 10,000 lines for extra precision
+- Calls `LogFileHandler.buildLineIndex()` + `extractAllGapsFromIndex()` + `computeDescriptiveStats()` + `detectOutliers()`
+- Min/max and each reported outlier are refined via `refineLargestGap()` (disk read of the surrounding chunk)
+- Data injected as `window.REPORT_DATA` into the `logChunkStats.html` template
+
+### Use Cases
+- Understand the statistical shape of processing throughput
+- Identify P99 tail latency for performance SLA analysis
+- Spot skewed distributions that may indicate bursty activity
+- Pin-point specific outlier entries for root-cause investigation
+
+---
+
+## Multi-File Chunk Statistics Comparison
+
+### Overview _(New in 3.6.5)_
+Analyses chunk-duration statistics for 2–20 log files simultaneously and presents them in a single interactive comparison report with natural-language summary, side-by-side statistics table, bar charts, and rankings.
+
+### Key Features
+
+1. **Natural Language Analysis Summary**
+   Eight plain-English paragraphs automatically generated:
+   - **Overview** — explains what a chunk is and how many files are compared
+   - **Throughput** — fastest/slowest file by mean with ratio; median commentary
+   - **Tail latency** — best/worst P99 across files
+   - **Consistency** — CV (coefficient of variation) with categorical buckets: _highly consistent_ / _moderately consistent_ / _variable_ / _highly variable_
+   - **Distribution shape** — skewness direction and magnitude per file
+   - **Outlier density** — outlier count and percentage per file
+   - **Worst-case single chunk** — flags severe gaps (>60 s, >5 s) with file name
+   - **Overall verdict** — holistic assessment of relative performance
+
+2. **Side-by-Side Statistics Table**
+   - 16 metrics per file: count, mean, median, min, max, P90, P95, P99, std dev, skewness, kurtosis, outlier count, outlier %, CV %
+   - **Green** highlighting for the best value in each row
+   - **Red** highlighting for the worst value in each row
+
+3. **Six Visual Bar Charts**
+   - Mean chunk duration
+   - Median chunk duration
+   - P99 tail latency
+   - Standard deviation
+   - Coefficient of variation (%)
+   - Outlier percentage
+   - Each bar coloured with the file's assigned palette colour
+
+4. **Six Ranking League Tables**
+   - `byMean`, `byMedian`, `byP99`, `byStdDev`, `byCv`, `byOutlierPct`
+   - Gold / silver / bronze medal CSS classes for top-3 positions
+
+5. **Colour-Coded File Legend**
+   - 20-colour palette auto-assigned per file
+   - Colour swatch + filename shown in the legend header
+   - Consistent colour used across all charts, tables, and rankings
+
+6. **Error Reporting**
+   - Files that fail analysis are listed separately with their error message
+   - Comparison proceeds with the remaining valid files
+
+### How to Use
+1. In the **Log Files** tree view, hold **Ctrl** (Windows/Linux) or **Cmd** (macOS) and click to select 2–20 log files
+2. Click the **Compare Chunk Stats** (`$(diff-multiple)`) icon in the Log Files toolbar,
+   _or_ right-click any selected file → **Compare Chunk Statistics (multi-file)**
+3. A progress notification tracks each file as it is analysed sequentially
+4. The comparison report opens in a new webview panel
+5. Click **Export HTML** to save a fully standalone file
+
+### Technical Details
+- Accepts 2–20 file paths; shows a warning if fewer than 2 are selected
+- Each file analysed with `LogFileHandler` + `extractAllGapsFromIndex()` + `computeDescriptiveStats()` + `detectOutliers()`
+- CV = `stdDev / mean × 100`; CV buckets: <15 highly consistent, 15-30 moderately consistent, 30-60 variable, >60 highly variable
+- Data injected as `window.COMPARISON_DATA` into `logChunkStatsComparison.html`
+- `canSelectMany: true` is set on the Log Files tree view to enable multi-selection
+
+### Use Cases
+- Compare log throughput across different environments (dev / staging / prod)
+- A/B compare before and after a performance optimisation
+- Identify which service instance has the most erratic latency
+- Benchmark processing speed across different application versions
 
 ---
 
