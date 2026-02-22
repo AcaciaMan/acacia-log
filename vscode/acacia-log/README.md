@@ -2,9 +2,9 @@
 
 **Advanced log file analyzer and visualizer for Visual Studio Code.**
 
-Navigate massive log files by timestamp, detect time gaps, visualize activity timelines, search with regex patterns, analyze similar lines, compare multiple files, and convert JSONL/NDJSON — all without leaving the editor.
+Navigate massive log files by timestamp, detect time gaps, visualize activity timelines, search with regex patterns, analyze similar lines, compare multiple files, convert JSONL/NDJSON, and highlight log levels with live colour decorations — all without leaving the editor.
 
-[![Version](https://img.shields.io/badge/version-3.8.1-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.8.4-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 <img alt="Acacia Log - Log Search Screenshot" src="https://github.com/user-attachments/assets/eca1bc9d-12a2-4833-9c98-1ec56417a859" />
@@ -40,6 +40,7 @@ Working with large or complex log files means spending time scrolling, grepping,
 | **Timestamp Auto-Detection** | 20+ format patterns detected automatically; visual status indicators |
 | **Log Tree View** | Browse multi-folder log collections; filter by date range or file type |
 | **Large-File Safety** | Streaming reads + progress notifications; 200 MB warning |
+| **Lens Decorations** | Colour-coded highlights for ERROR / WARN / INFO and custom patterns, visible-range only |
 
 ---
 
@@ -119,6 +120,18 @@ Identify the most repeated log lines to find recurring errors, retry storms, or 
 - **Streaming implementation** — the full file is never loaded into memory, safe for logs of any size
 - Results displayed in a new editor document
 - Progress spinner and 200 MB warning for very large files
+
+---
+
+### Lens Decorations _(New in 3.8.4)_
+
+Colour-coded highlights appear automatically in the editor as you open and scroll log files.
+
+- Matched text (not the whole line) is highlighted in bold with the colour defined in `logPatterns.json`
+- **Visible-range only** — only the lines currently on screen are scanned; no performance impact on large files
+- Works in both real log files and virtual `acacia-log://` result documents
+- Toggle on/off with `Acacia Log: Toggle Lens Decorations` (Command Palette or `$(color-mode)` editor toolbar button)
+- Persistent via `acacia-log.lensDecorationsEnabled` setting; reacts live to configuration changes
 
 ---
 
@@ -261,6 +274,7 @@ Configure through VS Code Settings (`Ctrl+,`) or `settings.json`:
 | `acacia-log.logSearchTime` | Default search time | `12:00:00` |
 | `acacia-log.logFilePath` | Default log file path for pattern search | `""` |
 | `acacia-log.patternsFilePath` | Path to patterns JSON file | `""` |
+| `acacia-log.lensDecorationsEnabled` | Enable live colour highlights in the editor based on `logPatterns.json` | `true` |
 
 ### Luxon Date Format Tokens
 
@@ -287,6 +301,7 @@ Access via the Command Palette (`Ctrl+Shift+P`) — all commands are under the *
 | `Acacia Log: Log navigate to Date RegExp` | Set the regex used to match timestamps |
 | `Acacia Log: Log navigate to Search Date` | Set the target date (YYYY-MM-DD) |
 | `Acacia Log: Log navigate to Search Time` | Set the target time and execute navigation |
+| `Acacia Log: Toggle Lens Decorations` | Toggle colour highlights on/off in the active editor |
 | `Acacia Log: Similar Lines` | Stream-analyze and rank similar lines |
 | `Acacia Log: Timeline` | Generate an interactive timeline chart |
 

@@ -16,6 +16,7 @@ import { LogGapReportProvider } from './logSearch/logGapReportProvider';
 import { LogChunkStatsProvider } from './logSearch/logChunkStatsProvider';
 import { LogChunkStatsComparisonProvider } from './logSearch/logChunkStatsComparisonProvider';
 import { convertJsonlToLog } from './utils/jsonl-to-log';
+import { LogLensDecorationProvider } from './logSearch/logLensDecorationProvider';
 
 // This method is called when your extension is activated
 // Your extension is activated the very first time the command is executed
@@ -254,6 +255,15 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Register the Log Chunk Statistics Comparison Provider
 	const logChunkStatsComparisonProvider = new LogChunkStatsComparisonProvider(context.extensionPath);
+
+	const logLensDecorationProvider = new LogLensDecorationProvider(context);
+	logLensDecorationProvider.activate();
+	context.subscriptions.push({ dispose: () => logLensDecorationProvider.dispose() });
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.toggleLensDecorations', () => {
+			logLensDecorationProvider.toggle();
+		})
+	);
 
 	// Track the currently selected/active log file
 	let currentLogFile: string | undefined;

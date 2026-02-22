@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.3",
+  "version": "3.8.4",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -193,6 +193,12 @@
         "category": "Acacia Log",
         "icon": "$(arrow-down)",
         "description": "Extend the virtual chunk view by 100 lines below the current window."
+      },
+      {
+        "command": "acacia-log.toggleLensDecorations",
+        "title": "Toggle Lens Decorations",
+        "category": "Acacia Log",
+        "icon": "$(color-mode)"
       }
     ],
     "viewsContainers": {
@@ -335,6 +341,11 @@
           "command": "acacia-log.loadMoreBelow",
           "when": "resourceScheme == acacia-log && resourcePath =~ /navigate-chunk/",
           "group": "navigation@2"
+        },
+        {
+          "command": "acacia-log.toggleLensDecorations",
+          "when": "resourceScheme == file || resourceScheme == acacia-log",
+          "group": "navigation"
         }
       ]
     },
@@ -371,6 +382,11 @@
           "type": "string",
           "default": "",
           "description": "The path to the search patterns JSON file."
+        },
+        "acacia-log.lensDecorationsEnabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable live lens decorations (coloured highlights) in the editor based on logPatterns.json."
         }
       }
     }

@@ -1,6 +1,7 @@
 # Acacia Log - Detailed Features Guide
 
 ## Table of Contents
+- [Lens Decorations](#lens-decorations) _(New in 3.8.4)_
 - [Editor Tools](#editor-tools) _(New in 3.7.0, Enhanced in 3.8.0)_
 - [Large-File Optimisations](#large-file-optimisations) _(New in 3.8.0)_
 - [Log Tree View](#log-tree-view) _(New in 3.2.0)_
@@ -15,6 +16,42 @@
 - [JSONL / NDJSON Support](#jsonl--ndjson-support) _(New in 3.6.7)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
+
+---
+
+## Lens Decorations
+
+### Overview _(New in 3.8.4)_
+Live **colour-coded highlights** are applied directly in the editor as you type and scroll, driven by the patterns defined in `logPatterns.json`.  No manual action is required — decorations appear automatically whenever you open a log file.
+
+### How it works
+- One `TextEditorDecorationType` (colour + bold) is created per lens entry that has `lensEnabled: true` and a `lensColor`.
+- Decorations cover only the **matched text span** (not the whole line), so they compose cleanly with other syntax highlighting.
+- Only the **visible range** of the editor is scanned on each scroll event — large log files are never fully re-processed.
+- Decoration types are cached and only rebuilt when the patterns file or configuration changes.
+
+### Supported editors
+Both real `file://` documents and virtual `acacia-log://` result documents (search results, chunk navigation) are decorated.
+
+### Default colour scheme
+
+| Pattern key | Regex | Colour |
+|---|---|---|
+| `error` | `ERROR` (case-insensitive) | `#ff4d4f` (red) |
+| `warn` | `WARN` (case-insensitive) | `#faad14` (amber) |
+| `info` | `INFO` (case-insensitive) | `#40a9ff` (blue) |
+
+Add more entries to `logPatterns.json` with `lensEnabled: true` and a `lensColor` to introduce additional highlights.
+
+### Toggling decorations
+
+| Method | Action |
+|---|---|
+| Command Palette | `Acacia Log: Toggle Lens Decorations` |
+| Editor title bar | Click the `$(color-mode)` icon (visible on `file://` and `acacia-log://` tabs) |
+| Settings | `acacia-log.lensDecorationsEnabled` — boolean, default `true` |
+
+The setting persists across reloads.  Changing it in Settings takes effect immediately without a restart.
 
 ---
 

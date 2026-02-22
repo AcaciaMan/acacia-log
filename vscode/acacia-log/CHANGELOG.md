@@ -4,6 +4,19 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.4] - 2026-02-22
+
+### Added
+- 🎨 **Live lens decorations** — log level keywords (`ERROR`, `WARN`, `INFO`, and any custom pattern) are automatically highlighted in the editor with colour-coded text as you scroll, driven by the entries in `logPatterns.json` with `lensEnabled: true`
+  - Decorations are applied to the **visible range only**; large log files are never fully scanned
+  - One `TextEditorDecorationType` is created per enabled lens entry (colour + bold weight, character-level range — not whole-line)
+  - Decoration types are cached and only rebuilt when the patterns file changes
+  - Works in both real `file://` editors and virtual `acacia-log://` result documents
+- 🔘 **Toggle Lens Decorations command** — `Acacia Log: Toggle Lens Decorations` (Command Palette or `$(color-mode)` toolbar button in the editor title bar) switches decorations on/off immediately without a reload
+- ⚙️ **`acacia-log.lensDecorationsEnabled` setting** — boolean (default `true`); persists the toggle state across reloads; reacts live to `onDidChangeConfiguration`
+
+---
+
 ## [3.8.3] - 2026-02-22
 
 ### Changed
