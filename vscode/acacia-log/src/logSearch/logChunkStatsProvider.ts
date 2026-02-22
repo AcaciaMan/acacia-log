@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { navigateToLine } from '../utils/navigateToLine';
 import { LogFileHandler, getFileDates, buildLineIndex } from '../utils/log-file-reader';
 import { refineLargestGap, formatDuration } from '../utils/log-gap-finder';
 import {
@@ -139,6 +140,7 @@ export class LogChunkStatsProvider {
         let html = fs.readFileSync(templatePath, 'utf8');
 
         const reportData = {
+            filePath: filePath,
             fileName: path.basename(filePath),
             stats: {
                 count: stats.count,
@@ -196,6 +198,8 @@ export class LogChunkStatsProvider {
         panel.webview.onDidReceiveMessage(async message => {
             if (message.command === 'exportHtml') {
                 await this.exportReport();
+            } else if (message.command === 'navigateToLine') {
+                await navigateToLine(message.filePath, message.line);
             }
         });
     }

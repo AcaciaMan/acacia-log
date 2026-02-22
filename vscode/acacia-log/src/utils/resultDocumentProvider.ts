@@ -1,15 +1,26 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { LineIndex } from './log-file-reader';
+import { navigateToLine } from './navigateToLine';
 
 /**
  * Virtual document provider for displaying results in editor tabs
  */
 export class ResultDocumentProvider implements vscode.TextDocumentContentProvider {
   private static instance: ResultDocumentProvider;
+  private static lineIndexCache = new Map<string, LineIndex>();
   private _onDidChange = new vscode.EventEmitter<vscode.Uri>();
   private documents = new Map<string, string>();
   private documentCounter = 0;
+  private chunkState = new Map<string, {
+    filePath: string;
+    lineIndex: LineIndex;
+    ctxStart: number;
+    ctxEnd: number;
+    matchedLine: number;
+    totalLines: number;
+  }>();
 
   readonly onDidChange = this._onDidChange.event;
 
@@ -195,11 +206,38 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
     );
   }
 
+  /** Called by navigateLargeFile after building the index. */
+  static cacheLineIndex(filePath: string, index: LineIndex): void {
+    ResultDocumentProvider.lineIndexCache.set(filePath, index);
+  }
+
+  static getCachedLineIndex(filePath: string): LineIndex | undefined {
+    return ResultDocumentProvider.lineIndexCache.get(filePath);
+  }
+
+  /** Store navigation state for the most-recently-opened chunk doc.
+   *  Key is the base virtual path '/results/navigate-chunk.log'. */
+  setChunkState(state: {
+    filePath: string;
+    lineIndex: LineIndex;
+    ctxStart: number;
+    ctxEnd: number;
+    matchedLine: number;
+    totalLines: number;
+  }): void {
+    this.chunkState.set('/results/navigate-chunk.log', state);
+  }
+
+  getChunkState(): { filePath: string; lineIndex: LineIndex; ctxStart: number; ctxEnd: number; matchedLine: number; totalLines: number } | undefined {
+    return this.chunkState.get('/results/navigate-chunk.log');
+  }
+
   /**
    * Open pattern search result in editor with HTML visualization
    */
   async openPatternSearchResult(
-    results: { [pattern: string]: { count: number; line_match: string[] } }
+    results: { [pattern: string]: { count: number; line_match: string[] } },
+    logFilePath: string
   ): Promise<void> {
     console.log('[ResultDocumentProvider] openPatternSearchResult called with', Object.keys(results).length, 'patterns');
     
@@ -219,6 +257,7 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
     const dataScript = `
     <script>
       window.RESULTS_DATA = ${JSON.stringify(results)};
+      window.LOG_FILE_PATH = ${JSON.stringify(logFilePath)};
     </script>
   </head>`;
     
@@ -239,6 +278,17 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
     
     panel.webview.html = htmlContent;
     console.log('[ResultDocumentProvider] Webview panel created and content set');
+
+    panel.webview.onDidReceiveMessage(async message => {
+      if (message.command === 'navigateToLine') {
+        try {
+          await navigateToLine(message.filePath, message.line);
+        } catch (err) {
+          vscode.window.showErrorMessage(
+            `Cannot open log file: ${err instanceof Error ? err.message : err}`);
+        }
+      }
+    });
   }
 
   /**

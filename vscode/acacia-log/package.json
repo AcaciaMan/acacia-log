@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.1",
+  "version": "3.8.2",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -183,6 +183,20 @@
         "title": "File Info",
         "category": "Acacia Log",
         "icon": "$(info)"
+      },
+      {
+        "command": "acacia-log.loadMoreAbove",
+        "title": "Load More Above",
+        "category": "Acacia Log",
+        "icon": "$(arrow-up)",
+        "description": "Extend the virtual chunk view by 100 lines above the current window."
+      },
+      {
+        "command": "acacia-log.loadMoreBelow",
+        "title": "Load More Below",
+        "category": "Acacia Log",
+        "icon": "$(arrow-down)",
+        "description": "Extend the virtual chunk view by 100 lines below the current window."
       }
     ],
     "viewsContainers": {
@@ -313,6 +327,18 @@
           "command": "acacia-log.logExplorer.convertJsonlToLog",
           "when": "view == acacia-log.logExplorer && viewItem == logFile",
           "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "acacia-log.loadMoreAbove",
+          "when": "resourceScheme == acacia-log && resourcePath =~ /navigate-chunk/",
+          "group": "navigation@1"
+        },
+        {
+          "command": "acacia-log.loadMoreBelow",
+          "when": "resourceScheme == acacia-log && resourcePath =~ /navigate-chunk/",
+          "group": "navigation@2"
         }
       ]
     },

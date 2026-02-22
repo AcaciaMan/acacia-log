@@ -208,6 +208,13 @@
             font-style: italic;
         }
 
+        .nav-date {
+            cursor: pointer;
+            color: var(--vscode-textLink-foreground);
+            text-decoration: underline dotted;
+        }
+        .nav-date:hover { text-decoration: underline; }
+
         /* ── Distribution histogram ── */
         .histogram-container {
             display: flex;
@@ -339,6 +346,18 @@
             return d.innerHTML;
         }
 
+        function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
+
+        document.addEventListener('click', e => {
+            const el = e.target.closest('.nav-date');
+            if (!el) return;
+            vscode.postMessage({
+                command: 'navigateToLine',
+                filePath: el.dataset.file,
+                line: parseInt(el.dataset.line, 10)
+            });
+        });
+
         function fmtDate(iso) {
             try { return new Date(iso).toISOString().replace('T', ' ').replace('Z', ' UTC'); }
             catch (_) { return iso; }
@@ -400,7 +419,9 @@
             if (!chunk) { return; }
             document.getElementById(prefix + 'Duration').textContent = chunk.duration;
             document.getElementById(prefix + 'Line').textContent     = 'Line: ' + chunk.line.toLocaleString();
-            document.getElementById(prefix + 'From').textContent     = 'From: ' + fmtDate(chunk.timestamp);
+            document.getElementById(prefix + 'From').innerHTML =
+                'From: <span class="nav-date" data-file="' + escapeAttr(data.filePath) +
+                '" data-line="' + chunk.line + '">' + fmtDate(chunk.timestamp) + '</span>';
             document.getElementById(prefix + 'To').textContent       = 'To:   ' + fmtDate(chunk.nextTimestamp);
             document.getElementById(prefix + 'Text').textContent     = chunk.text || '(no text available)';
         }
@@ -443,7 +464,7 @@
                     <td>${i + 1}</td>
                     <td class="duration-cell">${escapeHtml(o.duration)}</td>
                     <td>${o.line.toLocaleString()}</td>
-                    <td style="white-space:nowrap;font-size:0.82em;">${fmtDate(o.timestamp)}</td>
+                    <td style="white-space:nowrap;font-size:0.82em;"><span class="nav-date" data-file="${escapeAttr(data.filePath)}" data-line="${o.line}">${fmtDate(o.timestamp)}</span></td>
                     <td style="white-space:nowrap;font-size:0.82em;">${fmtDate(o.nextTimestamp)}</td>
                     <td class="text-cell" title="${escapeHtml(o.text)}">${escapeHtml(o.text)}</td>`;
                 tbody.appendChild(tr);

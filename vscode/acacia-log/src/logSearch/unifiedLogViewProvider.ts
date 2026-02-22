@@ -299,7 +299,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               const resultProvider = ResultDocumentProvider.getInstance(this.context.extensionPath);
               console.log('[UnifiedLogView] Opening pattern search results...');
               try {
-                await resultProvider.openPatternSearchResult(editorResults);
+                await resultProvider.openPatternSearchResult(editorResults, searchLogFilePath);
                 console.log('[UnifiedLogView] Results opened successfully');
               } catch (error) {
                 console.error('[UnifiedLogView] Failed to open results:', error);

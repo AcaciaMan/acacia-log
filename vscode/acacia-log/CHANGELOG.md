@@ -4,6 +4,19 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.2] - 2026-02-22
+
+### Added
+- 🖱️ **Clickable timestamps and line numbers in all HTML reports** — dates and line references throughout the four report webviews are now interactive links that open the source log file and jump the editor cursor to the exact line
+  - **Gap Report** — each gap's "From" timestamp is clickable (navigates to `gap.line`); "First" and "Last" timestamps in the Similar Lines section are also clickable, backed by new `firstLine` / `lastLine` fields tracked by the similar-lines analyser
+  - **Chunk Statistics** — the "From" timestamp on the min/max chunk cards and every outlier table row are clickable
+  - **Pattern Search results** — each `Line N:` prefix is a clickable link that reveals that line in the log file
+  - **Comparison report** — each file name in the table and legend is a clickable link that opens the corresponding log file
+- 🔧 **`SimilarLineRecord` now tracks `firstLine` and `lastLine`** — both the Node.js streaming path and the ripgrep path record the 1-based line number of the first and last occurrence of each pattern; these fields are serialised into `REPORT_DATA` and used by the Gap Report webview
+- 🛠️ **`navigateToLine` shared utility** (`src/utils/navigateToLine.ts`) — single helper used by all four providers to open a file and reveal a 1-based line number in the editor
+
+---
+
 ## [3.8.1] - 2026-02-22
 
 ### Changed

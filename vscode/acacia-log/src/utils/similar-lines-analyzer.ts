@@ -56,8 +56,12 @@ export interface SimilarLineRecord {
   count: number;
   /** First timestamp when this pattern appeared */
   firstTimestamp: Date;
+  /** 1-based line number of the first occurrence */
+  firstLine: number;
   /** Last timestamp when this pattern appeared */
   lastTimestamp: Date;
+  /** 1-based line number of the last occurrence */
+  lastLine: number;
   /** Example of the actual line (first occurrence) */
   exampleLine: string;
 }
@@ -98,7 +102,9 @@ async function analyzeSimilarLinesStreaming(
   const patternMap = new Map<string, {
     count: number;
     firstTs: Date;
+    firstLine: number;
     lastTs: Date;
+    lastLine: number;
     exampleLine: string;
   }>();
 
@@ -127,11 +133,14 @@ async function analyzeSimilarLinesStreaming(
           const entry = patternMap.get(normalized)!;
           entry.count++;
           entry.lastTs = ts;
+          entry.lastLine = linesRead;
         } else {
           patternMap.set(normalized, {
             count: 1,
             firstTs: ts,
+            firstLine: linesRead,
             lastTs: ts,
+            lastLine: linesRead,
             exampleLine: line
           });
         }
@@ -151,7 +160,9 @@ async function analyzeSimilarLinesStreaming(
       pattern,
       count: data.count,
       firstTimestamp: data.firstTs,
+      firstLine: data.firstLine,
       lastTimestamp: data.lastTs,
+      lastLine: data.lastLine,
       exampleLine: data.exampleLine
     }))
     .sort((a, b) => b.count - a.count)
@@ -213,7 +224,9 @@ function tryRipgrep(
     const patternMap = new Map<string, {
       count: number;
       firstTs: Date;
+      firstLine: number;
       lastTs: Date;
+      lastLine: number;
       exampleLine: string;
     }>();
 
@@ -266,6 +279,7 @@ function tryRipgrep(
           continue;
         }
         
+        const lineNumber = parseInt(line.substring(0, colonIndex), 10);
         const content = line.substring(colonIndex + 1);
         const prefix = content.substring(0, 100);
         const match = prefix.match(format.regex);
@@ -281,11 +295,14 @@ function tryRipgrep(
               const entry = patternMap.get(normalized)!;
               entry.count++;
               entry.lastTs = ts;
+              entry.lastLine = lineNumber;
             } else {
               patternMap.set(normalized, {
                 count: 1,
                 firstTs: ts,
+                firstLine: lineNumber,
                 lastTs: ts,
+                lastLine: lineNumber,
                 exampleLine: content
               });
             }
@@ -321,6 +338,7 @@ function tryRipgrep(
       if (buffer.trim()) {
         const colonIndex = buffer.indexOf(':');
         if (colonIndex !== -1) {
+          const lineNumber = parseInt(buffer.substring(0, colonIndex), 10);
           const content = buffer.substring(colonIndex + 1);
           const prefix = content.substring(0, 100);
           const match = prefix.match(format.regex);
@@ -335,11 +353,14 @@ function tryRipgrep(
                 const entry = patternMap.get(normalized)!;
                 entry.count++;
                 entry.lastTs = ts;
+                entry.lastLine = lineNumber;
               } else {
                 patternMap.set(normalized, {
                   count: 1,
                   firstTs: ts,
+                  firstLine: lineNumber,
                   lastTs: ts,
+                  lastLine: lineNumber,
                   exampleLine: content
                 });
               }
@@ -354,7 +375,9 @@ function tryRipgrep(
           pattern,
           count: data.count,
           firstTimestamp: data.firstTs,
+          firstLine: data.firstLine,
           lastTimestamp: data.lastTs,
+          lastLine: data.lastLine,
           exampleLine: data.exampleLine
         }))
         .sort((a, b) => b.count - a.count)

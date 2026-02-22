@@ -229,6 +229,11 @@
       color: #cccccc;
     }
 
+    .line-number.nav-line:hover {
+      color: #4fc1ff;
+      text-decoration: underline;
+    }
+
     /* Scrollbar styling */
     .result-lines::-webkit-scrollbar {
       width: 10px;
@@ -321,6 +326,18 @@
   </div>
 
   <script>
+    const vscode = acquireVsCodeApi();
+
+    document.addEventListener('click', e => {
+      const el = e.target.closest('.nav-line');
+      if (!el) return;
+      vscode.postMessage({
+        command: 'navigateToLine',
+        filePath: window.LOG_FILE_PATH,
+        line: parseInt(el.dataset.line, 10)
+      });
+    });
+
     let chartInstance = null;
     let topPatternsChartInstance = null;
     let currentChartType = 'pie';
@@ -521,6 +538,16 @@
       createMainChart(labels, data);
     }
 
+    function buildLineHtml(match) {
+      const colonIdx = match.indexOf(': ');
+      if (colonIdx === -1) {
+        return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
+      }
+      const lineNum  = match.substring(0, colonIdx);
+      const matchTxt = match.substring(colonIdx + 2);
+      return `<div><span class="line-number nav-line" data-line="${lineNum}" title="Click to navigate to line ${lineNum} in log file" style="cursor:pointer;">Line ${lineNum}:</span><span class="match-text">${escapeHtml(matchTxt)}</span></div>`;
+    }
+
     function displayDetailedResults(results) {
       const resultsContainer = document.getElementById('resultsContainer');
       resultsContainer.innerHTML = '';
@@ -537,13 +564,7 @@
         const lineMatchesPreview = result.line_match.slice(0, 5);
         const hasMore = result.line_match.length > 5;
         
-        let linesHtml = lineMatchesPreview.map(match => {
-          const parts = match.split(': ', 2);
-          if (parts.length === 2) {
-            return `<div><span class="line-number">Line ${parts[0]}:</span><span class="match-text">${escapeHtml(parts[1])}</span></div>`;
-          }
-          return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
-        }).join('');
+        let linesHtml = lineMatchesPreview.map(buildLineHtml).join('');
         
         resultItem.innerHTML = `
           <div class="result-pattern">🎯 ${escapeHtml(pattern)}</div>
@@ -568,26 +589,11 @@
       const toggleBtn = event.target;
       
       if (toggleBtn.textContent.startsWith('Show all')) {
-        const allLinesHtml = result.line_match.map(match => {
-          const parts = match.split(': ', 2);
-          if (parts.length === 2) {
-            return `<div><span class="line-number">Line ${parts[0]}:</span><span class="match-text">${escapeHtml(parts[1])}</span></div>`;
-          }
-          return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
-        }).join('');
-        
+        const allLinesHtml = result.line_match.map(buildLineHtml).join('');
         linesDiv.innerHTML = allLinesHtml;
         toggleBtn.textContent = 'Show less';
       } else {
-        const lineMatchesPreview = result.line_match.slice(0, 5);
-        const linesHtml = lineMatchesPreview.map(match => {
-          const parts = match.split(': ', 2);
-          if (parts.length === 2) {
-            return `<div><span class="line-number">Line ${parts[0]}:</span><span class="match-text">${escapeHtml(parts[1])}</span></div>`;
-          }
-          return `<div><span class="match-text">${escapeHtml(match)}</span></div>`;
-        }).join('');
-        
+        const linesHtml = result.line_match.slice(0, 5).map(buildLineHtml).join('');
         linesDiv.innerHTML = linesHtml;
         toggleBtn.textContent = `Show all ${result.line_match.length} matches`;
       }

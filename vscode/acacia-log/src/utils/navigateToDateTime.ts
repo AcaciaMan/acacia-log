@@ -107,6 +107,7 @@ async function navigateLargeFile(
 
       // Stream the whole file once to build a sparse line-to-byte-offset index
       const lineIndex = await buildLineIndex(filePath, format, fileDates);
+      ResultDocumentProvider.cacheLineIndex(filePath, lineIndex);
 
       progress.report({ message: 'Searching for timestamp…' });
 
@@ -157,6 +158,15 @@ async function navigateLargeFile(
       // Open the excerpt in a virtual read-only document
       const resultProvider = ResultDocumentProvider.getInstance();
       const resultEditor = await resultProvider.openLogChunkResult(content);
+
+      resultProvider.setChunkState({
+        filePath,
+        lineIndex,
+        ctxStart,
+        ctxEnd,
+        matchedLine: targetLine,
+        totalLines: lineIndex.totalLines,
+      });
 
       // Reveal the matched line inside the virtual document.
       // Header occupies lines 0–2 (3 lines); body starts at line 3.

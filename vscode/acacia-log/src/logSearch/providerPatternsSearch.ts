@@ -81,7 +81,7 @@ export class providerPatternsSearch implements vscode.WebviewViewProvider {
               const resultProvider = ResultDocumentProvider.getInstance(this.context.extensionPath);
               console.log('[PatternsSearch] Opening pattern search results...');
               try {
-                await resultProvider.openPatternSearchResult(editorResults);
+                await resultProvider.openPatternSearchResult(editorResults, logFilePath);
                 console.log('[PatternsSearch] Results opened successfully');
               } catch (error) {
                 console.error('[PatternsSearch] Failed to open results:', error);

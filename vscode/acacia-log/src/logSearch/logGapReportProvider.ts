@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { navigateToLine } from '../utils/navigateToLine';
 import { LogFileHandler, getFileDates, buildLineIndex } from '../utils/log-file-reader';
 import { findTopGapsFromIndex, findSlowestRecords, formatDuration } from '../utils/log-gap-finder';
 import { findTopSimilarLines } from '../utils/similar-lines-analyzer';
@@ -123,6 +124,7 @@ export class LogGapReportProvider {
 
         // Prepare data for the report
         const reportData = {
+            filePath: filePath,
             fileName: path.basename(filePath),
             totalRecords: result.totalRecords,
             logSpan: formatDuration(result.logSpanMs),
@@ -138,7 +140,9 @@ export class LogGapReportProvider {
                     pattern: line.pattern,
                     count: line.count,
                     firstTimestamp: line.firstTimestamp.toISOString(),
+                    firstLine: line.firstLine,
                     lastTimestamp: line.lastTimestamp.toISOString(),
+                    lastLine: line.lastLine,
                     exampleLine: line.exampleLine
                 })),
                 totalLinesAnalyzed: similarLines.totalLinesAnalyzed,
@@ -184,6 +188,9 @@ export class LogGapReportProvider {
                 switch (message.command) {
                     case 'exportHtml':
                         await this.exportHtmlToFile();
+                        break;
+                    case 'navigateToLine':
+                        await navigateToLine(message.filePath, message.line);
                         break;
                 }
             }

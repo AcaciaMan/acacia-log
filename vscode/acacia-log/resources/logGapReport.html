@@ -224,6 +224,13 @@
             display: inline-block;
             margin-right: 15px;
         }
+
+        .nav-date {
+            cursor: pointer;
+            color: var(--vscode-textLink-foreground);
+            text-decoration: underline dotted;
+        }
+        .nav-date:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
@@ -269,6 +276,18 @@
     </div>
     
     <script>
+        const vscode = acquireVsCodeApi();
+
+        document.addEventListener('click', e => {
+            const el = e.target.closest('.nav-date');
+            if (!el) return;
+            vscode.postMessage({
+                command: 'navigateToLine',
+                filePath: el.dataset.file,
+                line: parseInt(el.dataset.line, 10)
+            });
+        });
+
         (function() {
             // Data will be injected here by the extension
             const data = window.REPORT_DATA || {};
@@ -318,11 +337,11 @@
                         </div>
                         <div class="gap-detail-row">
                             <span class="icon">⏰</span>
-                            <strong>From:</strong> ${gap.timestamp}
+                            <strong>From:</strong> <span class="nav-date" data-file="${escapeAttr(data.filePath)}" data-line="${gap.line}">${escapeHtml(gap.timestamp)}</span>
                         </div>
                         <div class="gap-detail-row">
                             <span class="icon">⏰</span>
-                            <strong>To:</strong> ${gap.nextTimestamp}
+                            <strong>To:</strong> ${escapeHtml(gap.nextTimestamp)}
                         </div>
                     </div>
                     <div class="gap-text">${escapeHtml(gap.text)}</div>
@@ -336,6 +355,8 @@
                 div.textContent = text;
                 return div.innerHTML;
             }
+
+            function escapeAttr(s) { return (s || '').replace(/"/g, '&quot;'); }
             
             // Render similar lines
             const similarLinesContainer = document.getElementById('similarLinesContainer');
@@ -355,10 +376,16 @@
                     // Format time range
                     const firstTime = new Date(line.firstTimestamp).toLocaleString();
                     const lastTime = new Date(line.lastTimestamp).toLocaleString();
+                    const firstSpan = line.firstLine
+                        ? `<span class="nav-date" data-file="${escapeAttr(data.filePath)}" data-line="${line.firstLine}" title="Go to line ${line.firstLine}">${firstTime}</span>`
+                        : firstTime;
+                    const lastSpan = line.lastLine
+                        ? `<span class="nav-date" data-file="${escapeAttr(data.filePath)}" data-line="${line.lastLine}" title="Go to line ${line.lastLine}">${lastTime}</span>`
+                        : lastTime;
                     const timeRange = line.firstTimestamp === line.lastTimestamp 
-                        ? `<div class="time-range">⏰ <strong>Time:</strong> ${firstTime}</div>`
-                        : `<div class="time-range">⏰ <strong>First:</strong> ${firstTime}</div>
-                           <div class="time-range">⏰ <strong>Last:</strong> ${lastTime}</div>`;
+                        ? `<div class="time-range">⏰ <strong>Time:</strong> ${firstSpan}</div>`
+                        : `<div class="time-range">⏰ <strong>First:</strong> ${firstSpan}</div>
+                           <div class="time-range">⏰ <strong>Last:</strong> ${lastSpan}</div>`;
                     
                     lineCard.innerHTML = `
                         <div class="similar-line-header">
@@ -377,8 +404,6 @@
         })();
         
         // Export functionality
-        const vscode = acquireVsCodeApi();
-        
         document.getElementById('exportButton').addEventListener('click', () => {
             vscode.postMessage({
                 command: 'exportHtml'

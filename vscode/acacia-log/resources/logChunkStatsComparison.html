@@ -213,6 +213,12 @@
             vscode.postMessage({ command: 'exportHtml' })
         );
 
+        document.addEventListener('click', e => {
+            const el = e.target.closest('.open-file');
+            if (!el) return;
+            vscode.postMessage({ command: 'openFile', filePath: el.dataset.file });
+        });
+
         const D = window.COMPARISON_DATA;
         if (!D) { document.body.innerHTML += '<p style="color:red">No data loaded.</p>'; return; }
 
@@ -231,7 +237,7 @@
             const item = document.createElement('div');
             item.className = 'legend-item';
             item.innerHTML = `<div class="legend-dot" style="background:${colors[i]}"></div>
-                              <span title="${esc(f.filePath)}">${esc(f.fileName)}</span>`;
+                              <span class="open-file" data-file="${esc(f.filePath)}" title="Click to open ${esc(f.fileName)} in editor" style="cursor:pointer;text-decoration:underline dotted;color:var(--vscode-textLink-foreground)">${esc(f.fileName)}</span>`;
             legend.appendChild(item);
         });
 
@@ -280,7 +286,7 @@
             addTH(hr, 'Metric');
             files.forEach((f, i) => {
                 const th = document.createElement('th');
-                th.innerHTML = `<span class="file-header" style="color:${colors[i]}" title="${esc(f.filePath)}">${esc(f.fileName)}</span>`;
+                th.innerHTML = `<span class="file-header open-file" style="color:${colors[i]};cursor:pointer" data-file="${esc(f.filePath)}" title="Click to open ${esc(f.fileName)} in editor">${esc(f.fileName)}</span>`;
                 hr.appendChild(th);
             });
 
@@ -427,9 +433,10 @@
                     const row = document.createElement('div');
                     row.className = 'rank-row';
                     const c = colorOf(item.fileName);
+                    const fp = (window.COMPARISON_DATA.files.find(f => f.fileName === item.fileName) || {}).filePath || '';
                     row.innerHTML = `
                         <div class="rank-num ${medal(i)}">${i + 1}</div>
-                        <div class="rank-name" style="color:${c}" title="${esc(item.fileName)}">${esc(item.fileName)}</div>
+                        <div class="rank-name open-file" style="color:${c};cursor:pointer;text-decoration:underline dotted" data-file="${esc(fp)}" title="Click to open ${esc(item.fileName)} in editor">${esc(item.fileName)}</div>
                         <div class="rank-val">${esc(item.label)}</div>`;
                     card.appendChild(row);
                 });

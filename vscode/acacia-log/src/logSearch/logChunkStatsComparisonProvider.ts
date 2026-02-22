@@ -213,6 +213,18 @@ export class LogChunkStatsComparisonProvider {
         panel.webview.onDidReceiveMessage(async message => {
             if (message.command === 'exportHtml') {
                 await this.exportReport();
+            } else if (message.command === 'openFile') {
+                try {
+                    const uri = vscode.Uri.file(message.filePath);
+                    const doc = await vscode.workspace.openTextDocument(uri);
+                    await vscode.window.showTextDocument(doc, {
+                        viewColumn: vscode.ViewColumn.One,
+                        preview: false
+                    });
+                } catch (err) {
+                    const msg = err instanceof Error ? err.message : String(err);
+                    vscode.window.showErrorMessage(`Cannot open file: ${msg}`);
+                }
             }
         });
     }
