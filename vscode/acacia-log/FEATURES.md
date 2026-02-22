@@ -1,7 +1,8 @@
 # Acacia Log - Detailed Features Guide
 
 ## Table of Contents
-- [Editor Tools](#editor-tools) _(New in 3.7.0)_
+- [Editor Tools](#editor-tools) _(New in 3.7.0, Enhanced in 3.8.0)_
+- [Large-File Optimisations](#large-file-optimisations) _(New in 3.8.0)_
 - [Log Tree View](#log-tree-view) _(New in 3.2.0)_
 - [Unified Tabbed Interface](#unified-tabbed-interface) _(New in 3.2.0)_
 - [Date/Time Navigation](#datetime-navigation)
@@ -19,7 +20,7 @@
 
 ## Editor Tools
 
-### Overview _(New in 3.7.0)_
+### Overview _(New in 3.7.0, Enhanced in 3.8.0)_
 The **Editor Tools** sidebar view provides a focused workspace for running analysis directly on the log file currently open in the editor. Instead of an in-view tab bar, navigation is driven entirely by three **VS Code toolbar icons** at the top of the view — clicking an icon focuses the view and switches to the corresponding tool.
 
 ### Toolbar Icons
@@ -29,6 +30,14 @@ The **Editor Tools** sidebar view provides a focused workspace for running analy
 | `$(search)` | Log Search | Date/time navigation form |
 | `$(graph)` | Similar Lines | Similar-line analysis form |
 | `$(graph-line)` | Timeline | Timeline drawing form |
+
+### File Resolution _(New in 3.8.0)_
+All five message handlers (Log Search, Similar Lines, Timeline, Test Regex, Auto-Detect) resolve the target file via a two-step priority chain without requiring an active text editor:
+
+1. **Active text editor** — used when a real log file (not a virtual `acacia-log:` result document) is open and focused.
+2. **Log Explorer selection** — falls back to the file most recently clicked in the Log Explorer tree, opening it on demand as a text document.
+
+A clear error message — *"No log file available. Open a log file or select one in the Log Explorer."* — is displayed only when neither source can be resolved. Selecting any file in the Log Explorer automatically updates the Editor Tools view via `setSelectedLogFile()`.
 
 ### Log Search Tab
 - **Date/time regex** — configure or auto-detect the timestamp pattern in the active file
@@ -48,6 +57,39 @@ The **Editor Tools** sidebar view provides a focused workspace for running analy
 - Same format-configuration section as Log Search
 - Click **Draw Timeline** (or press Enter) to produce an interactive HTML timeline chart
 - Chart opens in a new editor tab showing log-entry density over time
+
+---
+
+## Large-File Optimisations
+
+### Overview _(New in 3.8.0)_
+All three heavy analysis operations are designed to handle log files of any size without freezing the editor or exhausting memory.
+
+### File Size Warning & Progress Notification
+When the active file exceeds **200 MB**, the extension:
+1. Shows an upfront `vscode.window.showInformationMessage`: *"This file is large (X MB). Analysis may take a moment."*
+2. Wraps the entire analysis in a `vscode.window.withProgress` Notification spinner so the user can see that work is in progress.
+
+This applies to `calculateSimilarLineCounts`, `drawLogTimeline`, and `navigateToDateTime`. Processing is never blocked or cancelled — the warning is purely informational.
+
+### Streaming Similar-Line Counts
+`calculateSimilarLineCounts` processes the file without loading it entirely into memory:
+- Uses `fs.createReadStream` + `readline.createInterface` to read one line at a time.
+- The file path is derived from `editor.document.uri.fsPath`; the public function signature is unchanged.
+- A `try/finally` block guarantees `rl.close()` and `stream.destroy()` are called even on error.
+
+### Virtual-Document Navigation for Files > 50 MB
+When `navigateToDateTime` detects a file larger than **50 MB** and a timestamp format has been detected, it switches to a streaming path instead of opening the whole file in the editor:
+
+| Step | What happens |
+|------|--------------|
+| **1. Index** | `buildLineIndex` streams the entire file once, recording a byte offset every 1 000 lines together with the parsed timestamp. |
+| **2. Search** | `jumpToTimestamp` binary-searches the sparse index, then refines the match by linear scan within the nearest chunk. |
+| **3. Read** | `readLineRange` seeks to the nearest indexed byte offset and reads only the context window (50 lines before + 50 lines after the match). |
+| **4. Display** | A virtual read-only document is opened via `ResultDocumentProvider.openLogChunkResult`. Each line is prefixed with its real 1-based line number padded to a consistent width. A 3-line header shows the file path, matched line number, and ISO timestamp. |
+| **5. Reveal** | `editor.revealRange` scrolls the virtual document to the matched line with `InCenter` alignment. |
+
+Files ≤ 50 MB continue to use the original fast in-editor binary search (`document.lineAt`).
 
 ---
 
@@ -225,7 +267,7 @@ View comprehensive file metadata:
 ## Date/Time Navigation
 
 ### Overview
-Navigate to any timestamp in your log files with precision. The extension supports multiple date/time formats and provides an intuitive interface for quick searches. Automatic timestamp detection makes configuration effortless.
+Navigate to any timestamp in your log files with precision. The extension supports multiple date/time formats and provides an intuitive interface for quick searches. Automatic timestamp detection makes configuration effortless. For files larger than 50 MB, a streaming path is used that never loads the whole file into the editor — see [Large-File Optimisations](#large-file-optimisations) for details.
 
 ### Key Features
 
@@ -587,13 +629,15 @@ Results open in a dedicated editor tab with:
 ### Overview
 Identify and count repeated log entries to understand patterns and frequency.
 
-### How It Works
+### How It Works _(Updated in 3.8.0 — fully streaming)_
 
-1. Reads all lines from active log file
-2. Groups identical lines together
-3. Counts occurrences
-4. Sorts by frequency (descending)
-5. Displays in new editor
+1. Opens the file as a **read stream** (`fs.createReadStream` + `readline`) — the file is never fully loaded into memory
+2. For each line that matches the configured timestamp regex, strips all digits (`\d+`) to normalise the line
+3. Counts occurrences of each normalised pattern using `?? 0` initialisation
+4. Sorts by frequency (descending), then alphabetically on ties
+5. Displays results in a new editor tab via `ResultDocumentProvider`
+
+For files over 200 MB, an upfront information message is shown and a progress spinner is displayed in the VS Code notification area for the duration of the analysis.
 
 ### Output Format
 

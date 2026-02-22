@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { DateTime } from 'luxon';
 import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
+
+/** Files larger than this threshold trigger an upfront warning and progress notification */
+const LARGE_FILE_WARN_BYTES = 200 * 1_024 * 1_024; // 200 MB
 
 interface TimelineEntry {
   timestamp: DateTime;
@@ -21,6 +25,23 @@ interface AggregatedData {
 
 export async function drawLogTimeline(editor: vscode.TextEditor) {
   const document = editor.document;
+  const filePath = document.uri.fsPath;
+
+  // Check file size — warn the user if the file is large
+  let fileSizeBytes = 0;
+  try {
+    fileSizeBytes = fs.statSync(filePath).size;
+  } catch { /* virtual / untitled document */ }
+
+  const isLarge = fileSizeBytes > LARGE_FILE_WARN_BYTES;
+  if (isLarge) {
+    const mb = Math.round(fileSizeBytes / (1_024 * 1_024));
+    vscode.window.showInformationMessage(
+      `This file is large (${mb} MB). Analysis may take a moment.`
+    );
+  }
+
+  const runAnalysis = async () => {
   const text = document.getText();
   const lines = text.split('\n');
   
@@ -192,6 +213,20 @@ export async function drawLogTimeline(editor: vscode.TextEditor) {
     undefined,
     []
   );
+  }; // end runAnalysis
+
+  if (isLarge) {
+    await vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: '[Acacia Log] Building log timeline…',
+        cancellable: false,
+      },
+      runAnalysis
+    );
+  } else {
+    await runAnalysis();
+  }
 }
 
 function getWebviewContent(data: AggregatedData[], stats: any, logFilePath: string): string {

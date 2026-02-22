@@ -4,6 +4,28 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.0] - 2026-02-22
+
+### Added
+- 🚀 **Large-file navigation** — files over 50 MB are no longer opened in the editor for date/time navigation
+  - Builds a sparse byte-offset line index by streaming the file once (`buildLineIndex`)
+  - Binary-searches the index then refines with a local linear scan (`jumpToTimestamp`)
+  - Reads only 100 lines of context around the match (50 before, 50 after) via byte-seek (`readLineRange`)
+  - Opens the excerpt as a read-only virtual document in the editor with real line numbers as a prefix and a 3-line header showing the file path, matched line number, and timestamp
+  - Reveals the matched line using `editor.revealRange` inside the virtual document
+  - Files ≤ 50 MB continue to use the fast in-editor binary search
+- 📢 **File size warning and progress notification** — any file exceeding 200 MB shows an upfront information message ("This file is large (X MB). Analysis may take a moment.") and wraps the heavy work in a `vscode.window.withProgress` Notification spinner; applies to `calculateSimilarLineCounts`, `drawLogTimeline`, and `navigateToDateTime`
+- 🔗 **Editor Tools fallback to Log Explorer selection** — the Search, Similar Lines, Timeline, Test Regex, and Auto-Detect handlers in the Editor Tools view no longer require an active text editor
+  - New `_resolveEditor()` helper tries the active editor first (skipping virtual `acacia-log:` result documents), then falls back to the file most recently selected in the Log Explorer tree (opening it on demand)
+  - Selecting a file in the Log Explorer now calls `editorToolsViewProvider.setSelectedLogFile()` to keep the webview in sync
+  - Clear error message shown when neither source is available: "No log file available. Open a log file or select one in the Log Explorer."
+
+### Changed
+- ⚡ **`calculateSimilarLineCounts` fully streaming** — replaced `document.getText()` / `text.split('\n')` with `fs.createReadStream` + `readline` so the file is processed line-by-line without loading it entirely into memory; file path derived from `editor.document.uri.fsPath` so the change is transparent to all callers
+- 🔢 **Consistent line-count increment** — `calculateSimilarLineCounts` now uses `?? 0` initialisation instead of an explicit `if/else` branch
+
+---
+
 ## [3.7.0] - 2026-02-22
 
 ### Added

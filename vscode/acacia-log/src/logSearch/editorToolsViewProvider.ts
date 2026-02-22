@@ -14,7 +14,56 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = 'acacia-log.editorTools';
   private _view?: vscode.WebviewView;
 
+  /** File path of the last item selected in the Log Explorer tree view. */
+  private _selectedLogFile: string | undefined;
+
   constructor(private readonly context: vscode.ExtensionContext) {}
+
+  /**
+   * Called by the extension whenever the user selects a file in the Log
+   * Explorer tree view, so the webview can operate even when the file is
+   * not open in a text editor.
+   */
+  public setSelectedLogFile(filePath: string | undefined): void {
+    this._selectedLogFile = filePath;
+  }
+
+  /**
+   * Resolve a text editor for the current operation.
+   *
+   * Priority:
+   *   1. The active VS Code text editor (skipping virtual acacia-log: results
+   *      documents which cannot be used as log sources).
+   *   2. The file most recently selected in the Log Explorer tree — opened
+   *      as a text document on demand.
+   *
+   * Returns `undefined` when neither source is available; callers should
+   * surface a user-facing error in that case.
+   */
+  private async _resolveEditor(): Promise<vscode.TextEditor | undefined> {
+    // Prefer the active editor, but ignore virtual result documents
+    const active = vscode.window.activeTextEditor;
+    if (active && active.document.uri.scheme !== 'acacia-log') {
+      return active;
+    }
+
+    // Fall back to the tree-selected file
+    if (this._selectedLogFile) {
+      try {
+        const uri = vscode.Uri.file(this._selectedLogFile);
+        const doc = await vscode.workspace.openTextDocument(uri);
+        return await vscode.window.showTextDocument(doc, {
+          viewColumn: vscode.ViewColumn.One,
+          preview: true,
+          preserveFocus: false,
+        });
+      } catch (err) {
+        console.error('[EditorTools] Failed to open selected log file:', err);
+      }
+    }
+
+    return undefined;
+  }
 
   public resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -41,49 +90,66 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
 
     webviewView.webview.onDidReceiveMessage(
       async message => {
-        const editor = vscode.window.activeTextEditor;
         try {
           switch (message.command) {
 
-            case 'search':
+            case 'search': {
               await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
               await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
               await vscode.workspace.getConfiguration('acacia-log').update('logSearchDate', message.searchDate, vscode.ConfigurationTarget.Workspace);
               await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
+              // Ensure the target file is the active editor before navigateToDateTime
+              // reads vscode.window.activeTextEditor internally.
+              const searchEditor = await this._resolveEditor();
+              if (!searchEditor) {
+                const msg = 'No log file available. Open a log file or select one in the Log Explorer.';
+                vscode.window.showErrorMessage(msg);
+                this._reply(webviewView, { command: 'operationComplete', success: false, message: msg });
+                return;
+              }
               await navigateToDateTime();
               this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Navigation completed successfully' });
               return;
+            }
 
-            case 'calculateSimilarLineCounts':
+            case 'calculateSimilarLineCounts': {
               await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
               await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
-              if (editor) {
-                await calculateSimilarLineCounts(editor);
-                this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Similar line counts calculated successfully' });
-              } else {
-                vscode.window.showErrorMessage('No active editor found');
-                this._reply(webviewView, { command: 'operationComplete', success: false, message: 'No active editor found' });
+              const slcEditor = await this._resolveEditor();
+              if (!slcEditor) {
+                const msg = 'No log file available. Open a log file or select one in the Log Explorer.';
+                vscode.window.showErrorMessage(msg);
+                this._reply(webviewView, { command: 'operationComplete', success: false, message: msg });
+                return;
               }
+              await calculateSimilarLineCounts(slcEditor);
+              this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Similar line counts calculated successfully' });
               return;
+            }
 
-            case 'drawLogTimeline':
+            case 'drawLogTimeline': {
               await vscode.workspace.getConfiguration('acacia-log').update('logDateRegex', message.logTimeRegex, vscode.ConfigurationTarget.Workspace);
               await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
-              if (editor) {
-                await drawLogTimeline(editor);
-                this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Timeline drawn successfully' });
-              } else {
-                vscode.window.showErrorMessage('No active editor found');
-                this._reply(webviewView, { command: 'operationComplete', success: false, message: 'No active editor found' });
+              const timelineEditor = await this._resolveEditor();
+              if (!timelineEditor) {
+                const msg = 'No log file available. Open a log file or select one in the Log Explorer.';
+                vscode.window.showErrorMessage(msg);
+                this._reply(webviewView, { command: 'operationComplete', success: false, message: msg });
+                return;
               }
+              await drawLogTimeline(timelineEditor);
+              this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Timeline drawn successfully' });
               return;
+            }
 
             case 'testRegex': {
               const regex = message.logTimeRegex;
-              if (!editor) {
-                this._reply(webviewView, { command: 'testRegexResult', success: false, message: '✗ No active editor found.' });
+              const testEditor = await this._resolveEditor();
+              if (!testEditor) {
+                this._reply(webviewView, { command: 'testRegexResult', success: false, message: '✗ No log file available. Open a log file or select one in the Log Explorer.' });
                 return;
               }
+              const editor = testEditor;
               try {
                 const pat = new RegExp(regex);
                 const doc = editor.document;
@@ -106,44 +172,46 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
               return;
             }
 
-            case 'autoDetectTimestampFormat':
-              if (editor) {
-                try {
-                  const detection = await getOrDetectFormat(editor.document);
-                  if (detection.detected && detection.format) {
-                    const regexPattern = getRegexPatternString(detection.format);
-                    const formatMap: Record<string, string> = {
-                      'yyyy-MM-ddTHH:mm:ss.SSS': "yyyy-MM-dd'T'HH:mm:ss.SSS",
-                      'yyyy-MM-dd HH:mm:ss.SSS': 'yyyy-MM-dd HH:mm:ss.SSS',
-                      'yyyy-MM-dd HH:mm:ss': 'yyyy-MM-dd HH:mm:ss',
-                      'yyyy-MM-dd': 'yyyy-MM-dd',
-                      'dd-MM-yyyy HH:mm': 'dd-MM-yyyy HH:mm',
-                      'MM-dd-yyyy HH:mm': 'MM-dd-yyyy HH:mm',
-                      'dd/MM/yyyy HH:mm:ss': 'dd/MM/yyyy HH:mm:ss',
-                      'dd/MM/yyyy HH:mm': 'dd/MM/yyyy HH:mm',
-                      'MM/dd/yyyy HH:mm:ss': 'MM/dd/yyyy HH:mm:ss',
-                      'MM/dd/yyyy HH:mm': 'MM/dd/yyyy HH:mm',
-                      'dd.MM.yyyy HH:mm:ss': 'dd.MM.yyyy HH:mm:ss',
-                      'dd.MM.yyyy HH:mm': 'dd.MM.yyyy HH:mm',
-                    };
-                    const fmt = formatMap[detection.format.pattern] || detection.format.pattern;
-                    this._reply(webviewView, {
-                      command: 'timestampFormatDetected', success: true, detected: true,
-                      regex: regexPattern, format: fmt, pattern: detection.format.pattern,
-                      totalLines: detection.totalLines,
-                      message: `✓ Detected: ${detection.format.pattern}`,
-                      tab: message.tab
-                    });
-                  } else {
-                    this._reply(webviewView, { command: 'timestampFormatDetected', success: false, detected: false, message: '✗ Could not detect timestamp format', tab: message.tab });
-                  }
-                } catch (e) {
-                  this._reply(webviewView, { command: 'timestampFormatDetected', success: false, detected: false, message: `✗ Error: ${e instanceof Error ? e.message : e}`, tab: message.tab });
+            case 'autoDetectTimestampFormat': {
+              const detectEditor = await this._resolveEditor();
+              if (!detectEditor) {
+                this._reply(webviewView, { command: 'timestampFormatDetected', success: false, detected: false, message: '✗ No log file available. Open a log file or select one in the Log Explorer.', tab: message.tab });
+                return;
+              }
+              try {
+                const detection = await getOrDetectFormat(detectEditor.document);
+                if (detection.detected && detection.format) {
+                  const regexPattern = getRegexPatternString(detection.format);
+                  const formatMap: Record<string, string> = {
+                    'yyyy-MM-ddTHH:mm:ss.SSS': "yyyy-MM-dd'T'HH:mm:ss.SSS",
+                    'yyyy-MM-dd HH:mm:ss.SSS': 'yyyy-MM-dd HH:mm:ss.SSS',
+                    'yyyy-MM-dd HH:mm:ss': 'yyyy-MM-dd HH:mm:ss',
+                    'yyyy-MM-dd': 'yyyy-MM-dd',
+                    'dd-MM-yyyy HH:mm': 'dd-MM-yyyy HH:mm',
+                    'MM-dd-yyyy HH:mm': 'MM-dd-yyyy HH:mm',
+                    'dd/MM/yyyy HH:mm:ss': 'dd/MM/yyyy HH:mm:ss',
+                    'dd/MM/yyyy HH:mm': 'dd/MM/yyyy HH:mm',
+                    'MM/dd/yyyy HH:mm:ss': 'MM/dd/yyyy HH:mm:ss',
+                    'MM/dd/yyyy HH:mm': 'MM/dd/yyyy HH:mm',
+                    'dd.MM.yyyy HH:mm:ss': 'dd.MM.yyyy HH:mm:ss',
+                    'dd.MM.yyyy HH:mm': 'dd.MM.yyyy HH:mm',
+                  };
+                  const fmt = formatMap[detection.format.pattern] || detection.format.pattern;
+                  this._reply(webviewView, {
+                    command: 'timestampFormatDetected', success: true, detected: true,
+                    regex: regexPattern, format: fmt, pattern: detection.format.pattern,
+                    totalLines: detection.totalLines,
+                    message: `✓ Detected: ${detection.format.pattern}`,
+                    tab: message.tab
+                  });
+                } else {
+                  this._reply(webviewView, { command: 'timestampFormatDetected', success: false, detected: false, message: '✗ Could not detect timestamp format', tab: message.tab });
                 }
-              } else {
-                this._reply(webviewView, { command: 'timestampFormatDetected', success: false, detected: false, message: '✗ No active editor found', tab: message.tab });
+              } catch (e) {
+                this._reply(webviewView, { command: 'timestampFormatDetected', success: false, detected: false, message: `✗ Error: ${e instanceof Error ? e.message : e}`, tab: message.tab });
               }
               return;
+            }
           }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unexpected error';

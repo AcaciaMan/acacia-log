@@ -182,6 +182,10 @@ export function activate(context: vscode.ExtensionContext) {
 			
 			// Update the current log file
 			currentLogFile = currentPath;
+
+			// Keep the Editor Tools webview in sync so it can operate on this
+			// file even without an open text editor.
+			editorToolsViewProvider.setSelectedLogFile(currentPath);
 			
 			// If this is a different item, reset
 			if (lastClickedPath !== currentPath) {

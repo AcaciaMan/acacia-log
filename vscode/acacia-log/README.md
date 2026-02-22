@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.7.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.8.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -22,6 +22,14 @@ A dedicated sidebar view for running editor-based analysis tools directly on the
 - **Similar Lines** (`$(graph)` icon) — calculate and rank similar-line counts for the active log file
 - **Timeline** (`$(graph-line)` icon) — draw an interactive timeline chart for the active log file
 - Each tab includes full format configuration (regex, format string, presets, auto-detect)
+- **Works without an active editor** _(New in 3.8.0)_ — all operations fall back to the most recently selected file in the Log Explorer tree; a clear error is shown only when neither source is available
+
+### ⚡ **Large-File Optimisations** _(New in 3.8.0)_
+All heavy analysis operations are now safe and efficient on log files of any size.
+
+- **Streaming similar-line counts** — `calculateSimilarLineCounts` uses `fs.createReadStream` + `readline` to process the file line-by-line; the whole file is never loaded into memory
+- **Virtual-document navigation for files > 50 MB** — instead of opening a huge file in the editor, a sparse byte-offset index is built by streaming the file once; a binary search locates the target timestamp; only 100 lines of context (50 before + 50 after) are read and displayed in a read-only virtual document with real line numbers and a file/line header
+- **200 MB warning with progress spinner** — any file exceeding 200 MB shows an upfront information message and a VS Code progress notification for `calculateSimilarLineCounts`, `drawLogTimeline`, and `navigateToDateTime`; nothing is blocked or cancelled
 
 ### �🔄 **JSONL / NDJSON Support** _(New in 3.6.7)_
 Convert structured JSON-Lines log files into plain-text format so every existing analysis feature works on them instantly.

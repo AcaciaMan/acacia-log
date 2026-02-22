@@ -168,6 +168,19 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
   }
 
   /**
+   * Open a log file chunk (context around a navigated line) as a read-only
+   * virtual document in column one.  The content should already contain a
+   * header and numbered lines built by navigateToDateTime.
+   */
+  async openLogChunkResult(content: string): Promise<vscode.TextEditor> {
+    return this.openResultDocument(
+      '/results/navigate-chunk.log',
+      content,
+      vscode.ViewColumn.One
+    );
+  }
+
+  /**
    * Open pattern search result in editor with HTML visualization
    */
   async openPatternSearchResult(
