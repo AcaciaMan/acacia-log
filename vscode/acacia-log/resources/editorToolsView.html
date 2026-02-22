@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editor Tools</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-foreground);
+      background-color: var(--vscode-sideBar-background);
+      padding: 0;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+
+    /* Tab Navigation */
+    .tab-nav {
+      display: flex;
+      background-color: var(--vscode-editorGroupHeader-tabsBackground, #2d2d30);
+      border-bottom: 2px solid var(--vscode-focusBorder, #007acc);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+    }
+
+    .tab-button {
+      flex: 1;
+      padding: 7px 4px;
+      background-color: transparent;
+      color: var(--vscode-tab-inactiveForeground, #cccccc);
+      border: none;
+      border-bottom: 2px solid transparent;
+      border-right: 1px solid var(--vscode-panel-border, #444444);
+      cursor: pointer;
+      font-size: 11px;
+      font-family: var(--vscode-font-family);
+      font-weight: 500;
+      transition: all 0.15s;
+      outline: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tab-button:last-child { border-right: none; }
+    .tab-button:hover { color: var(--vscode-foreground); background-color: var(--vscode-tab-hoverBackground, #3e3e42); }
+    .tab-button.active { color: var(--vscode-foreground); border-bottom-color: var(--vscode-focusBorder, #007acc); }
+    .tab-button:focus-visible { outline: 1px solid var(--vscode-focusBorder); outline-offset: -1px; }
+
+    /* Tab Content */
+    .tab-content { display: none; padding: 8px; animation: fadeIn 0.15s ease-in; }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    h1 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--vscode-foreground);
+      border-bottom: 1px solid var(--vscode-panel-border);
+      padding-bottom: 6px;
+    }
+
+    .section {
+      background-color: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+      padding: 8px;
+      margin-bottom: 8px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      margin-bottom: 6px;
+    }
+
+    .section-title { font-size: 12px; font-weight: 600; color: var(--vscode-foreground); }
+    .section-toggle { font-size: 11px; color: var(--vscode-descriptionForeground); transition: transform 0.2s; }
+    .section.collapsed .section-toggle { transform: rotate(-90deg); }
+    .section.collapsed .section-content { display: none; }
+
+    .form-group { margin-bottom: 8px; }
+    .form-group:last-child { margin-bottom: 0; }
+
+    label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 3px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--vscode-foreground);
+    }
+
+    .help-icon {
+      display: inline-block;
+      width: 13px;
+      height: 13px;
+      margin-left: 5px;
+      border-radius: 50%;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      text-align: center;
+      line-height: 13px;
+      font-size: 9px;
+      cursor: help;
+      font-weight: bold;
+    }
+
+    .help-text {
+      font-size: 10px;
+      color: var(--vscode-descriptionForeground);
+      margin-top: 3px;
+      padding: 3px 5px;
+      background-color: var(--vscode-textCodeBlock-background);
+      border-radius: 3px;
+      display: none;
+    }
+    .help-text.visible { display: block; }
+
+    input[type="text"], input[type="date"], input[type="time"], select {
+      width: 100%;
+      padding: 4px 6px;
+      background-color: var(--vscode-input-background);
+      color: var(--vscode-input-foreground);
+      border: 1px solid var(--vscode-input-border);
+      border-radius: 2px;
+      font-family: var(--vscode-font-family);
+      font-size: 11px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus, select:focus {
+      border-color: var(--vscode-focusBorder);
+    }
+    input[type="text"]::placeholder { color: var(--vscode-input-placeholderForeground); }
+    select { cursor: pointer; margin-top: 3px; }
+
+    .date-time-group { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+
+    .actions { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--vscode-panel-border); }
+    .primary-action { margin-bottom: 6px; }
+
+    button {
+      width: 100%;
+      padding: 5px 10px;
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      font-size: 11px;
+      font-family: var(--vscode-font-family);
+      font-weight: 500;
+      transition: background-color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    button:hover:not(:disabled) { background-color: var(--vscode-button-hoverBackground); }
+    button:active:not(:disabled) { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .secondary-btn {
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+    }
+    .secondary-btn:hover:not(:disabled) { background-color: var(--vscode-button-secondaryHoverBackground); }
+
+    .spinner {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border: 2px solid var(--vscode-button-foreground);
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-message {
+      margin-top: 6px;
+      padding: 5px 8px;
+      border-radius: 3px;
+      font-size: 11px;
+      display: none;
+    }
+    .status-message.visible { display: block; }
+    .status-message.success { background-color: var(--vscode-testing-iconPassed); color: var(--vscode-editor-background); }
+    .status-message.error { background-color: var(--vscode-testing-iconFailed); color: var(--vscode-editor-background); }
+    .status-message.info { background-color: var(--vscode-textLink-foreground); color: var(--vscode-editor-background); }
+
+    .quick-actions { display: flex; gap: 4px; margin-top: 6px; }
+    .quick-action-btn {
+      flex: 1;
+      padding: 3px 6px;
+      font-size: 10px;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .quick-action-btn:hover { background-color: var(--vscode-button-secondaryHoverBackground); }
+
+    .info-box {
+      margin-bottom: 8px;
+      padding: 5px 8px;
+      background-color: var(--vscode-textBlockQuote-background);
+      border-left: 3px solid var(--vscode-textLink-foreground);
+      border-radius: 3px;
+      font-size: 10px;
+      color: var(--vscode-descriptionForeground);
+    }
+
+    .result-info {
+      margin-top: 12px;
+      padding: 10px;
+      background-color: var(--vscode-textBlockQuote-background);
+      border-left: 3px solid #007acc;
+      border-radius: 3px;
+      font-size: 11px;
+    }
+    .result-info-title { font-weight: 600; margin-bottom: 4px; }
+    .result-info-text { color: var(--vscode-descriptionForeground); line-height: 1.5; }
+  </style>
+</head>
+<body>
+
+  <!-- Tab 1: Log Search -->
+  <div class="tab-content active" id="logSearchTab">
+    <h1>🔍 Log Search</h1>
+
+    <div class="info-box">ℹ️ Search is performed on the currently open file in the editor</div>
+
+    <!-- Format Configuration Section -->
+    <div class="section" id="formatSection">
+      <div class="section-header" onclick="toggleSection('formatSection')">
+        <span class="section-title">⚙️ Log Format</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="logTimeRegex">
+            Date/Time Regex
+            <span class="help-icon" onclick="toggleHelp('regexHelp', event)">?</span>
+          </label>
+          <div id="regexHelp" class="help-text">Regular expression to match date/time stamps in your log files.</div>
+          <input type="text" id="logTimeRegex" placeholder="e.g., \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" aria-label="Date time regex pattern">
+          <select id="logTimeRegexSelect" aria-label="Preset regex patterns">
+            <option value="">-- Select preset --</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📅 Standard (yyyy-MM-dd HH:mm:ss)</option>
+            <option value="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})">🌐 ISO 8601</option>
+            <option value="\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}">🌐 Common Log</option>
+            <option value="\[\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]">🔧 Apache</option>
+            <option value="\w{3} \d{2} \d{2}:\d{2}:\d{2}">💻 Syslog</option>
+            <option value="\d{10}">⏱️ UNIX Timestamp</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}">🪟 Windows Event</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}">☕ Log4j</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <button id="autoDetectButton" class="secondary-btn" aria-label="Auto-detect timestamp format">
+            <span>🔍 Auto-Detect Format</span>
+          </button>
+          <div id="autoDetectStatus" style="display:none; padding:5px; margin-top:5px; border-radius:3px; font-size:10px;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="logTimeFormat">
+            Format String
+            <span class="help-icon" onclick="toggleHelp('formatHelp', event)">?</span>
+          </label>
+          <div id="formatHelp" class="help-text">Format string for parsing matched date/time stamps (Luxon tokens).</div>
+          <input type="text" id="logTimeFormat" placeholder="e.g., yyyy-MM-dd HH:mm:ss" aria-label="Date time format string">
+          <select id="logTimeFormatSelect" aria-label="Preset format strings">
+            <option value="">-- Select preset --</option>
+            <option value="yyyy-MM-dd HH:mm:ss">📅 Standard</option>
+            <option value="yyyy-MM-dd'T'HH:mm:ss.SSSXXX">🌐 ISO 8601</option>
+            <option value="dd/MMM/yyyy:HH:mm:ss Z">🌐 Common Log</option>
+            <option value="[dd/MMM/yyyy:HH:mm:ss Z]">🔧 Apache</option>
+            <option value="MMM dd HH:mm:ss">💻 Syslog</option>
+            <option value="X">⏱️ UNIX Timestamp</option>
+            <option value="yyyy-MM-dd HH:mm:ss.SSS">🪟 Windows Event</option>
+            <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <button type="button" class="secondary-btn" onclick="testRegex()">
+            🧪 Test Regex Pattern
+          </button>
+          <div id="regexTestResult" class="status-message"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search Criteria Section -->
+    <div class="section" id="searchSection">
+      <div class="section-header" onclick="toggleSection('searchSection')">
+        <span class="section-title">🎯 Search Criteria</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="date-time-group">
+          <div class="form-group">
+            <label for="searchDate">Date</label>
+            <input type="date" id="searchDate" aria-label="Search date">
+          </div>
+          <div class="form-group">
+            <label for="searchTime">Time</label>
+            <input type="time" id="searchTime" step="1" aria-label="Search time">
+          </div>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-action-btn" onclick="setToday()">📅 Today</button>
+          <button class="quick-action-btn" onclick="setNow()">🕐 Now</button>
+          <button class="quick-action-btn" onclick="clearDateTime()">✖️ Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="primary-action">
+        <button id="searchButton" aria-label="Navigate to date and time">
+          🔍 Navigate to Date &amp; Time
+        </button>
+      </div>
+      <div id="statusMessage" class="status-message" role="status" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Tab 2: Similar Lines -->
+  <div class="tab-content" id="similarLinesTab">
+    <h1>📊 Similar Lines Analysis</h1>
+
+    <div class="info-box">ℹ️ Analyzes the currently open file in the editor to find and count similar log lines</div>
+
+    <div class="section" id="similarLinesFormatSection">
+      <div class="section-header" onclick="toggleSection('similarLinesFormatSection')">
+        <span class="section-title">⚙️ Log Format</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="similarLinesLogTimeRegex">Date/Time Regex</label>
+          <input type="text" id="similarLinesLogTimeRegex" placeholder="e.g., \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" aria-label="Date time regex pattern">
+          <select id="similarLinesLogTimeRegexSelect" aria-label="Preset regex patterns">
+            <option value="">-- Select preset --</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📅 Standard (yyyy-MM-dd HH:mm:ss)</option>
+            <option value="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})">🌐 ISO 8601</option>
+            <option value="\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}">🌐 Common Log</option>
+            <option value="\[\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]">🔧 Apache</option>
+            <option value="\w{3} \d{2} \d{2}:\d{2}:\d{2}">💻 Syslog</option>
+            <option value="\d{10}">⏱️ UNIX Timestamp</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}">🪟 Windows Event</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}">☕ Log4j</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="similarLinesLogTimeFormat">Format String</label>
+          <input type="text" id="similarLinesLogTimeFormat" placeholder="e.g., yyyy-MM-dd HH:mm:ss" aria-label="Date time format string">
+          <select id="similarLinesLogTimeFormatSelect" aria-label="Preset format strings">
+            <option value="">-- Select preset --</option>
+            <option value="yyyy-MM-dd HH:mm:ss">📅 Standard</option>
+            <option value="yyyy-MM-dd'T'HH:mm:ss.SSSXXX">🌐 ISO 8601</option>
+            <option value="dd/MMM/yyyy:HH:mm:ss Z">🌐 Common Log</option>
+            <option value="[dd/MMM/yyyy:HH:mm:ss Z]">🔧 Apache</option>
+            <option value="MMM dd HH:mm:ss">💻 Syslog</option>
+            <option value="X">⏱️ UNIX Timestamp</option>
+            <option value="yyyy-MM-dd HH:mm:ss.SSS">🪟 Windows Event</option>
+            <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <button id="autoDetectButtonSimilarLines" class="secondary-btn" aria-label="Auto-detect timestamp format">
+            🔍 Auto-Detect Format
+          </button>
+          <div id="autoDetectStatusSimilarLines" style="display:none; padding:5px; margin-top:5px; border-radius:3px; font-size:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="primary-action">
+        <button id="calculateSimilarLineCountsButton" aria-label="Calculate similar line counts">
+          📊 Calculate Similar Lines
+        </button>
+      </div>
+      <div id="statusMessageSimilarLines" class="status-message" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="result-info">
+      <div class="result-info-title">📋 Results Display</div>
+      <div class="result-info-text">Results will open in a new editor tab showing similar line patterns grouped together with their occurrence counts.</div>
+    </div>
+  </div>
+
+  <!-- Tab 3: Timeline -->
+  <div class="tab-content" id="timelineTab">
+    <h1>📈 Log Timeline</h1>
+
+    <div class="info-box">ℹ️ Generates a visual timeline of the currently open log file in the editor</div>
+
+    <div class="section" id="timelineFormatSection">
+      <div class="section-header" onclick="toggleSection('timelineFormatSection')">
+        <span class="section-title">⚙️ Log Format</span>
+        <span class="section-toggle">▼</span>
+      </div>
+      <div class="section-content">
+        <div class="form-group">
+          <label for="timelineLogTimeRegex">Date/Time Regex</label>
+          <input type="text" id="timelineLogTimeRegex" placeholder="e.g., \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}" aria-label="Date time regex pattern">
+          <select id="timelineLogTimeRegexSelect" aria-label="Preset regex patterns">
+            <option value="">-- Select preset --</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}">📅 Standard (yyyy-MM-dd HH:mm:ss)</option>
+            <option value="\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})">🌐 ISO 8601</option>
+            <option value="\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}">🌐 Common Log</option>
+            <option value="\[\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} [+-]\d{4}\]">🔧 Apache</option>
+            <option value="\w{3} \d{2} \d{2}:\d{2}:\d{2}">💻 Syslog</option>
+            <option value="\d{10}">⏱️ UNIX Timestamp</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\.\d{3}">🪟 Windows Event</option>
+            <option value="\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3}">☕ Log4j</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="timelineLogTimeFormat">Format String</label>
+          <input type="text" id="timelineLogTimeFormat" placeholder="e.g., yyyy-MM-dd HH:mm:ss" aria-label="Date time format string">
+          <select id="timelineLogTimeFormatSelect" aria-label="Preset format strings">
+            <option value="">-- Select preset --</option>
+            <option value="yyyy-MM-dd HH:mm:ss">📅 Standard</option>
+            <option value="yyyy-MM-dd'T'HH:mm:ss.SSSXXX">🌐 ISO 8601</option>
+            <option value="dd/MMM/yyyy:HH:mm:ss Z">🌐 Common Log</option>
+            <option value="[dd/MMM/yyyy:HH:mm:ss Z]">🔧 Apache</option>
+            <option value="MMM dd HH:mm:ss">💻 Syslog</option>
+            <option value="X">⏱️ UNIX Timestamp</option>
+            <option value="yyyy-MM-dd HH:mm:ss.SSS">🪟 Windows Event</option>
+            <option value="yyyy-MM-dd HH:mm:ss,SSS">☕ Log4j</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <button id="autoDetectButtonTimeline" class="secondary-btn" aria-label="Auto-detect timestamp format">
+            🔍 Auto-Detect Format
+          </button>
+          <div id="autoDetectStatusTimeline" style="display:none; padding:5px; margin-top:5px; border-radius:3px; font-size:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div class="primary-action">
+        <button id="drawLogTimelineButton" aria-label="Draw log timeline">
+          📈 Draw Timeline
+        </button>
+      </div>
+      <div id="statusMessageTimeline" class="status-message" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="result-info">
+      <div class="result-info-title">📋 Results Display</div>
+      <div class="result-info-text">Timeline will open in a new editor tab showing a visual representation of log entries over time.</div>
+    </div>
+  </div>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+    let isProcessing = false;
+
+    // ====== Tab Switching ======
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+      });
+      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+      const map = { logSearch: 'logSearchTab', similarLines: 'similarLinesTab', timeline: 'timelineTab' };
+      if (map[tabName]) {
+        document.getElementById(map[tabName]).classList.add('active');
+      }
+    }
+
+    function toggleSection(id) {
+      document.getElementById(id).classList.toggle('collapsed');
+    }
+
+    function toggleHelp(id, event) {
+      if (event) event.stopPropagation();
+      document.getElementById(id).classList.toggle('visible');
+    }
+
+    // ====== Log Search helpers ======
+    function setToday() {
+      document.getElementById('searchDate').value = new Date().toISOString().split('T')[0];
+    }
+    function setNow() {
+      document.getElementById('searchTime').value = new Date().toTimeString().split(' ')[0];
+    }
+    function clearDateTime() {
+      document.getElementById('searchDate').value = '';
+      document.getElementById('searchTime').value = '';
+    }
+
+    function showStatus(msg, type) {
+      const el = document.getElementById('statusMessage');
+      el.textContent = msg;
+      el.className = `status-message visible ${type}`;
+      setTimeout(() => el.classList.remove('visible'), 3000);
+    }
+
+    function showStatusFor(id, msg, type) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = `status-message visible ${type}`;
+      setTimeout(() => el.classList.remove('visible'), 3000);
+    }
+
+    function setButtonLoading(btn, loading) {
+      if (!btn) return;
+      if (loading) {
+        btn.disabled = true;
+        btn.dataset.orig = btn.innerHTML;
+        btn.innerHTML = '<span class="spinner"></span><span>Processing...</span>';
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.orig) btn.innerHTML = btn.dataset.orig;
+      }
+    }
+
+    function testRegex() {
+      const logTimeRegex = document.getElementById('logTimeRegex').value;
+      const logTimeFormat = document.getElementById('logTimeFormat').value;
+      if (!logTimeRegex) { showTestResult('Please enter a regex pattern', 'error'); return; }
+      if (!logTimeFormat) { showTestResult('Please enter a format string', 'error'); return; }
+      vscode.postMessage({ command: 'testRegex', logTimeRegex, logTimeFormat });
+    }
+
+    function showTestResult(msg, type) {
+      const el = document.getElementById('regexTestResult');
+      el.textContent = msg;
+      el.className = `status-message visible ${type}`;
+      setTimeout(() => el.classList.remove('visible'), 5000);
+    }
+
+    // ====== Message Handler ======
+    window.addEventListener('message', event => {
+      const message = event.data;
+      switch (message.command) {
+        case 'setValues':
+          if (message.logTimeRegex !== undefined) {
+            document.getElementById('logTimeRegex').value = message.logTimeRegex;
+            document.getElementById('similarLinesLogTimeRegex').value = message.logTimeRegex;
+            document.getElementById('timelineLogTimeRegex').value = message.logTimeRegex;
+          }
+          if (message.logTimeFormat !== undefined) {
+            document.getElementById('logTimeFormat').value = message.logTimeFormat;
+            document.getElementById('similarLinesLogTimeFormat').value = message.logTimeFormat;
+            document.getElementById('timelineLogTimeFormat').value = message.logTimeFormat;
+          }
+          if (message.searchDate !== undefined) document.getElementById('searchDate').value = message.searchDate;
+          if (message.searchTime !== undefined) document.getElementById('searchTime').value = message.searchTime;
+          break;
+
+        case 'timestampFormatDetected':
+          let statusDiv, autoDetectBtn;
+          if (message.tab === 'similarLines') {
+            statusDiv = document.getElementById('autoDetectStatusSimilarLines');
+            autoDetectBtn = document.getElementById('autoDetectButtonSimilarLines');
+          } else if (message.tab === 'timeline') {
+            statusDiv = document.getElementById('autoDetectStatusTimeline');
+            autoDetectBtn = document.getElementById('autoDetectButtonTimeline');
+          } else {
+            statusDiv = document.getElementById('autoDetectStatus');
+            autoDetectBtn = document.getElementById('autoDetectButton');
+          }
+          setButtonLoading(autoDetectBtn, false);
+          if (message.success && message.detected) {
+            document.getElementById('logTimeRegex').value = message.regex;
+            document.getElementById('logTimeFormat').value = message.format;
+            document.getElementById('similarLinesLogTimeRegex').value = message.regex;
+            document.getElementById('similarLinesLogTimeFormat').value = message.format;
+            document.getElementById('timelineLogTimeRegex').value = message.regex;
+            document.getElementById('timelineLogTimeFormat').value = message.format;
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = 'var(--vscode-testing-iconPassed, #73c991)';
+            statusDiv.style.color = 'var(--vscode-editor-background, #1e1e1e)';
+            statusDiv.innerHTML = `${message.message}<br><small>Pattern: ${message.pattern} | Lines: ${message.totalLines.toLocaleString()}</small>`;
+          } else {
+            statusDiv.style.display = 'block';
+            statusDiv.style.backgroundColor = 'var(--vscode-testing-iconFailed, #f48771)';
+            statusDiv.style.color = 'var(--vscode-editor-background, #1e1e1e)';
+            statusDiv.textContent = message.message || 'Auto-detection failed';
+          }
+          setTimeout(() => { statusDiv.style.display = 'none'; }, 5000);
+          break;
+
+        case 'operationComplete':
+          isProcessing = false;
+          document.querySelectorAll('button').forEach(btn => setButtonLoading(btn, false));
+          const type2 = message.success ? 'success' : 'error';
+          const msg2 = message.message || (message.success ? 'Done' : 'Failed');
+          showStatus(msg2, type2);
+          showStatusFor('statusMessageSimilarLines', msg2, type2);
+          showStatusFor('statusMessageTimeline', msg2, type2);
+          break;
+
+        case 'testRegexResult':
+          showTestResult(message.message, message.success ? 'success' : 'error');
+          break;
+
+        case 'switchTab':
+          if (message.tabName) switchTab(message.tabName);
+          break;
+      }
+    });
+
+    // ====== Event Listeners ======
+
+    // Log Search preset selects
+    document.getElementById('logTimeRegexSelect').addEventListener('change', e => {
+      if (e.target.value) document.getElementById('logTimeRegex').value = e.target.value;
+    });
+    document.getElementById('logTimeFormatSelect').addEventListener('change', e => {
+      if (e.target.value) document.getElementById('logTimeFormat').value = e.target.value;
+    });
+
+    // Search auto-detect
+    document.getElementById('autoDetectButton').addEventListener('click', () => {
+      setButtonLoading(document.getElementById('autoDetectButton'), true);
+      vscode.postMessage({ command: 'autoDetectTimestampFormat' });
+    });
+
+    // Search button
+    document.getElementById('searchButton').addEventListener('click', () => {
+      const logTimeRegex = document.getElementById('logTimeRegex').value;
+      const logTimeFormat = document.getElementById('logTimeFormat').value;
+      if (!logTimeRegex) { showStatus('Please enter a date/time regex pattern', 'error'); return; }
+      if (!logTimeFormat) { showStatus('Please enter a date/time format string', 'error'); return; }
+      if (isProcessing) return;
+      setButtonLoading(document.getElementById('searchButton'), true);
+      isProcessing = true;
+      vscode.postMessage({
+        command: 'search',
+        logTimeRegex,
+        logTimeFormat,
+        searchDate: document.getElementById('searchDate').value,
+        searchTime: document.getElementById('searchTime').value
+      });
+    });
+
+    // Similar Lines preset selects
+    document.getElementById('similarLinesLogTimeRegexSelect').addEventListener('change', e => {
+      if (e.target.value) document.getElementById('similarLinesLogTimeRegex').value = e.target.value;
+    });
+    document.getElementById('similarLinesLogTimeFormatSelect').addEventListener('change', e => {
+      if (e.target.value) document.getElementById('similarLinesLogTimeFormat').value = e.target.value;
+    });
+
+    // Similar Lines auto-detect
+    document.getElementById('autoDetectButtonSimilarLines').addEventListener('click', () => {
+      setButtonLoading(document.getElementById('autoDetectButtonSimilarLines'), true);
+      vscode.postMessage({ command: 'autoDetectTimestampFormat', tab: 'similarLines' });
+    });
+
+    // Similar Lines button
+    document.getElementById('calculateSimilarLineCountsButton').addEventListener('click', () => {
+      const logTimeRegex = document.getElementById('similarLinesLogTimeRegex').value;
+      const logTimeFormat = document.getElementById('similarLinesLogTimeFormat').value;
+      if (!logTimeRegex || !logTimeFormat) {
+        showStatusFor('statusMessageSimilarLines', 'Please enter regex pattern and format string', 'error');
+        return;
+      }
+      if (isProcessing) return;
+      setButtonLoading(document.getElementById('calculateSimilarLineCountsButton'), true);
+      isProcessing = true;
+      vscode.postMessage({ command: 'calculateSimilarLineCounts', logTimeRegex, logTimeFormat });
+    });
+
+    // Timeline preset selects
+    document.getElementById('timelineLogTimeRegexSelect').addEventListener('change', e => {
+      if (e.target.value) document.getElementById('timelineLogTimeRegex').value = e.target.value;
+    });
+    document.getElementById('timelineLogTimeFormatSelect').addEventListener('change', e => {
+      if (e.target.value) document.getElementById('timelineLogTimeFormat').value = e.target.value;
+    });
+
+    // Timeline auto-detect
+    document.getElementById('autoDetectButtonTimeline').addEventListener('click', () => {
+      setButtonLoading(document.getElementById('autoDetectButtonTimeline'), true);
+      vscode.postMessage({ command: 'autoDetectTimestampFormat', tab: 'timeline' });
+    });
+
+    // Timeline button
+    document.getElementById('drawLogTimelineButton').addEventListener('click', () => {
+      const logTimeRegex = document.getElementById('timelineLogTimeRegex').value;
+      const logTimeFormat = document.getElementById('timelineLogTimeFormat').value;
+      if (!logTimeRegex || !logTimeFormat) {
+        showStatusFor('statusMessageTimeline', 'Please enter regex pattern and format string', 'error');
+        return;
+      }
+      if (isProcessing) return;
+      setButtonLoading(document.getElementById('drawLogTimelineButton'), true);
+      isProcessing = true;
+      vscode.postMessage({ command: 'drawLogTimeline', logTimeRegex, logTimeFormat });
+    });
+
+    // Enter key shortcuts
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey && e.target.tagName === 'INPUT') {
+        e.preventDefault();
+        const active = document.querySelector('.tab-content.active');
+        if (active.id === 'logSearchTab') document.getElementById('searchButton').click();
+        else if (active.id === 'similarLinesTab') document.getElementById('calculateSimilarLineCountsButton').click();
+        else if (active.id === 'timelineTab') document.getElementById('drawLogTimelineButton').click();
+      }
+    });
+
+    // Init: set today's date
+    window.addEventListener('load', () => {
+      const d = document.getElementById('searchDate');
+      if (!d.value) d.value = new Date().toISOString().split('T')[0];
+    });
+  </script>
+</body>
+</html>

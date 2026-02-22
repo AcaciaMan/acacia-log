@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.6.7",
+  "version": "3.7.0",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -60,15 +60,17 @@
       },
       {
         "command": "extension.calculateSimilarLineCounts",
-        "title": "Calculate Similar Line Counts",
+        "title": "Similar Lines",
         "category": "Acacia Log",
-        "description": "Calculates counts of similar lines in the log file and displays them in descending order."
+        "description": "Calculates counts of similar lines in the log file and displays them in descending order.",
+        "icon": "$(graph)"
       },
       {
         "command": "extension.drawLogTimeline",
-        "title": "Draw Log Timeline",
+        "title": "Timeline",
         "category": "Acacia Log",
-        "description": "Draws a chart containing a timeline of log file records."
+        "description": "Draws a chart containing a timeline of log file records.",
+        "icon": "$(graph-line)"
       },
       {
         "command": "acacia-log.logExplorer.refresh",
@@ -147,6 +149,18 @@
         "icon": "$(search)"
       },
       {
+        "command": "acacia-log.editorTools.switchToSimilarLines",
+        "title": "Similar Lines",
+        "category": "Acacia Log",
+        "icon": "$(graph)"
+      },
+      {
+        "command": "acacia-log.editorTools.switchToTimeline",
+        "title": "Timeline",
+        "category": "Acacia Log",
+        "icon": "$(graph-line)"
+      },
+      {
         "command": "acacia-log.unifiedView.switchToSimilarLines",
         "title": "Similar Lines",
         "category": "Acacia Log",
@@ -189,6 +203,12 @@
         },
         {
           "type": "webview",
+          "id": "acacia-log.editorTools",
+          "name": "Editor Tools",
+          "icon": "resources/log_icon.svg"
+        },
+        {
+          "type": "webview",
           "id": "acacia-log.unifiedView",
           "name": "Log Analysis",
           "icon": "resources/log_icon.svg"
@@ -219,17 +239,17 @@
         },
         {
           "command": "acacia-log.unifiedView.switchToLogAnalysis",
-          "when": "view == acacia-log.unifiedView",
+          "when": "view == acacia-log.editorTools",
           "group": "navigation@1"
         },
         {
-          "command": "acacia-log.unifiedView.switchToSimilarLines",
-          "when": "view == acacia-log.unifiedView",
+          "command": "acacia-log.editorTools.switchToSimilarLines",
+          "when": "view == acacia-log.editorTools",
           "group": "navigation@2"
         },
         {
-          "command": "acacia-log.unifiedView.switchToTimeline",
-          "when": "view == acacia-log.unifiedView",
+          "command": "acacia-log.editorTools.switchToTimeline",
+          "when": "view == acacia-log.editorTools",
           "group": "navigation@3"
         },
         {

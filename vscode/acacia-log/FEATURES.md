@@ -1,6 +1,7 @@
 # Acacia Log - Detailed Features Guide
 
 ## Table of Contents
+- [Editor Tools](#editor-tools) _(New in 3.7.0)_
 - [Log Tree View](#log-tree-view) _(New in 3.2.0)_
 - [Unified Tabbed Interface](#unified-tabbed-interface) _(New in 3.2.0)_
 - [Date/Time Navigation](#datetime-navigation)
@@ -13,6 +14,40 @@
 - [JSONL / NDJSON Support](#jsonl--ndjson-support) _(New in 3.6.7)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
+
+---
+
+## Editor Tools
+
+### Overview _(New in 3.7.0)_
+The **Editor Tools** sidebar view provides a focused workspace for running analysis directly on the log file currently open in the editor. Instead of an in-view tab bar, navigation is driven entirely by three **VS Code toolbar icons** at the top of the view — clicking an icon focuses the view and switches to the corresponding tool.
+
+### Toolbar Icons
+
+| Icon | Command | Tab shown |
+|------|---------|----------|
+| `$(search)` | Log Search | Date/time navigation form |
+| `$(graph)` | Similar Lines | Similar-line analysis form |
+| `$(graph-line)` | Timeline | Timeline drawing form |
+
+### Log Search Tab
+- **Date/time regex** — configure or auto-detect the timestamp pattern in the active file
+- **Format string** — Luxon-compatible format for parsing matched timestamps
+- **Preset selector** — 8 built-in format presets (Standard, ISO 8601, Apache, Syslog, …)
+- **Auto-Detect** button — one-click detection from the first 1 000 lines of the active file
+- **Test Regex** — verify the pattern against the active file and see match count
+- **Date & time pickers** — calendar + time input with Today / Now / Clear shortcuts
+- Click **Navigate to Date & Time** (or press Enter) to jump to the matching line
+
+### Similar Lines Tab
+- Same format-configuration section as Log Search (regex, format string, presets, auto-detect)
+- Click **Calculate Similar Lines** (or press Enter) to group and rank repeated log lines
+- Results open in a new editor tab sorted by occurrence count
+
+### Timeline Tab
+- Same format-configuration section as Log Search
+- Click **Draw Timeline** (or press Enter) to produce an interactive HTML timeline chart
+- Chart opens in a new editor tab showing log-entry density over time
 
 ---
 

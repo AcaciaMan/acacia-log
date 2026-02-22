@@ -4,6 +4,21 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.7.0] - 2026-02-22
+
+### Added
+- 🛠️ **Editor Tools** — new dedicated sidebar view with three tool tabs driven by VS Code toolbar icons
+  - **Log Search** (`$(search)`) — navigate to a date/time in the currently open log file
+  - **Similar Lines** (`$(graph)`) — calculate similar-line counts for the currently open log file
+  - **Timeline** (`$(graph-line)`) — draw an interactive timeline chart for the currently open log file
+  - Each toolbar icon focuses the *Editor Tools* view and switches directly to the corresponding tab; no in-view tab bar is shown — navigation is done exclusively through the toolbar icons
+  - Full format-configuration section (regex + format string, presets, auto-detect) on every tab
+
+### Changed
+- 🔀 **Log Analysis view** — toolbar icons for Log Search, Similar Lines, and Timeline have moved to the new **Editor Tools** view; the Log Analysis view now shows **Pattern Search** as its first visible tab
+
+---
+
 ## [3.6.7] - 2026-02-21
 
 ### Added

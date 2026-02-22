@@ -9,6 +9,7 @@ import { create } from 'domain';
 import { createLogPatterns } from './utils/createLogPatterns';
 import { LogTreeProvider, LogTreeItem, FilterOptions } from './logManagement/logTreeProvider';
 import { UnifiedLogViewProvider } from './logSearch/unifiedLogViewProvider';
+import { EditorToolsViewProvider } from './logSearch/editorToolsViewProvider';
 import { ResultDocumentProvider } from './utils/resultDocumentProvider';
 import { LogGapReportProvider } from './logSearch/logGapReportProvider';
 import { LogChunkStatsProvider } from './logSearch/logChunkStatsProvider';
@@ -142,6 +143,15 @@ export function activate(context: vscode.ExtensionContext) {
 		canSelectMany: true
 	});
 	context.subscriptions.push(treeView);
+
+	// Register the Editor Tools webview provider (Log Search, Similar Lines, Timeline tabs)
+	const editorToolsViewProvider = new EditorToolsViewProvider(context);
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(
+			EditorToolsViewProvider.viewType,
+			editorToolsViewProvider
+		)
+	);
 
 	// Register the Log Gap Report Provider
 	const logGapReportProvider = new LogGapReportProvider(context.extensionPath);
@@ -375,7 +385,8 @@ export function activate(context: vscode.ExtensionContext) {
 	// Register unified view tab switching commands
 	context.subscriptions.push(
 		vscode.commands.registerCommand('acacia-log.unifiedView.switchToLogAnalysis', () => {
-			unifiedLogViewProvider.switchTab('logAnalysis');
+			vscode.commands.executeCommand('acacia-log.editorTools.focus');
+			editorToolsViewProvider.switchTab('logSearch');
 		})
 	);
 
@@ -388,6 +399,20 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('acacia-log.unifiedView.switchToTimeline', () => {
 			unifiedLogViewProvider.switchTab('timeline');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.editorTools.switchToSimilarLines', () => {
+			vscode.commands.executeCommand('acacia-log.editorTools.focus');
+			editorToolsViewProvider.switchTab('similarLines');
+		})
+	);
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.editorTools.switchToTimeline', () => {
+			vscode.commands.executeCommand('acacia-log.editorTools.focus');
+			editorToolsViewProvider.switchTab('timeline');
 		})
 	);
 

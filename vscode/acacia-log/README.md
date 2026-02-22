@@ -2,7 +2,7 @@
 
 > **Professional log file analysis and visualization for VS Code**
 
-[![Version](https://img.shields.io/badge/version-3.6.7-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.7.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 Acacia Log is a powerful Visual Studio Code extension designed to make log file analysis effortless. Navigate through massive log files with precision, visualize patterns, and gain insights from your logs—all within your favorite editor.
@@ -15,7 +15,15 @@ Acacia Log is a powerful Visual Studio Code extension designed to make log file 
 
 ## ✨ Key Features
 
-### 🔄 **JSONL / NDJSON Support** _(New in 3.6.7)_
+### �️ **Editor Tools** _(New in 3.7.0)_
+A dedicated sidebar view for running editor-based analysis tools directly on the file open in the editor. Three toolbar icons switch between tabs without showing an in-view tab bar.
+
+- **Log Search** (`$(search)` icon) — navigate to a date/time position in the active log file
+- **Similar Lines** (`$(graph)` icon) — calculate and rank similar-line counts for the active log file
+- **Timeline** (`$(graph-line)` icon) — draw an interactive timeline chart for the active log file
+- Each tab includes full format configuration (regex, format string, presets, auto-detect)
+
+### �🔄 **JSONL / NDJSON Support** _(New in 3.6.7)_
 Convert structured JSON-Lines log files into plain-text format so every existing analysis feature works on them instantly.
 
 - **Auto-discovery** — `.jsonl` and `.ndjson` files appear in the Log Files tree alongside `.log` / `.txt` files
@@ -119,13 +127,15 @@ Or search for "Acacia Log" in the Extensions view (`Ctrl+Shift+X`).
 1. **Open a log file** in VS Code
 2. **Click the Acacia Log icon** in the Activity Bar (left sidebar)
 3. **Browse log files** in the Log Files tree view, or add custom log folders
-4. **Use the toolbar buttons** in the Log Analysis view to switch between tools:
-   - 🔍 **Log Analysis** - Navigate to date/time in log files
-   - 🔎 **Pattern Search** - Search using regex patterns
-   - 📊 **Similar Lines** - Analyze repetitive log patterns
-   - 📈 **Timeline** - Generate visual timeline charts
+4. **Use the toolbar buttons** in the **Editor Tools** view to run analysis on the currently open file:
+   - 🔍 **Log Search** - Navigate to date/time in the active log file
+   - 📊 **Similar Lines** - Analyze repetitive log patterns in the active file
+   - 📈 **Timeline** - Generate visual timeline chart for the active file
+5. **Use the toolbar buttons** in the **Log Analysis** view for file-based analysis:
+   - 🔎 **Pattern Search** - Search using regex patterns across a selected file
    - 📋 **File Info** - View file metadata and statistics
-5. **Results open in editor tabs** giving you full screen space to view and analyze data
+   - 📊 **HTML Gap Report**, **Chunk Stats**, **Convert JSONL**
+6. **Results open in editor tabs** giving you full screen space to view and analyze data
 
 **Tip:** All navigation buttons are located in the view title bar for quick access!
 
