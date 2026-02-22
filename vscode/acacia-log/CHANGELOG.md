@@ -4,6 +4,13 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.1] - 2026-02-22
+
+### Changed
+- 📖 **README restructured for better Marketplace discoverability** — reorganised by user workflow, added feature overview table, requirements section, large-file support reference table, and use-case section; removed version-noise tags; corrected minimum VS Code version to 1.109.0
+
+---
+
 ## [3.8.0] - 2026-02-22
 
 ### Added

@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.0",
+  "version": "3.8.1",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"

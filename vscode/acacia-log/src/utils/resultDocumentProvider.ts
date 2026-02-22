@@ -66,7 +66,8 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
   async openResultDocument(
     path: string,
     content: string,
-    viewColumn: vscode.ViewColumn = vscode.ViewColumn.One
+    viewColumn: vscode.ViewColumn = vscode.ViewColumn.One,
+    languageId?: string
   ): Promise<vscode.TextEditor> {
     // Increment counter for each new document
     this.documentCounter++;
@@ -111,9 +112,21 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
       console.log('[ResultDocumentProvider] Opening document:', uniquePath);
       const doc = await vscode.workspace.openTextDocument(uri);
       console.log('[ResultDocumentProvider] Document opened:', doc.uri.toString());
-      
+
+      // Attempt to apply a language ID (e.g. 'log' for Log File Highlighter).
+      // setTextDocumentLanguage throws when the language is unknown (extension not
+      // installed), so swallow any error and fall back to the original document.
+      let docToShow = doc;
+      if (languageId) {
+        try {
+          docToShow = await vscode.languages.setTextDocumentLanguage(doc, languageId);
+        } catch {
+          // Language ID unknown – extension not installed, silently continue.
+        }
+      }
+
       // Show the document in the editor
-      const editor = await vscode.window.showTextDocument(doc, {
+      const editor = await vscode.window.showTextDocument(docToShow, {
         viewColumn,
         preview: false,
         preserveFocus: false
@@ -163,7 +176,8 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
     return this.openResultDocument(
       '/results/similar-lines.txt',
       content,
-      vscode.ViewColumn.Two
+      vscode.ViewColumn.Two,
+      'log'
     );
   }
 
@@ -176,7 +190,8 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
     return this.openResultDocument(
       '/results/navigate-chunk.log',
       content,
-      vscode.ViewColumn.One
+      vscode.ViewColumn.One,
+      'log'
     );
   }
 
@@ -244,7 +259,8 @@ export class ResultDocumentProvider implements vscode.TextDocumentContentProvide
     return this.openResultDocument(
       '/results/timeline.txt',
       content,
-      vscode.ViewColumn.Two
+      vscode.ViewColumn.Two,
+      'log'
     );
   }
 }
