@@ -4,6 +4,16 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.3] - 2026-02-22
+
+### Changed
+- 🔍 **Marketplace discoverability improvements** — updated `displayName`, `description`, and `keywords` in `package.json` to better surface the extension when users search for log viewing and analysis tools in the VS Code Marketplace
+  - `displayName` updated to *"Acacia Log Viewer & Analyzer"*
+  - `description` rewritten to lead with the most searched terms
+  - `keywords` expanded to include: `log`, `log viewer`, `log analysis`, `log parser`, `timestamp`, `log gaps`, `log statistics`, `log file`, `log monitoring`, `log tools`
+
+---
+
 ## [3.8.2] - 2026-02-22
 
 ### Added
