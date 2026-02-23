@@ -4,7 +4,7 @@
 
 Navigate massive log files by timestamp, detect time gaps, visualize activity timelines, search with regex patterns, analyze similar lines, compare multiple files, convert JSONL/NDJSON, and highlight log levels with live colour decorations — all without leaving the editor.
 
-[![Version](https://img.shields.io/badge/version-3.8.4-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.8.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 <img alt="Acacia Log - Log Search Screenshot" src="https://github.com/user-attachments/assets/eca1bc9d-12a2-4833-9c98-1ec56417a859" />
@@ -36,7 +36,8 @@ Working with large or complex log files means spending time scrolling, grepping,
 | **Time Gap Report** | HTML report of the top 10 longest silences in a log file |
 | **Chunk Statistics** | Descriptive stats (mean, median, P99, skewness, outliers) per file |
 | **Multi-File Comparison** | Side-by-side stats + charts + rankings for 2–20 log files |
-| **JSONL / NDJSON Converter** | Guided 4-step wizard to convert structured logs to plain text |
+| **JSONL → Log Converter** | Guided 4-step wizard to convert structured JSONL/NDJSON logs to plain text |
+| **Log → JSONL Converter** | Convert any plain-text log to JSON Lines — one entry per timestamp block, with `timestamp`, `message`, `text` fields |
 | **Timestamp Auto-Detection** | 20+ format patterns detected automatically; visual status indicators |
 | **Log Tree View** | Browse multi-folder log collections; filter by date range or file type |
 | **Large-File Safety** | Streaming reads + progress notifications; 200 MB warning |
@@ -209,7 +210,7 @@ Compare log throughput and latency across 2–20 log files in a single report.
 
 ---
 
-### JSONL / NDJSON Converter
+### JSONL → Log Converter
 
 Convert structured JSON-Lines log files into plain-text format so all analysis features work on them.
 
@@ -223,6 +224,35 @@ Convert structured JSON-Lines log files into plain-text format so all analysis f
 - Output example: `2026-02-21T10:00:00Z [ERROR] Connection timeout service=api`
 - Non-JSON lines passed through unchanged
 - Prompts before overwriting an existing `.log` sibling
+
+---
+
+### Log → JSONL Converter _(New in 3.8.5)_
+
+Convert any plain-text log file into JSON Lines format — one JSON object per logical log entry.
+
+**Access:**
+- Command Palette → `Acacia Log: Convert to JSONL`
+- `$(json)` toolbar icon in the **Log Files** tree
+- Right-click any file in the **Log Files** tree → **Convert to JSONL**
+
+**Output fields per entry:**
+
+| Field | Value |
+|---|---|
+| `timestamp` | ISO-8601 string, or `null` if not detected |
+| `message` | First-line summary (timestamp stripped by default) |
+| `text` | Full multiline block, lines joined with `\n` |
+
+**Grouping rules:** a new entry starts at every line whose prefix matches the auto-detected timestamp pattern; all following non-matching lines (stack traces, continuation lines) are appended to that entry's `text`.
+
+**Settings:**
+
+| Setting | Default | Description |
+|---|---|---|
+| `acacia-log.jsonl.messageMode` | `"firstLineMinusTimestamp"` | `"firstLineAsIs"` keeps the whole first line |
+| `acacia-log.jsonl.maxMultilineSize` | `1000` | Max lines per entry; extras are dropped with a `[... truncated ...]` marker |
+| `acacia-log.jsonl.openResultInNewEditor` | `true` | `false` replaces the current document in-place |
 
 ---
 

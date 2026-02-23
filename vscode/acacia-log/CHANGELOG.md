@@ -4,6 +4,24 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.5] - 2026-02-23
+
+### Added
+- 📤 **Convert Log to JSONL command** — `Acacia Log: Convert to JSONL` converts the active plain-text log file into JSON Lines format (one JSON object per logical log entry)
+  - Each entry contains three fields: `timestamp` (ISO-8601 string or `null`), `message` (first-line summary), and `text` (full multiline block joined with `\n`)
+  - Logical entries are grouped automatically: a new entry starts at every line whose prefix matches the auto-detected timestamp regex; continuation lines are appended to the current entry
+  - Leading non-matching lines before the first timestamp produce a `null`-timestamp entry
+  - `acacia-log.jsonl.messageMode` — `"firstLineMinusTimestamp"` (default) strips the timestamp from the message; `"firstLineAsIs"` keeps the full line
+  - `acacia-log.jsonl.maxMultilineSize` — max lines per entry (default `1000`); overflow lines are dropped and a `[... truncated ...]` marker is appended once
+  - `acacia-log.jsonl.openResultInNewEditor` — when `true` (default) the JSONL is opened in a new untitled editor; when `false` the current document is replaced in-place
+  - Warns but continues if no timestamp format can be auto-detected
+  - Shows an informational note when all entries have `timestamp = null`
+- 🖱️ **Convert to JSONL in Log Files tree** — the command is accessible two ways from the tree view:
+  - Right-click any log file → **Convert to JSONL** (context menu)
+  - `$(json)` toolbar icon at the top of the **Log Files** panel (acts on the currently selected file)
+
+---
+
 ## [3.8.4] - 2026-02-22
 
 ### Added

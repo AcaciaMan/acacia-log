@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.4",
+  "version": "3.8.5",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -199,6 +199,18 @@
         "title": "Toggle Lens Decorations",
         "category": "Acacia Log",
         "icon": "$(color-mode)"
+      },
+      {
+        "command": "acacia-log.convertToJsonl",
+        "title": "Acacia Log: Convert to JSONL",
+        "category": "Acacia Log",
+        "icon": "$(json)"
+      },
+      {
+        "command": "acacia-log.logExplorer.convertToJsonl",
+        "title": "Convert to JSONL",
+        "category": "Acacia Log",
+        "icon": "$(json)"
       }
     ],
     "viewsContainers": {
@@ -297,6 +309,11 @@
           "command": "acacia-log.logExplorer.compareChunkStats",
           "when": "view == acacia-log.logExplorer",
           "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.convertToJsonl",
+          "when": "view == acacia-log.logExplorer",
+          "group": "navigation"
         }
       ],
       "view/item/context": [
@@ -327,6 +344,11 @@
         },
         {
           "command": "acacia-log.logExplorer.convertJsonlToLog",
+          "when": "view == acacia-log.logExplorer && viewItem == logFile",
+          "group": "navigation"
+        },
+        {
+          "command": "acacia-log.logExplorer.convertToJsonl",
           "when": "view == acacia-log.logExplorer && viewItem == logFile",
           "group": "navigation"
         }
@@ -387,6 +409,22 @@
           "type": "boolean",
           "default": true,
           "description": "Enable live lens decorations (coloured highlights) in the editor based on logPatterns.json."
+        },
+        "acacia-log.jsonl.messageMode": {
+          "type": "string",
+          "enum": ["firstLineMinusTimestamp", "firstLineAsIs"],
+          "default": "firstLineMinusTimestamp",
+          "description": "How the 'message' field is derived. 'firstLineMinusTimestamp' strips the detected timestamp from the first line; 'firstLineAsIs' uses the full line."
+        },
+        "acacia-log.jsonl.maxMultilineSize": {
+          "type": "number",
+          "default": 1000,
+          "description": "Maximum number of lines per logical log entry. Lines beyond this limit are dropped and a '[... truncated ...]' marker is appended."
+        },
+        "acacia-log.jsonl.openResultInNewEditor": {
+          "type": "boolean",
+          "default": true,
+          "description": "When true, JSONL output is opened in a new untitled editor. When false, the current document is replaced."
         }
       }
     }

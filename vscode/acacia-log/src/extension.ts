@@ -16,6 +16,7 @@ import { LogGapReportProvider } from './logSearch/logGapReportProvider';
 import { LogChunkStatsProvider } from './logSearch/logChunkStatsProvider';
 import { LogChunkStatsComparisonProvider } from './logSearch/logChunkStatsComparisonProvider';
 import { convertJsonlToLog } from './utils/jsonl-to-log';
+import { convertToJsonl } from './utils/log-to-jsonl-command';
 import { LogLensDecorationProvider } from './logSearch/logLensDecorationProvider';
 
 // This method is called when your extension is activated
@@ -463,6 +464,36 @@ export function activate(context: vscode.ExtensionContext) {
 
 			await logChunkStatsProvider.generateReport(filePath);
 		})
+	);
+
+	// Register Log → JSONL converter command (active editor)
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.convertToJsonl', convertToJsonl)
+	);
+
+	// Register Log → JSONL converter command (tree context menu)
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.logExplorer.convertToJsonl',
+			async (_item?: LogTreeItem) => {
+				// Resolve target file: tree selection → tracked log file → active editor
+				let filePath: string | undefined;
+				const selection = treeView.selection[0];
+				if (selection && selection.resourceUri && !selection.isFolder) {
+					filePath = selection.resourceUri.fsPath;
+				} else if (currentLogFile) {
+					filePath = currentLogFile;
+				} else {
+					const activeEditor = vscode.window.activeTextEditor;
+					if (activeEditor) { filePath = activeEditor.document.uri.fsPath; }
+				}
+				if (!filePath) {
+					vscode.window.showErrorMessage('Acacia Log: Please select a log file first.');
+					return;
+				}
+				const doc = await vscode.workspace.openTextDocument(filePath);
+				await convertToJsonl(doc);
+			}
+		)
 	);
 
 	// Register JSONL → Log converter command

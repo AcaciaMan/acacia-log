@@ -1,6 +1,7 @@
 # Acacia Log - Detailed Features Guide
 
 ## Table of Contents
+- [Convert Log to JSONL](#convert-log-to-jsonl) _(New in 3.8.5)_
 - [Lens Decorations](#lens-decorations) _(New in 3.8.4)_
 - [Editor Tools](#editor-tools) _(New in 3.7.0, Enhanced in 3.8.0)_
 - [Large-File Optimisations](#large-file-optimisations) _(New in 3.8.0)_
@@ -13,9 +14,58 @@
 - [HTML Gap Report](#html-gap-report) _(New in 3.6.2, Enhanced in 3.6.3)_
 - [Chunk Duration Statistics Report](#chunk-duration-statistics-report) _(New in 3.6.5)_
 - [Multi-File Chunk Statistics Comparison](#multi-file-chunk-statistics-comparison) _(New in 3.6.5)_
-- [JSONL / NDJSON Support](#jsonl--ndjson-support) _(New in 3.6.7)_
+- [JSONL / NDJSON Support](#jsonl--ndjson-support) _(New in 3.6.7, Enhanced in 3.8.5)_
 - [UI Components](#ui-components)
 - [Advanced Usage](#advanced-usage)
+
+---
+
+## Convert Log to JSONL
+
+### Overview _(New in 3.8.5)_
+Converts the active plain-text log file into **JSON Lines** format — one JSON object per logical log entry — so the output can be ingested by any JSONL-aware tool (Elasticsearch, Loki, jq, DuckDB, etc.).
+
+### Access
+
+| Method | Action |
+|---|---|
+| Command Palette | `Acacia Log: Convert to JSONL` |
+| Log Files tree toolbar | `$(json)` icon (acts on the currently selected file) |
+| Log Files tree context menu | Right-click any log file → **Convert to JSONL** |
+
+### Output schema
+Each logical entry is serialised as a single JSON object:
+
+```json
+{ "timestamp": "2026-02-23T10:00:00.000Z", "message": "INFO application started", "text": "2026-02-23 10:00:00 INFO application started" }
+{ "timestamp": "2026-02-23T10:00:01.000Z", "message": "ERROR Connection refused", "text": "2026-02-23 10:00:01 ERROR Connection refused\n  at connect (db.ts:42)\n  at query (db.ts:88)" }
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `timestamp` | `string \| null` | ISO-8601 string parsed from the entry's first line, or `null` when no timestamp is found |
+| `message` | `string` | First-line summary (timestamp stripped by default; see `messageMode`) |
+| `text` | `string` | Full multiline block — first line plus all continuation lines, joined with `\n` |
+
+### Grouping rules
+- A **start line** is any line whose prefix matches the auto-detected (or configured fallback) timestamp regex.
+- The entry accumulates all following lines until the next start line or end of file.
+- **Leading non-matching lines** (before the first timestamp) produce one entry with `timestamp = null`.
+- **Files with no timestamps at all** produce a single entry with `timestamp = null`.
+
+### maxMultilineSize guard
+When an entry's line count reaches `acacia-log.jsonl.maxMultilineSize` (default `1000`), further lines are silently dropped and `[... truncated ...]` is appended to `text` exactly once.  The next start line begins a fresh entry normally.
+
+### Settings
+
+| Setting | Type | Default | Description |
+|---|---|---|---|
+| `acacia-log.jsonl.messageMode` | `string` | `"firstLineMinusTimestamp"` | `"firstLineAsIs"` uses the full first line unchanged |
+| `acacia-log.jsonl.maxMultilineSize` | `number` | `1000` | Max lines per entry before truncation |
+| `acacia-log.jsonl.openResultInNewEditor` | `boolean` | `true` | `false` replaces the source document in-place |
+
+### Format detection
+The command reuses the same auto-detection pipeline as all other Acacia Log features (`getOrDetectFormat` → `getRegexAndFormat`).  If no format is detected, a warning is shown and the user can choose to continue using the configured fallback regex.
 
 ---
 
@@ -1082,7 +1132,7 @@ Analyses chunk-duration statistics for 2–20 log files simultaneously and prese
 
 ## JSONL / NDJSON Support
 
-_(New in 3.6.7)_
+_(New in 3.6.7, Enhanced in 3.8.5)_
 
 ### Overview
 Acacia Log recognises `.jsonl` and `.ndjson` files (JSON Lines / Newline-Delimited JSON) alongside traditional plain-text log files. A built-in converter turns structured JSONL files into plain-text log files so every existing analysis feature (gap reports, chunk statistics, timeline, similar lines, pattern search, date navigation) works on them without modification.
@@ -1092,11 +1142,20 @@ Acacia Log recognises `.jsonl` and `.ndjson` files (JSON Lines / Newline-Delimit
 - Included in all file-type filter options (Filter by File Type dialog)
 - Treated identically to `.log` files for all tree actions (open, reveal, file info, context menu)
 
-### Convert JSONL to Log Command
+### Convert JSONL → Log Command
 
 **Access:**
 - `$(file-code)` icon in the **Log Analysis** panel toolbar (`navigation@8`)
 - Right-click any file in the **Log Files** tree → **Convert JSONL to Log**
+
+### Convert Log → JSONL Command _(New in 3.8.5)_
+
+See the dedicated [Convert Log to JSONL](#convert-log-to-jsonl) section above for full documentation.
+
+**Quick reference:**
+- `$(json)` toolbar icon in the **Log Files** tree, or right-click → **Convert to JSONL**
+- Output: one JSON object per timestamp-delimited entry with `timestamp`, `message`, `text` fields
+- Configurable via `acacia-log.jsonl.messageMode`, `acacia-log.jsonl.maxMultilineSize`, `acacia-log.jsonl.openResultInNewEditor`
 
 **4-Step Field Mapping Wizard:**
 
