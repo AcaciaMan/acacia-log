@@ -4,3 +4,4 @@
 /vscode/acacia-log/.vscode-test
 /vscode/acacia-log/out
 *.vsix
+/vscode/acacia-log/coverage

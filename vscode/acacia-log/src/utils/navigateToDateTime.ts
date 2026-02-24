@@ -2,7 +2,8 @@
 
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DateTime } from 'luxon';
+import type { DateTime } from 'luxon';
+import { getLuxonDateTime } from './lazy-luxon';
 import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
 import { buildLineIndex, getFileDates, jumpToTimestamp, readLineRange } from './log-file-reader';
 import { DetectedFormat } from './timestamp-detect';
@@ -57,7 +58,7 @@ export async function navigateToDateTime() {
   const logSearchTime = config.get<string>('logSearchTime');
   const dateTimeInput = `${logSearchDate}T${logSearchTime}`;
 
-  const dateTime = DateTime.fromISO(dateTimeInput);
+  const dateTime = getLuxonDateTime().fromISO(dateTimeInput);
   if (!dateTime.isValid) {
     vscode.window.showErrorMessage('Invalid date and time format');
     return;
@@ -215,7 +216,7 @@ async function navigateInEditor(
     const match = lineText.match(dateRegexCompiled);
 
     if (match) {
-      const matchDateTime = DateTime.fromFormat(match[0], logDateFormat);
+      const matchDateTime = getLuxonDateTime().fromFormat(match[0], logDateFormat);
 
       // Skip invalid dates in the log
       if (!matchDateTime.isValid) {

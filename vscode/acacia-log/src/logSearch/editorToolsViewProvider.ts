@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { navigateToDateTime } from '../utils/navigateToDateTime';
-import { calculateSimilarLineCounts } from '../utils/calculateSimilarLineCounts';
-import { drawLogTimeline } from '../utils/drawLogTimeline';
-import { getOrDetectFormat, getRegexPatternString } from '../utils/format-cache';
 
 /**
  * Editor Tools View Provider
@@ -107,6 +103,7 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
                 this._reply(webviewView, { command: 'operationComplete', success: false, message: msg });
                 return;
               }
+              const { navigateToDateTime } = require('../utils/navigateToDateTime');
               await navigateToDateTime();
               this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Navigation completed successfully' });
               return;
@@ -122,6 +119,7 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
                 this._reply(webviewView, { command: 'operationComplete', success: false, message: msg });
                 return;
               }
+              const { calculateSimilarLineCounts } = require('../utils/calculateSimilarLineCounts');
               await calculateSimilarLineCounts(slcEditor);
               this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Similar line counts calculated successfully' });
               return;
@@ -137,6 +135,7 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
                 this._reply(webviewView, { command: 'operationComplete', success: false, message: msg });
                 return;
               }
+              const { drawLogTimeline } = require('../utils/drawLogTimeline');
               await drawLogTimeline(timelineEditor);
               this._reply(webviewView, { command: 'operationComplete', success: true, message: 'Timeline drawn successfully' });
               return;
@@ -179,6 +178,7 @@ export class EditorToolsViewProvider implements vscode.WebviewViewProvider {
                 return;
               }
               try {
+                const { getOrDetectFormat, getRegexPatternString } = require('../utils/format-cache');
                 const detection = await getOrDetectFormat(detectEditor.document);
                 if (detection.detected && detection.format) {
                   const regexPattern = getRegexPatternString(detection.format);

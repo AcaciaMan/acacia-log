@@ -1,10 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { navigateToLine } from '../utils/navigateToLine';
-import { LogFileHandler, getFileDates, buildLineIndex } from '../utils/log-file-reader';
-import { findTopGapsFromIndex, findSlowestRecords, formatDuration } from '../utils/log-gap-finder';
-import { findTopSimilarLines } from '../utils/similar-lines-analyzer';
 
 /**
  * Provider for generating HTML gap analysis reports
@@ -26,6 +22,10 @@ export class LogGapReportProvider {
                 title: "Analyzing log gaps...",
                 cancellable: false
             }, async (progress) => {
+                const { LogFileHandler, getFileDates, buildLineIndex } = require('../utils/log-file-reader');
+                const { findTopGapsFromIndex, findSlowestRecords, formatDuration } = require('../utils/log-gap-finder');
+                const { findTopSimilarLines } = require('../utils/similar-lines-analyzer');
+
                 progress.report({ increment: 0, message: "Initializing log file handler..." });
 
                 // Initialize the log file handler
@@ -48,7 +48,7 @@ export class LogGapReportProvider {
                 progress.report({ increment: 30, message: "Finding approximate gaps..." });
 
                 // Log debug information
-                const timestampedEntries = handler.index.offsets.filter(e => e.timestamp !== null);
+                const timestampedEntries = handler.index.offsets.filter((e: any) => e.timestamp !== null);
                 console.log(`[LogGapReportProvider] Total lines: ${handler.index.totalLines}`);
                 console.log(`[LogGapReportProvider] Index entries: ${handler.index.offsets.length}`);
                 console.log(`[LogGapReportProvider] Entries with timestamps: ${timestampedEntries.length}`);
@@ -114,6 +114,7 @@ export class LogGapReportProvider {
      * Generate HTML content for the gap report
      */
     private generateHtmlContent(filePath: string, result: any, similarLines: any): string {
+        const { formatDuration } = require('../utils/log-gap-finder');
         const templatePath = path.join(this.extensionPath, 'resources', 'logGapReport.html');
         
         if (!fs.existsSync(templatePath)) {
@@ -189,9 +190,11 @@ export class LogGapReportProvider {
                     case 'exportHtml':
                         await this.exportHtmlToFile();
                         break;
-                    case 'navigateToLine':
+                    case 'navigateToLine': {
+                        const { navigateToLine } = require('../utils/navigateToLine');
                         await navigateToLine(message.filePath, message.line);
                         break;
+                    }
                 }
             }
         );

@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.5",
+  "version": "3.8.6",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -441,7 +441,11 @@
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "check-types": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "jest"
+    "test": "jest",
+    "test:activation": "jest --testPathPatterns=activation",
+    "test:coverage": "jest --coverage",
+    "test:e2e": "vscode-test",
+    "bundle-size": "node -e \"const fs=require('fs'); const s=fs.statSync('dist/extension.js'); console.log('Bundle size:', (s.size/1024).toFixed(1), 'KB');\""
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

@@ -4,7 +4,7 @@
  */
 
 import * as vscode from 'vscode';
-import { DateTime } from 'luxon';
+import { getLuxonDateTime } from './lazy-luxon';
 import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
 import { groupLinesToJsonEntries, LogToJsonOptions, MessageMode } from './log-to-jsonl';
 
@@ -69,7 +69,7 @@ export async function convertToJsonl(documentOverride?: vscode.TextDocument): Pr
 
     parseTimestamp: (raw: string): string | null => {
       // Try Luxon first (handles all detected format strings)
-      const dt = DateTime.fromFormat(raw, format);
+      const dt = getLuxonDateTime().fromFormat(raw, format);
       if (dt.isValid) { return dt.toISO(); }
       // Fallback: native Date (handles ISO-8601 strings)
       const d = new Date(raw);

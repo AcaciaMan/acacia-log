@@ -4,6 +4,27 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.6] - 2026-02-24
+
+### Added
+- 🧪 **Activation performance tests** (`src/test/activation-performance.test.ts`) — comprehensive test suite verifying activation correctness after each refactoring
+  - `activate()` completes without throwing and populates `context.subscriptions`
+  - All expected commands are registered at activation time
+  - Lazy-loaded modules (`luxon`, `navigateToDateTime`, `drawLogTimeline`, `calculateSimilarLineCounts`, etc.) are NOT loaded during activation — only on first use
+  - `createLogPatterns` is called asynchronously in Phase 2 (via `setTimeout`), not during the synchronous activation phase
+  - Provider constructors perform no file-system I/O
+  - Import weight analysis ensures `extension.ts` has no forbidden heavy static imports for command-only modules
+  - Subscription integrity checks verify disposal works correctly
+  - Deactivation is clean and idempotent
+- 📊 **Activation benchmarks** (`src/test/activation-benchmark.test.ts`) — timing benchmarks with regression-catch thresholds
+  - `activate()` completes within 100 ms (generous guard against catastrophic regressions)
+  - Synchronous activation phase completes within 20 ms
+  - Consistency check across 5 consecutive runs (< 50 ms standard deviation)
+  - Registration count assertions (expects 32 commands)
+- 🛡️ **CI performance guard** — `npm run test:activation` script runs only the activation-related test files via `--testPathPatterns=activation`
+
+---
+
 ## [3.8.5] - 2026-02-23
 
 ### Added

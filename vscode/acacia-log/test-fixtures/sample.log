@@ -1,0 +1,12 @@
+2026-01-15 10:00:00 INFO Application started
+2026-01-15 10:00:01 DEBUG Loading configuration from /etc/app/config.yml
+2026-01-15 10:00:02 INFO Configuration loaded successfully
+2026-01-15 10:00:05 WARN Slow database query detected (1234ms)
+2026-01-15 10:00:10 ERROR Connection timeout to database server
+  at DBConnection.connect (db.ts:42)
+  at QueryRunner.execute (query.ts:88)
+2026-01-15 10:00:11 INFO Retrying database connection (attempt 2/3)
+2026-01-15 10:00:12 INFO Database connected successfully
+2026-01-15 10:00:15 DEBUG Processing batch 1 of 5 (200 records)
+2026-01-15 10:00:20 INFO Batch processing complete - 1000 records in 5.2s
+2026-01-15 10:00:25 INFO Application shutdown complete

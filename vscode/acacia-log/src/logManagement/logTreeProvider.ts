@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import { LogFileHandler } from '../utils/log-file-reader';
-import { getFormatDisplayString } from '../utils/timestamp-detect';
 
 /** Filter options applied to the Log Files tree view */
 export interface FilterOptions {
@@ -545,6 +543,8 @@ export class LogTreeProvider implements vscode.TreeDataProvider<LogTreeItem> {
             let formatDisplay: string | undefined;
             
             try {
+                const { LogFileHandler } = require('../utils/log-file-reader');
+                const { getFormatDisplayString } = require('../utils/timestamp-detect');
                 const handler = new LogFileHandler(filePath);
                 const result = await handler.initialize();
                 

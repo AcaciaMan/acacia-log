@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
-import { DateTime } from 'luxon';
+import type { DateTime } from 'luxon';
+import { getLuxonDateTime } from './lazy-luxon';
 import { getOrDetectFormat, getRegexAndFormat } from './format-cache';
 
 /** Files larger than this threshold trigger an upfront warning and progress notification */
@@ -71,7 +72,7 @@ export async function drawLogTimeline(editor: vscode.TextEditor) {
     const line = lines[i];
     const match = line.match(logDateRegex);
     if (match) {
-      const dateTime = DateTime.fromFormat(match[0], logDateFormat);
+      const dateTime = getLuxonDateTime().fromFormat(match[0], logDateFormat);
       if (dateTime.isValid) {
         // Detect log level
         let level: string | undefined;

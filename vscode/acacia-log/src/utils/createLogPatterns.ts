@@ -2,7 +2,16 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export function createLogPatterns() {
+async function pathExists(p: string): Promise<boolean> {
+  try {
+    await fs.promises.access(p);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function createLogPatterns(): Promise<void> {
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders) {
     vscode.window.showErrorMessage('No workspace folder found');
@@ -13,11 +22,11 @@ export function createLogPatterns() {
   const vscodeFolderPath = path.join(workspacePath, '.vscode');
   const logPatternsFilePath = path.join(vscodeFolderPath, 'logPatterns.json');
 
-  if (!fs.existsSync(vscodeFolderPath)) {
-    fs.mkdirSync(vscodeFolderPath);
+  if (!(await pathExists(vscodeFolderPath))) {
+    await fs.promises.mkdir(vscodeFolderPath, { recursive: true });
   }
 
-  if (!fs.existsSync(logPatternsFilePath)) {
+  if (!(await pathExists(logPatternsFilePath))) {
     const defaultLogPatterns = {
       logPatterns: {
         error: {
@@ -53,7 +62,7 @@ export function createLogPatterns() {
       }
     };
 
-    fs.writeFileSync(logPatternsFilePath, JSON.stringify(defaultLogPatterns, null, 2));
+    await fs.promises.writeFile(logPatternsFilePath, JSON.stringify(defaultLogPatterns, null, 2));
     vscode.window.showInformationMessage('logPatterns.json created in .vscode folder');
   }
 }

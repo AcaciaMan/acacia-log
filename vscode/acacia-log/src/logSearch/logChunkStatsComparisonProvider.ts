@@ -1,14 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { LogFileHandler, getFileDates, buildLineIndex } from '../utils/log-file-reader';
-import { formatDuration } from '../utils/log-gap-finder';
-import {
-    extractAllGapsFromIndex,
-    computeDescriptiveStats,
-    detectOutliers,
-    DescriptiveStats
-} from '../utils/log-chunk-stats';
+import type { DescriptiveStats } from '../utils/log-chunk-stats';
 
 // ── Per-file result ────────────────────────────────────────────────────
 
@@ -109,6 +102,9 @@ export class LogChunkStatsComparisonProvider {
     private async analyseFile(filePath: string): Promise<FileStats> {
         const fileName = path.basename(filePath);
         try {
+            const { LogFileHandler, getFileDates, buildLineIndex } = require('../utils/log-file-reader');
+            const { extractAllGapsFromIndex, computeDescriptiveStats, detectOutliers } = require('../utils/log-chunk-stats');
+
             const handler = new LogFileHandler(filePath);
             await handler.initialize();
 
@@ -128,7 +124,7 @@ export class LogChunkStatsComparisonProvider {
                 return { filePath, fileName, stats: emptyStats(), outlierCount: 0, cv: 0, error: 'Not enough timestamped chunks' };
             }
 
-            const durations = allGaps.map(g => g.durationMs);
+            const durations = allGaps.map((g: any) => g.durationMs);
             const stats = computeDescriptiveStats(durations);
             const outlierCount = detectOutliers(allGaps).length;
             const cv = stats.mean > 0 ? (stats.stdDev / stats.mean) * 100 : 0;
@@ -171,6 +167,7 @@ export class LogChunkStatsComparisonProvider {
     }
 
     private serialize(r: FileStats): SerializedFileStats {
+        const { formatDuration } = require('../utils/log-gap-finder');
         const s = r.stats;
         const outlierPct = s.count > 0 ? ((r.outlierCount / s.count) * 100).toFixed(1) : '0.0';
         return {
@@ -263,6 +260,7 @@ interface Rankings {
 }
 
 function generateRankings(valid: FileStats[]): Rankings {
+    const { formatDuration } = require('../utils/log-gap-finder');
     const rank = (
         arr: FileStats[],
         key: (r: FileStats) => number,
@@ -288,6 +286,7 @@ function generateRankings(valid: FileStats[]): Rankings {
 function generateDescription(valid: FileStats[]): string[] {
     if (valid.length === 0) { return ['No valid files could be analysed.']; }
 
+    const { formatDuration } = require('../utils/log-gap-finder');
     const paragraphs: string[] = [];
     const n = valid.length;
     const names = valid.map(r => `"${r.fileName}"`);
@@ -422,6 +421,7 @@ function listJoin(items: string[]): string {
 }
 
 function medianComment(valid: FileStats[]): string {
+    const { formatDuration } = require('../utils/log-gap-finder');
     const byMed = [...valid].sort((a, b) => a.stats.median - b.stats.median);
     const lo = byMed[0];
     const hi = byMed[byMed.length - 1];

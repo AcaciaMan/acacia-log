@@ -1,0 +1,10 @@
+{"timestamp":"2026-01-15T10:00:00.000Z","text":"2026-01-15 10:00:00 INFO Application started"}
+{"timestamp":"2026-01-15T10:00:01.000Z","text":"2026-01-15 10:00:01 DEBUG Loading configuration from /etc/app/config.yml"}
+{"timestamp":"2026-01-15T10:00:02.000Z","text":"2026-01-15 10:00:02 INFO Configuration loaded successfully"}
+{"timestamp":"2026-01-15T10:00:05.000Z","text":"2026-01-15 10:00:05 WARN Slow database query detected (1234ms)"}
+{"timestamp":"2026-01-15T10:00:10.000Z","text":"2026-01-15 10:00:10 ERROR Connection timeout to database server\n  at DBConnection.connect (db.ts:42)\n  at QueryRunner.execute (query.ts:88)"}
+{"timestamp":"2026-01-15T10:00:11.000Z","text":"2026-01-15 10:00:11 INFO Retrying database connection (attempt 2/3)"}
+{"timestamp":"2026-01-15T10:00:12.000Z","text":"2026-01-15 10:00:12 INFO Database connected successfully"}
+{"timestamp":"2026-01-15T10:00:15.000Z","text":"2026-01-15 10:00:15 DEBUG Processing batch 1 of 5 (200 records)"}
+{"timestamp":"2026-01-15T10:00:20.000Z","text":"2026-01-15 10:00:20 INFO Batch processing complete - 1000 records in 5.2s"}
+{"timestamp":"2026-01-15T10:00:25.000Z","text":"2026-01-15 10:00:25 INFO Application shutdown complete"}

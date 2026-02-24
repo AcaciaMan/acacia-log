@@ -1,16 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { navigateToLine } from '../utils/navigateToLine';
-import { LogFileHandler, getFileDates, buildLineIndex } from '../utils/log-file-reader';
-import { refineLargestGap, formatDuration } from '../utils/log-gap-finder';
-import {
-    extractAllGapsFromIndex,
-    computeDescriptiveStats,
-    detectOutliers,
-    DescriptiveStats
-} from '../utils/log-chunk-stats';
-import type { GapRecord } from '../utils/log-gap-finder';
 
 /** Maximum number of outlier records refined with actual line text */
 const MAX_REFINED_OUTLIERS = 25;
@@ -39,6 +29,10 @@ export class LogChunkStatsProvider {
                 cancellable: false
             }, async (progress) => {
 
+                const { LogFileHandler, getFileDates, buildLineIndex } = require('../utils/log-file-reader');
+                const { refineLargestGap } = require('../utils/log-gap-finder');
+                const { extractAllGapsFromIndex, computeDescriptiveStats, detectOutliers } = require('../utils/log-chunk-stats');
+
                 progress.report({ increment: 0, message: 'Initializing log file handler…' });
 
                 const handler = new LogFileHandler(filePath);
@@ -61,7 +55,7 @@ export class LogChunkStatsProvider {
                 const allGaps = extractAllGapsFromIndex(handler.index);
 
                 if (allGaps.length < 2) {
-                    const tsCount = handler.index.offsets.filter(e => e.timestamp !== null).length;
+                    const tsCount = handler.index.offsets.filter((e: any) => e.timestamp !== null).length;
                     vscode.window.showInformationMessage(
                         tsCount < 2
                             ? `Only ${tsCount} timestamped entry/entries found. The file may be too small or timestamps were not detected.`
@@ -72,7 +66,7 @@ export class LogChunkStatsProvider {
 
                 progress.report({ increment: 40, message: 'Computing descriptive statistics…' });
 
-                const durations = allGaps.map(g => g.durationMs);
+                const durations = allGaps.map((g: any) => g.durationMs);
                 const stats = computeDescriptiveStats(durations);
                 const rawOutliers = detectOutliers(allGaps);
 
@@ -96,7 +90,7 @@ export class LogChunkStatsProvider {
 
                 const topOutliers = rawOutliers.slice(0, MAX_REFINED_OUTLIERS);
                 const refinedOutliers = await Promise.all(
-                    topOutliers.map(o => refineLargestGap(filePath, o, handler.index!, handler.format!, fileDates))
+                    topOutliers.map((o: any) => refineLargestGap(filePath, o, handler.index!, handler.format!, fileDates))
                 );
                 refinedOutliers.sort((a, b) => b.durationMs - a.durationMs);
 
@@ -125,12 +119,13 @@ export class LogChunkStatsProvider {
 
     private buildHtmlReport(
         filePath: string,
-        stats: DescriptiveStats,
-        minChunk: GapRecord,
-        maxChunk: GapRecord,
-        outliers: GapRecord[],
+        stats: any,
+        minChunk: any,
+        maxChunk: any,
+        outliers: any[],
         totalOutlierCount: number
     ): string {
+        const { formatDuration } = require('../utils/log-gap-finder');
         const templatePath = path.join(this.extensionPath, 'resources', 'logChunkStats.html');
 
         if (!fs.existsSync(templatePath)) {
@@ -171,7 +166,8 @@ export class LogChunkStatsProvider {
         return html;
     }
 
-    private serializeGap(gap: GapRecord) {
+    private serializeGap(gap: any) {
+        const { formatDuration } = require('../utils/log-gap-finder');
         return {
             line: gap.line + 1,
             timestamp: gap.timestamp.toISOString(),
@@ -199,6 +195,7 @@ export class LogChunkStatsProvider {
             if (message.command === 'exportHtml') {
                 await this.exportReport();
             } else if (message.command === 'navigateToLine') {
+                const { navigateToLine } = require('../utils/navigateToLine');
                 await navigateToLine(message.filePath, message.line);
             }
         });

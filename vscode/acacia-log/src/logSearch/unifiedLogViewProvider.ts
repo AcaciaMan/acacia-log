@@ -1,12 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { navigateToDateTime } from '../utils/navigateToDateTime';
-import { calculateSimilarLineCounts } from '../utils/calculateSimilarLineCounts';
-import { drawLogTimeline } from '../utils/drawLogTimeline';
-import { readLogPatterns } from '../utils/readLogPatterns';
-import { ResultDocumentProvider } from '../utils/resultDocumentProvider';
-import { getOrDetectFormat, getRegexPatternString } from '../utils/format-cache';
 
 /**
  * Unified Log View Provider with tabbed interface
@@ -57,6 +51,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               await vscode.workspace.getConfiguration('acacia-log').update('logSearchTime', message.searchTime, vscode.ConfigurationTarget.Workspace);
 
               // Execute navigation
+              const { navigateToDateTime } = require('../utils/navigateToDateTime');
               await navigateToDateTime();
               
               // Send success feedback
@@ -73,6 +68,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
 
               if (editor) {
+                const { calculateSimilarLineCounts } = require('../utils/calculateSimilarLineCounts');
                 await calculateSimilarLineCounts(editor);
                 webviewView.webview.postMessage({
                   command: 'operationComplete',
@@ -159,6 +155,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               await vscode.workspace.getConfiguration('acacia-log').update('logDateFormat', message.logTimeFormat, vscode.ConfigurationTarget.Workspace);
               
               if (editor) {
+                const { drawLogTimeline } = require('../utils/drawLogTimeline');
                 await drawLogTimeline(editor);
                 webviewView.webview.postMessage({
                   command: 'operationComplete',
@@ -179,6 +176,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               // Auto-detect timestamp format from current file
               if (editor) {
                 try {
+                  const { getOrDetectFormat, getRegexPatternString } = require('../utils/format-cache');
                   const detection = await getOrDetectFormat(editor.document);
                   
                   if (detection.detected && detection.format) {
@@ -273,6 +271,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               await vscode.workspace.getConfiguration('acacia-log').update('logFilePath', searchLogFilePath, vscode.ConfigurationTarget.Workspace);
               await vscode.workspace.getConfiguration('acacia-log').update('patternsFilePath', patternFilePath, vscode.ConfigurationTarget.Workspace);
 
+              const { readLogPatterns } = require('../utils/readLogPatterns');
               const searchPatterns = readLogPatterns(patternFilePath);
               console.log('[UnifiedLogView] Patterns loaded:', searchPatterns.length);
 
@@ -296,6 +295,7 @@ export class UnifiedLogViewProvider implements vscode.WebviewViewProvider {
               }
 
               // Open results in editor tab with HTML visualization
+              const { ResultDocumentProvider } = require('../utils/resultDocumentProvider');
               const resultProvider = ResultDocumentProvider.getInstance(this.context.extensionPath);
               console.log('[UnifiedLogView] Opening pattern search results...');
               try {
