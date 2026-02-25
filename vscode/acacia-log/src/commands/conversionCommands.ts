@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { LogTreeItem } from '../logManagement/logTreeProvider';
+import { ILogContext } from '../utils/log-context';
 
 export function registerConversionCommands(
     context: vscode.ExtensionContext,
     treeView: vscode.TreeView<LogTreeItem>,
-    getCurrentLogFile: () => string | undefined
+    logContext: ILogContext
 ): void {
     // Register Log → JSONL converter command (active editor)
     context.subscriptions.push(
@@ -23,8 +24,8 @@ export function registerConversionCommands(
                 const selection = treeView.selection[0];
                 if (selection && selection.resourceUri && !selection.isFolder) {
                     filePath = selection.resourceUri.fsPath;
-                } else if (getCurrentLogFile()) {
-                    filePath = getCurrentLogFile();
+                } else if (logContext.activeFilePath) {
+                    filePath = logContext.activeFilePath;
                 } else {
                     const activeEditor = vscode.window.activeTextEditor;
                     if (activeEditor) { filePath = activeEditor.document.uri.fsPath; }
@@ -49,8 +50,8 @@ export function registerConversionCommands(
                 const selection = treeView.selection[0];
                 if (selection && selection.resourceUri && !selection.isFolder) {
                     filePath = selection.resourceUri.fsPath;
-                } else if (getCurrentLogFile()) {
-                    filePath = getCurrentLogFile();
+                } else if (logContext.activeFilePath) {
+                    filePath = logContext.activeFilePath;
                 } else {
                     const activeEditor = vscode.window.activeTextEditor;
                     if (activeEditor) { filePath = activeEditor.document.uri.fsPath; }

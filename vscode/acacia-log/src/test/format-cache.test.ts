@@ -37,6 +37,7 @@ import {
 } from '../utils/format-cache';
 import { DetectedFormat } from '../utils/timestamp-detect';
 import { LogFileHandler } from '../utils/log-file-reader';
+import { LogContext } from '../utils/log-context';
 import * as vscode from 'vscode';
 
 // ── Test helpers ──────────────────────────────────────────────────────────────
@@ -124,6 +125,7 @@ describe('getRegexPatternString', () => {
 
 describe('clearAllFormatCache', () => {
   beforeEach(() => {
+    LogContext.resetInstance();
     clearAllFormatCache();
   });
 
@@ -145,6 +147,7 @@ describe('clearAllFormatCache', () => {
 
 describe('getCachedFormat and clearFormatCache', () => {
   beforeEach(() => {
+    LogContext.resetInstance();
     clearAllFormatCache();
   });
 
@@ -183,6 +186,7 @@ describe('getCachedFormat and clearFormatCache', () => {
 
 describe('getOrDetectFormat', () => {
   beforeEach(() => {
+    LogContext.resetInstance();
     clearAllFormatCache();
     jest.clearAllMocks();
   });

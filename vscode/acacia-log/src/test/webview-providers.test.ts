@@ -222,6 +222,26 @@ jest.mock('../utils/similar-lines-analyzer', () => ({
   }),
 }));
 
+// Mock LogContext singleton
+const mockResolveEditor = jest.fn();
+const mockLogContextInstance = {
+  activeFilePath: undefined as string | undefined,
+  setActiveFile: jest.fn((path: string | undefined) => { mockLogContextInstance.activeFilePath = path; }),
+  resolveEditor: mockResolveEditor,
+  getOrDetectFormat: jest.fn(),
+  getCachedFormat: jest.fn().mockReturnValue(null),
+  clearFormatCache: jest.fn(),
+  clearAllFormatCache: jest.fn(),
+  onDidChangeActiveFile: jest.fn(),
+  dispose: jest.fn(),
+};
+jest.mock('../utils/log-context', () => ({
+  LogContext: {
+    getInstance: jest.fn().mockReturnValue(mockLogContextInstance),
+    resetInstance: jest.fn(),
+  },
+}));
+
 // ── Imports under test ────────────────────────────────────────────────────────
 
 import { UnifiedLogViewProvider } from '../logSearch/unifiedLogViewProvider';
@@ -229,6 +249,7 @@ import { EditorToolsViewProvider } from '../logSearch/editorToolsViewProvider';
 import { LogGapReportProvider } from '../logSearch/logGapReportProvider';
 import { LogChunkStatsProvider } from '../logSearch/logChunkStatsProvider';
 import { LogChunkStatsComparisonProvider } from '../logSearch/logChunkStatsComparisonProvider';
+import { LogContext } from '../utils/log-context';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 
@@ -263,6 +284,8 @@ describe('UnifiedLogViewProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    LogContext.resetInstance();
+    mockLogContextInstance.activeFilePath = undefined;
     context = createMockExtensionContext();
     provider = new UnifiedLogViewProvider(context);
     view = createMockWebviewView();
@@ -442,7 +465,7 @@ describe('UnifiedLogViewProvider', () => {
 
   describe('message: autoDetectTimestampFormat', () => {
     it('reports detection failure when no editor', async () => {
-      (vscode.window as any).activeTextEditor = undefined;
+      mockResolveEditor.mockResolvedValue(undefined);
 
       await handleMessage({ command: 'autoDetectTimestampFormat', tab: 'logSearch' });
 
@@ -457,7 +480,7 @@ describe('UnifiedLogViewProvider', () => {
 
     it('returns detected format when found', async () => {
       const mockDoc = { uri: { scheme: 'file' } };
-      (vscode.window as any).activeTextEditor = { document: mockDoc };
+      mockResolveEditor.mockResolvedValue({ document: mockDoc });
       mockGetOrDetectFormat.mockResolvedValue({
         detected: true,
         format: { pattern: 'yyyy-MM-dd HH:mm:ss' },
@@ -606,6 +629,8 @@ describe('EditorToolsViewProvider', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    LogContext.resetInstance();
+    mockLogContextInstance.activeFilePath = undefined;
     context = createMockExtensionContext();
     provider = new EditorToolsViewProvider(context);
     view = createMockWebviewView();
@@ -633,8 +658,7 @@ describe('EditorToolsViewProvider', () => {
 
   describe('message: search', () => {
     it('shows error when no editor is resolvable', async () => {
-      (vscode.window as any).activeTextEditor = undefined;
-      provider.setSelectedLogFile(undefined);
+      mockResolveEditor.mockResolvedValue(undefined);
 
       await handleMessage({
         command: 'search',
@@ -653,9 +677,9 @@ describe('EditorToolsViewProvider', () => {
     });
 
     it('navigates when editor is available', async () => {
-      (vscode.window as any).activeTextEditor = {
+      mockResolveEditor.mockResolvedValue({
         document: { uri: { scheme: 'file' } },
-      };
+      });
 
       await handleMessage({
         command: 'search',
@@ -677,8 +701,7 @@ describe('EditorToolsViewProvider', () => {
 
   describe('message: calculateSimilarLineCounts', () => {
     it('shows error when no editor available', async () => {
-      (vscode.window as any).activeTextEditor = undefined;
-      provider.setSelectedLogFile(undefined);
+      mockResolveEditor.mockResolvedValue(undefined);
 
       await handleMessage({
         command: 'calculateSimilarLineCounts',
@@ -695,9 +718,9 @@ describe('EditorToolsViewProvider', () => {
     });
 
     it('runs analysis when editor available', async () => {
-      (vscode.window as any).activeTextEditor = {
+      mockResolveEditor.mockResolvedValue({
         document: { uri: { scheme: 'file' } },
-      };
+      });
 
       await handleMessage({
         command: 'calculateSimilarLineCounts',
@@ -717,9 +740,9 @@ describe('EditorToolsViewProvider', () => {
 
   describe('message: drawLogTimeline', () => {
     it('draws timeline when editor available', async () => {
-      (vscode.window as any).activeTextEditor = {
+      mockResolveEditor.mockResolvedValue({
         document: { uri: { scheme: 'file' } },
-      };
+      });
 
       await handleMessage({
         command: 'drawLogTimeline',
@@ -750,14 +773,11 @@ describe('EditorToolsViewProvider', () => {
     });
   });
 
-  describe('setSelectedLogFile', () => {
-    it('stores file path for editor resolution fallback', async () => {
-      // No active editor, but set a selected log file
-      (vscode.window as any).activeTextEditor = undefined;
+  describe('resolveEditor fallback via LogContext', () => {
+    it('uses LogContext.resolveEditor for editor resolution', async () => {
+      // Mock LogContext returning an editor
       const mockEditor = { document: { uri: { scheme: 'file' } } };
-      (vscode.window.showTextDocument as jest.Mock).mockResolvedValue(mockEditor);
-
-      provider.setSelectedLogFile('/mock/selected.log');
+      mockResolveEditor.mockResolvedValue(mockEditor);
 
       await handleMessage({
         command: 'search',
@@ -767,7 +787,8 @@ describe('EditorToolsViewProvider', () => {
         searchTime: '10:00:00',
       });
 
-      // Should successfully fall back to the selected file
+      // Should successfully resolve via LogContext
+      expect(mockResolveEditor).toHaveBeenCalled();
       expect(mockNavigateToDateTime).toHaveBeenCalled();
     });
   });

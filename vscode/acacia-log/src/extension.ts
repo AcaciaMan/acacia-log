@@ -10,6 +10,7 @@ import { registerTreeCommands } from './commands/treeCommands';
 import { registerReportCommands } from './commands/reportCommands';
 import { registerConversionCommands } from './commands/conversionCommands';
 import { registerViewCommands } from './commands/viewCommands';
+import { LogContext } from './utils/log-context';
 
 // This method is called when your extension is activated
 export async function activate(context: vscode.ExtensionContext) {
@@ -59,19 +60,18 @@ export async function activate(context: vscode.ExtensionContext) {
 		})
 	);
 
-	// ── Track current log file ─────────────────────────────────────────
+	// ── LogContext singleton ───────────────────────────────────────────
 
-	let currentLogFile: string | undefined;
-	const getCurrentLogFile = () => currentLogFile;
-	const setCurrentLogFile = (path: string | undefined) => { currentLogFile = path; };
+	const logContext = LogContext.getInstance();
+	context.subscriptions.push(logContext);
 
 	// ── Register all commands ──────────────────────────────────────────
 
 	registerConfigCommands(context);
 	registerAnalysisCommands(context);
-	registerTreeCommands(context, logTreeProvider, treeView, unifiedLogViewProvider, editorToolsViewProvider, setCurrentLogFile);
-	registerReportCommands(context, treeView, getCurrentLogFile);
-	registerConversionCommands(context, treeView, getCurrentLogFile);
+	registerTreeCommands(context, logTreeProvider, unifiedLogViewProvider, logContext);
+	registerReportCommands(context, treeView, logContext);
+	registerConversionCommands(context, treeView, logContext);
 	registerViewCommands(context, unifiedLogViewProvider, editorToolsViewProvider, resultProvider);
 
 	// ── Cleanup ────────────────────────────────────────────────────────

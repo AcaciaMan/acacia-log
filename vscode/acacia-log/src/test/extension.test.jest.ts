@@ -76,6 +76,26 @@ jest.mock('../utils/createLogPatterns', () => ({ createLogPatterns: jest.fn().mo
 jest.mock('../utils/log-to-jsonl-command', () => ({ convertToJsonl: jest.fn() }));
 jest.mock('../utils/jsonl-to-log', () => ({ convertJsonlToLog: jest.fn() }));
 jest.mock('../utils/log-file-reader', () => ({ readLineRange: jest.fn() }));
+jest.mock('../utils/log-context', () => {
+  const mockInstance = {
+    activeFilePath: undefined,
+    setActiveFile: jest.fn(),
+    resolveEditor: jest.fn(),
+    getOrDetectFormat: jest.fn(),
+    getCachedFormat: jest.fn(),
+    clearFormatCache: jest.fn(),
+    clearAllFormatCache: jest.fn(),
+    onDidChangeActiveFile: jest.fn(),
+    dispose: jest.fn(),
+  };
+  return {
+    LogContext: {
+      getInstance: jest.fn().mockReturnValue(mockInstance),
+      resetInstance: jest.fn(),
+    },
+    ILogContext: {},
+  };
+});
 jest.mock('../utils/resultDocumentProvider', () => ({
   ResultDocumentProvider: {
     getInstance: jest.fn().mockReturnValue({
@@ -125,7 +145,6 @@ jest.mock('../logSearch/unifiedLogViewProvider', () => {
 jest.mock('../logSearch/editorToolsViewProvider', () => {
   const ctor = jest.fn().mockImplementation(() => ({
     switchTab: jest.fn(),
-    setSelectedLogFile: jest.fn(),
   }));
   (ctor as any).viewType = 'acacia-log.editorTools';
   return { EditorToolsViewProvider: ctor };

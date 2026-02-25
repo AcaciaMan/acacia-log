@@ -1,101 +1,50 @@
 /**
- * Cache and helper for auto-detected timestamp formats
+ * Format-cache façade — delegates to LogContext singleton.
+ *
+ * All cache state now lives inside LogContext.  This module is kept as a
+ * thin re-export layer so existing consumers (`require` / `import`) continue
+ * to work without modification.
  */
 import * as vscode from 'vscode';
-import { LogFileHandler } from './log-file-reader';
-import { DetectedFormat, getFormatDisplayString } from './timestamp-detect';
+import { LogContext } from './log-context';
+import { DetectedFormat } from './timestamp-detect';
 
-// Cache detected formats by file URI
-const formatCache = new Map<string, {
-  format: DetectedFormat | null;
-  detected: boolean;
-  totalLines: number;
-  timestamp: number;
-}>();
-
-const CACHE_EXPIRATION_MS = 5 * 60 * 1000; // 5 minutes
+// Re-export types for backward compat
+export { DetectedFormat, getFormatDisplayString } from './timestamp-detect';
 
 /**
- * Get or detect the timestamp format for a document
- * Returns the detected format or null if detection fails
+ * Get or detect the timestamp format for a document (delegated to LogContext)
  */
 export async function getOrDetectFormat(document: vscode.TextDocument): Promise<{
   format: DetectedFormat | null;
   detected: boolean;
   totalLines: number;
 }> {
-  const uri = document.uri.toString();
-  
-  // Check cache first
-  const cached = formatCache.get(uri);
-  if (cached && (Date.now() - cached.timestamp < CACHE_EXPIRATION_MS)) {
-    return {
-      format: cached.format,
-      detected: cached.detected,
-      totalLines: cached.totalLines
-    };
-  }
-  
-  try {
-    // Detect format using LogFileHandler
-    const filePath = document.uri.fsPath;
-    const handler = new LogFileHandler(filePath);
-    const result = await handler.initialize();
-    
-    const detectionResult = {
-      format: result.detected ? result.format : null,
-      detected: result.detected,
-      totalLines: handler.totalLines
-    };
-    
-    // Cache the result
-    formatCache.set(uri, {
-      ...detectionResult,
-      timestamp: Date.now()
-    });
-    
-    console.log(`[FormatCache] Detected format for ${document.fileName}:`, 
-      result.detected ? result.format?.pattern : 'None');
-    
-    return detectionResult;
-  } catch (error) {
-    console.error(`[FormatCache] Error detecting format:`, error);
-    return {
-      format: null,
-      detected: false,
-      totalLines: 0
-    };
-  }
+  return LogContext.getInstance().getOrDetectFormat(document);
 }
 
 /**
- * Get format from cache or return null
+ * Get format from cache or return null (delegated to LogContext)
  */
 export function getCachedFormat(document: vscode.TextDocument): DetectedFormat | null {
-  const uri = document.uri.toString();
-  const cached = formatCache.get(uri);
-  
-  if (cached && (Date.now() - cached.timestamp < CACHE_EXPIRATION_MS)) {
-    return cached.format;
-  }
-  
-  return null;
+  return LogContext.getInstance().getCachedFormat(document);
 }
 
 /**
- * Clear format cache for a document
+ * Clear format cache for a document (delegated to LogContext)
  */
 export function clearFormatCache(document: vscode.TextDocument): void {
-  const uri = document.uri.toString();
-  formatCache.delete(uri);
+  return LogContext.getInstance().clearFormatCache(document);
 }
 
 /**
- * Clear all cached formats
+ * Clear all cached formats (delegated to LogContext)
  */
 export function clearAllFormatCache(): void {
-  formatCache.clear();
+  return LogContext.getInstance().clearAllFormatCache();
 }
+
+// ── Pure helper functions (no cache state) ────────────────────────────────────
 
 /**
  * Get regex and format from detected format or fallback to config
@@ -109,9 +58,6 @@ export function getRegexAndFormat(
 } {
   if (detectedFormat) {
     // Convert luxon format patterns to match what the timeline expects
-    let luxonFormat = detectedFormat.pattern;
-    
-    // Map common patterns for timeline parsing
     const formatMap: Record<string, string> = {
       'yyyy-MM-ddTHH:mm:ss.SSS': 'yyyy-MM-dd\'T\'HH:mm:ss.SSS',
       'yyyy-MM-dd HH:mm:ss.SSS': 'yyyy-MM-dd HH:mm:ss.SSS',
@@ -132,7 +78,7 @@ export function getRegexAndFormat(
       'HH:mm:ss': 'HH:mm:ss',
     };
     
-    const format = formatMap[luxonFormat] || luxonFormat;
+    const format = formatMap[detectedFormat.pattern] || detectedFormat.pattern;
     
     return {
       regex: detectedFormat.regex,

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { LogTreeItem } from '../logManagement/logTreeProvider';
+import { ILogContext } from '../utils/log-context';
 
 // Lazy-loaded provider instances
 let _logGapReportProvider: import('../logSearch/logGapReportProvider').LogGapReportProvider | undefined;
@@ -33,13 +34,13 @@ function getLogChunkStatsComparisonProvider(extensionPath: string) {
 export function registerReportCommands(
     context: vscode.ExtensionContext,
     treeView: vscode.TreeView<LogTreeItem>,
-    getCurrentLogFile: () => string | undefined
+    logContext: ILogContext
 ): void {
     // Register gap report generation command
     context.subscriptions.push(
         vscode.commands.registerCommand('acacia-log.logExplorer.generateGapReport', async () => {
             // Get the currently selected file from tree view or active editor
-            let filePath: string | undefined = getCurrentLogFile();
+            let filePath: string | undefined = logContext.activeFilePath;
 
             // If no file selected in tree, try to get from active editor
             if (!filePath) {
@@ -93,7 +94,7 @@ export function registerReportCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('acacia-log.logExplorer.generateChunkStatsReport', async () => {
             // Resolve the target log file (same resolution order as gap report)
-            let filePath: string | undefined = getCurrentLogFile();
+            let filePath: string | undefined = logContext.activeFilePath;
 
             if (!filePath) {
                 const selection = treeView.selection[0];

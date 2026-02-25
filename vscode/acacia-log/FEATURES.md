@@ -124,7 +124,7 @@ All five message handlers (Log Search, Similar Lines, Timeline, Test Regex, Auto
 1. **Active text editor** — used when a real log file (not a virtual `acacia-log:` result document) is open and focused.
 2. **Log Explorer selection** — falls back to the file most recently clicked in the Log Explorer tree, opening it on demand as a text document.
 
-A clear error message — *"No log file available. Open a log file or select one in the Log Explorer."* — is displayed only when neither source can be resolved. Selecting any file in the Log Explorer automatically updates the Editor Tools view via `setSelectedLogFile()`.
+A clear error message — *"No log file available. Open a log file or select one in the Log Explorer."* — is displayed only when neither source can be resolved. Selecting a file in the Log Explorer updates the shared `LogContext` singleton, which all views and commands automatically use to resolve the active log file.
 
 ### Log Search Tab
 - **Date/time regex** — configure or auto-detect the timestamp pattern in the active file

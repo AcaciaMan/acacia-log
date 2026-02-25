@@ -6,6 +6,9 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [3.8.6] - 2026-02-24
 
+### Changed
+- **State management refactor** — Introduced `LogContext` singleton (`src/utils/log-context.ts`) to centralize tracking of the active log file, detected timestamp format cache, and editor resolution. Replaces scattered `currentLogFile` closures, `_selectedLogFile` property, and module-level `formatCache` Map.
+
 ### Added
 - 🧪 **Activation performance tests** (`src/test/activation-performance.test.ts`) — comprehensive test suite verifying activation correctness after each refactoring
   - `activate()` completes without throwing and populates `context.subscriptions`

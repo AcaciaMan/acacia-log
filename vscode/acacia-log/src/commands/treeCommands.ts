@@ -1,15 +1,13 @@
 import * as vscode from 'vscode';
 import { LogTreeProvider, LogTreeItem, FilterOptions } from '../logManagement/logTreeProvider';
 import { UnifiedLogViewProvider } from '../logSearch/unifiedLogViewProvider';
-import { EditorToolsViewProvider } from '../logSearch/editorToolsViewProvider';
+import { ILogContext } from '../utils/log-context';
 
 export function registerTreeCommands(
     context: vscode.ExtensionContext,
     logTreeProvider: LogTreeProvider,
-    treeView: vscode.TreeView<LogTreeItem>,
     unifiedLogViewProvider: UnifiedLogViewProvider,
-    editorToolsViewProvider: EditorToolsViewProvider,
-    setCurrentLogFile: (path: string | undefined) => void
+    logContext: ILogContext
 ): void {
     // Double-click detection for tree view clicks
     let clickCount = 0;
@@ -27,11 +25,7 @@ export function registerTreeCommands(
             const currentPath = item.resourceUri.fsPath;
 
             // Update the current log file
-            setCurrentLogFile(currentPath);
-
-            // Keep the Editor Tools webview in sync so it can operate on this
-            // file even without an open text editor.
-            editorToolsViewProvider.setSelectedLogFile(currentPath);
+            logContext.setActiveFile(currentPath);
 
             // If this is a different item, reset
             if (lastClickedPath !== currentPath) {
