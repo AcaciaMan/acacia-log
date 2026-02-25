@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.6",
+  "version": "3.8.7",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -199,6 +199,24 @@
         "title": "Toggle Lens Decorations",
         "category": "Acacia Log",
         "icon": "$(color-mode)"
+      },
+      {
+        "command": "acacia-log.findLens",
+        "title": "Find Lens Pattern in File",
+        "category": "Acacia Log",
+        "icon": "$(search)"
+      },
+      {
+        "command": "acacia-log.toggleLensKey",
+        "title": "Toggle Single Lens Visibility",
+        "category": "Acacia Log",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "acacia-log.manageLenses",
+        "title": "Manage Lenses",
+        "category": "Acacia Log",
+        "icon": "$(telescope)"
       },
       {
         "command": "acacia-log.convertToJsonl",
@@ -409,6 +427,14 @@
           "type": "boolean",
           "default": true,
           "description": "Enable live lens decorations (coloured highlights) in the editor based on logPatterns.json."
+        },
+        "acacia-log.lensVisibility": {
+          "type": "object",
+          "default": {},
+          "description": "Per-lens visibility overrides. Keys are lens keys from logPatterns.json (e.g. \"error\", \"warn\"). Values are booleans: true = visible, false = hidden. Keys absent from this object inherit the lens's lensEnabled value.",
+          "additionalProperties": {
+            "type": "boolean"
+          }
         },
         "acacia-log.jsonl.messageMode": {
           "type": "string",

@@ -6,5 +6,10 @@
     "acacia-log.logFilePath": "c:\\work\\GitHub\\acacia-log\\log_example\\example.log",
     "acacia-log.patternsFilePath": "C:\\work\\GitHub\\acacia-log\\log_example\\.vscode\\logPatterns.json",
     "vscode-git-kafka.workspaceUUID": "z7ajuc59-5l1x-0apl-tucn-fj0000000000",
-    "vscode-git-kafka.sort": "Clicks (High-Low)"
+    "vscode-git-kafka.sort": "Clicks (High-Low)",
+    "acacia-log.lensVisibility": {
+        "error": true,
+        "warn": true,
+        "info": true
+    }
 }

@@ -8,7 +8,8 @@
       "lensCategory": "level",
       "lensLabel": "Error",
       "lensColor": "#ff4d4f",
-      "lensPriority": 100
+      "lensPriority": 100,
+      "lensShowInStatusBar": true
     },
     "warn": {
       "regexp": "WARN",
@@ -18,7 +19,8 @@
       "lensCategory": "level",
       "lensLabel": "Warning",
       "lensColor": "#faad14",
-      "lensPriority": 90
+      "lensPriority": 90,
+      "lensShowInStatusBar": true
     },
     "info": {
       "regexp": "INFO",
@@ -28,7 +30,8 @@
       "lensCategory": "level",
       "lensLabel": "Info",
       "lensColor": "#40a9ff",
-      "lensPriority": 80
+      "lensPriority": 80,
+      "lensShowInStatusBar": true
     }
   }
 }

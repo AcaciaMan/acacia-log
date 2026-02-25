@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { readLogPatterns, LogPatternEntry } from '../utils/readLogPatterns';
+import { readLogPatterns, LogPatternEntry, LensCategory } from '../utils/readLogPatterns';
 
 const ALLOWED_SCHEMES = new Set(['file', 'acacia-log']);
 
@@ -9,6 +9,10 @@ export class LogLensDecorationProvider {
   private decorationTypes: Map<string, vscode.TextEditorDecorationType> = new Map();
   private patterns: LogPatternEntry[] = [];
   private _enabled: boolean = true;
+  private _perLensVisible: Map<string, boolean> = new Map();
+  private _visibleCounts: Map<string, number> = new Map();
+  private readonly _onDidUpdateCounts =
+    new vscode.EventEmitter<ReadonlyMap<string, number>>();
 
   constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -56,8 +60,49 @@ export class LogLensDecorationProvider {
     }
   }
 
+  /** Fired after every decoration pass with visible-range match counts per key. */
+  readonly onDidUpdateCounts: vscode.Event<ReadonlyMap<string, number>> =
+    this._onDidUpdateCounts.event;
+
+  /**
+   * Set per-lens runtime visibility.
+   * Persists in memory only; does not modify logPatterns.json.
+   * Pass `undefined` to remove the override (reverts to lensEnabled from JSON).
+   */
+  setLensVisible(key: string, visible: boolean | undefined): void {
+    if (visible === undefined) {
+      this._perLensVisible.delete(key);
+    } else {
+      this._perLensVisible.set(key, visible);
+    }
+    this.applyToActiveEditor();
+  }
+
+  /**
+   * Return the effective runtime visibility for a lens key.
+   * Returns the _perLensVisible override if set, otherwise the pattern's
+   * lensEnabled value from logPatterns.json, or true if the key is unknown.
+   */
+  getLensVisible(key: string): boolean {
+    if (this._perLensVisible.has(key)) {
+      return this._perLensVisible.get(key)!;
+    }
+    const pattern = this.patterns.find(p => p.key === key);
+    return pattern ? pattern.lensEnabled : true;
+  }
+
+  /**
+   * Return a snapshot of visible-range match counts from the last decoration
+   * pass. Keys are lens keys; values are the count of matched ranges.
+   * Only lenses that were active (not hidden) in the last pass are included.
+   */
+  getVisibleCounts(): ReadonlyMap<string, number> {
+    return this._visibleCounts;
+  }
+
   dispose(): void {
     this.clearDecorationTypes();
+    this._onDidUpdateCounts.dispose();
   }
 
   private readEnabledSetting(): boolean {
@@ -80,6 +125,13 @@ export class LogLensDecorationProvider {
       const allPatterns = readLogPatterns(filePath);
       this.patterns = allPatterns.filter(p => p.lensEnabled && p.lensColor);
       this.rebuildDecorationTypes();
+      // Clear stale per-lens overrides for keys no longer present in patterns
+      for (const key of this._perLensVisible.keys()) {
+        if (!this.patterns.find(p => p.key === key)) {
+          this._perLensVisible.delete(key);
+        }
+      }
+      this._visibleCounts.clear();
     } catch (err) {
       console.error('[LogLensDecorationProvider] Failed to load patterns:', err);
       this.patterns = [];
@@ -116,8 +168,19 @@ export class LogLensDecorationProvider {
         color: pattern.lensColor,
         fontWeight: 'bold',
         isWholeLine: false,
+        overviewRulerColor: pattern.lensColor,
+        overviewRulerLane: this.rulerLaneForCategory(pattern.lensCategory),
       });
       this.decorationTypes.set(pattern.key, decorationType);
+    }
+  }
+
+  private rulerLaneForCategory(category: LensCategory): vscode.OverviewRulerLane {
+    switch (category) {
+      case 'stack':  return vscode.OverviewRulerLane.Left;
+      case 'sql':    return vscode.OverviewRulerLane.Center;
+      case 'config': return vscode.OverviewRulerLane.Center;
+      default:       return vscode.OverviewRulerLane.Right;
     }
   }
 
@@ -155,10 +218,24 @@ export class LogLensDecorationProvider {
     // Collect all visible line numbers across all visible ranges
     const visibleLineNumbers = this.getVisibleLineNumbers(editor);
 
+    // Reset counts for this pass
+    this._visibleCounts.clear();
+
     // Apply decorations for each lens pattern (already sorted by lensPriority desc)
     for (const pattern of this.patterns) {
       const decorationType = this.decorationTypes.get(pattern.key);
       if (!decorationType) {
+        continue;
+      }
+
+      // Check per-lens runtime visibility override
+      const isVisible = this._perLensVisible.has(pattern.key)
+        ? this._perLensVisible.get(pattern.key)!
+        : pattern.lensEnabled;
+
+      if (!isVisible) {
+        // Clear any stale decorations and skip this lens
+        editor.setDecorations(decorationType, []);
         continue;
       }
 
@@ -197,9 +274,15 @@ export class LogLensDecorationProvider {
         }
       }
 
+      // Store the visible-range count as a by-product (no extra iterations)
+      this._visibleCounts.set(pattern.key, ranges.length);
+
       // Always call setDecorations (even with an empty array) to clear stale decorations
       editor.setDecorations(decorationType, ranges);
     }
+
+    // Notify subscribers with a snapshot of visible counts
+    this._onDidUpdateCounts.fire(this._visibleCounts);
   }
 
   private getVisibleLineNumbers(editor: vscode.TextEditor): number[] {

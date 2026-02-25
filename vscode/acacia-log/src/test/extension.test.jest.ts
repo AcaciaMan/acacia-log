@@ -66,7 +66,16 @@ jest.mock('vscode', () => ({
   ConfigurationTarget: { Global: 1, Workspace: 2, WorkspaceFolder: 3 },
   TextEditorRevealType: { InCenter: 2 },
   QuickPickItemKind: { Separator: -1 },
+  StatusBarAlignment: { Left: 1, Right: 2 },
 }), { virtual: true });
+
+jest.mock('../logSearch/lensStatusBar', () => ({
+  LensStatusBar: jest.fn().mockImplementation(() => ({
+    activate: jest.fn(),
+    refresh: jest.fn(),
+    dispose: jest.fn(),
+  })),
+}));
 
 // Mock internal modules to prevent side effects
 jest.mock('../utils/navigateToDateTime', () => ({ navigateToDateTime: jest.fn() }));
@@ -273,6 +282,10 @@ describe('Extension activation', () => {
       'acacia-log.loadMoreBelow',
       // Decoration toggle
       'acacia-log.toggleLensDecorations',
+      // Lens commands
+      'acacia-log.findLens',
+      'acacia-log.toggleLensKey',
+      'acacia-log.manageLenses',
       // Tree view commands
       'acacia-log.logExplorer.onFileClick',
       'acacia-log.logExplorer.refresh',

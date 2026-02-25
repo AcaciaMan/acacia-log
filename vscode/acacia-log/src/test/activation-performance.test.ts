@@ -70,7 +70,16 @@ jest.mock('vscode', () => ({
     ConfigurationTarget: { Global: 1, Workspace: 2, WorkspaceFolder: 3 },
     TextEditorRevealType: { InCenter: 2 },
     QuickPickItemKind: { Separator: -1 },
+    StatusBarAlignment: { Left: 1, Right: 2 },
 }), { virtual: true });
+
+jest.mock('../logSearch/lensStatusBar', () => ({
+    LensStatusBar: jest.fn().mockImplementation(() => ({
+        activate: jest.fn(),
+        refresh: jest.fn(),
+        dispose: jest.fn(),
+    })),
+}));
 
 // Mock internal modules to prevent side effects
 const mockCreateLogPatterns = jest.fn().mockResolvedValue(undefined);
@@ -496,6 +505,8 @@ describe('Activation Performance Tests', () => {
                 './logSearch/editorToolsViewProvider',
                 './utils/resultDocumentProvider',
                 './logSearch/logLensDecorationProvider',
+                './logSearch/lensStatusBar',
+                './utils/readLogPatterns',
                 './utils/log-context',
                 './commands/configCommands',
                 './commands/analysisCommands',

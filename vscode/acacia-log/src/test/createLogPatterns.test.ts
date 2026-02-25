@@ -146,6 +146,7 @@ describe('createLogPatterns', () => {
       lensLabel: 'Error',
       lensColor: '#ff4d4f',
       lensPriority: 100,
+      lensShowInStatusBar: true,
     });
 
     // Check warn pattern structure
@@ -158,6 +159,7 @@ describe('createLogPatterns', () => {
       lensLabel: 'Warning',
       lensColor: '#faad14',
       lensPriority: 90,
+      lensShowInStatusBar: true,
     });
 
     // Check info pattern structure
@@ -170,6 +172,7 @@ describe('createLogPatterns', () => {
       lensLabel: 'Info',
       lensColor: '#40a9ff',
       lensPriority: 80,
+      lensShowInStatusBar: true,
     });
   });
 });

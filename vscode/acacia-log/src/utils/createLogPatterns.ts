@@ -37,7 +37,8 @@ export async function createLogPatterns(): Promise<void> {
           lensCategory: 'level',
           lensLabel: 'Error',
           lensColor: '#ff4d4f',
-          lensPriority: 100
+          lensPriority: 100,
+          lensShowInStatusBar: true
         },
         warn: {
           regexp: 'WARN',
@@ -47,7 +48,8 @@ export async function createLogPatterns(): Promise<void> {
           lensCategory: 'level',
           lensLabel: 'Warning',
           lensColor: '#faad14',
-          lensPriority: 90
+          lensPriority: 90,
+          lensShowInStatusBar: true
         },
         info: {
           regexp: 'INFO',
@@ -57,7 +59,8 @@ export async function createLogPatterns(): Promise<void> {
           lensCategory: 'level',
           lensLabel: 'Info',
           lensColor: '#40a9ff',
-          lensPriority: 80
+          lensPriority: 80,
+          lensShowInStatusBar: true
         }
       }
     };

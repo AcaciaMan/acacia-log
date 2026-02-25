@@ -70,7 +70,16 @@ jest.mock('vscode', () => ({
     ConfigurationTarget: { Global: 1, Workspace: 2, WorkspaceFolder: 3 },
     TextEditorRevealType: { InCenter: 2 },
     QuickPickItemKind: { Separator: -1 },
+    StatusBarAlignment: { Left: 1, Right: 2 },
 }), { virtual: true });
+
+jest.mock('../logSearch/lensStatusBar', () => ({
+    LensStatusBar: jest.fn().mockImplementation(() => ({
+        activate: jest.fn(),
+        refresh: jest.fn(),
+        dispose: jest.fn(),
+    })),
+}));
 
 jest.mock('../utils/navigateToDateTime', () => ({ navigateToDateTime: jest.fn() }));
 jest.mock('../utils/calculateSimilarLineCounts', () => ({ calculateSimilarLineCounts: jest.fn() }));
@@ -272,7 +281,7 @@ describe('Activation Benchmark', () => {
         console.log(`  subscriptions: ${context.subscriptions.length}`);
 
         // These counts should remain stable. Update if commands are added/removed.
-        expect(commandCount).toBe(32);
+        expect(commandCount).toBe(35);
         expect(webviewProviderCount).toBe(2);
         expect(contentProviderCount).toBe(1);
         expect(treeViewCount).toBe(1);

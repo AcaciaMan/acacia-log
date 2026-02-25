@@ -48,6 +48,17 @@ jest.mock('vscode', () => ({
   }),
   Position: jest.fn((l: number, c: number) => ({ line: l, character: c })),
   ThemeColor: jest.fn((id: string) => ({ id })),
+  OverviewRulerLane: {
+    Left: 1,
+    Center: 2,
+    Right: 4,
+    Full: 7,
+  },
+  EventEmitter: jest.fn().mockImplementation(() => ({
+    event: jest.fn(),
+    fire: jest.fn(),
+    dispose: jest.fn(),
+  })),
 }), { virtual: true });
 
 import { LogLensDecorationProvider } from '../logSearch/logLensDecorationProvider';
@@ -384,6 +395,263 @@ describe('LogLensDecorationProvider', () => {
         (c: any[]) => c[1].length > 0
       );
       expect(nonEmptyCalls.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // ── Overview ruler ────────────────────────────────────────────────────────
+
+  describe('overview ruler', () => {
+    it('sets overviewRulerColor on every decoration type', () => {
+      provider.activate();
+
+      const calls = mockCreateDecorationType.mock.calls;
+      // All 3 patterns (error, warn, info) should have overviewRulerColor
+      expect(calls.length).toBe(3);
+      for (const call of calls) {
+        expect(call[0].overviewRulerColor).toBeDefined();
+        expect(typeof call[0].overviewRulerColor).toBe('string');
+        expect(call[0].overviewRulerColor).toMatch(/^#[0-9a-fA-F]{6}$/);
+      }
+    });
+
+    it('overviewRulerColor matches lensColor for each pattern', () => {
+      provider.activate();
+
+      const calls = mockCreateDecorationType.mock.calls;
+      const rulerColors = calls.map((c: any[]) => c[0].overviewRulerColor);
+      const textColors  = calls.map((c: any[]) => c[0].color);
+
+      // ruler color must equal the text decoration color for each entry
+      for (let i = 0; i < calls.length; i++) {
+        expect(rulerColors[i]).toBe(textColors[i]);
+      }
+    });
+
+    it('sets overviewRulerLane on every decoration type', () => {
+      provider.activate();
+
+      const calls = mockCreateDecorationType.mock.calls;
+      for (const call of calls) {
+        expect(call[0].overviewRulerLane).toBeDefined();
+      }
+    });
+
+    it('uses Right lane for all level-category patterns (error, warn, info)', () => {
+      provider.activate();
+
+      const vscode = require('vscode');
+      const calls = mockCreateDecorationType.mock.calls;
+      // All 3 test-fixture patterns are lensCategory=level → Right lane
+      for (const call of calls) {
+        expect(call[0].overviewRulerLane).toBe(vscode.OverviewRulerLane.Right);
+      }
+    });
+  });
+
+  // ── Visible counts ────────────────────────────────────────────────────────
+
+  describe('visible counts', () => {
+    it('getVisibleCounts returns zero count for patterns with no matches', () => {
+      const editor = mockEditor([
+        'plain log line',
+        'another plain line',
+      ]);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      const counts = provider.getVisibleCounts();
+      // All patterns (error, warn, info) should have 0 matches
+      for (const [, count] of counts) {
+        expect(count).toBe(0);
+      }
+    });
+
+    it('getVisibleCounts returns correct count for ERROR pattern', () => {
+      const editor = mockEditor([
+        '10:00:00 ERROR first failure',
+        '10:00:01 INFO  all good',
+        '10:00:02 ERROR second failure',
+      ]);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      const counts = provider.getVisibleCounts();
+      expect(counts.get('error')).toBe(2);
+    });
+
+    it('getVisibleCounts accumulates counts when a single line matches multiple times', () => {
+      // The regexp is 'ERROR' with global flag — each occurrence on a line is
+      // a separate range, so a line with 'ERROR ERROR' yields 2 ranges
+      const editor = mockEditor([
+        '10:00:00 ERROR ERROR double',
+      ]);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      const counts = provider.getVisibleCounts();
+      expect(counts.get('error')).toBeGreaterThanOrEqual(2);
+    });
+
+    it('counts update when visible range changes', () => {
+      const editor = mockEditor(
+        [
+          '10:00:00 ERROR line 0',
+          '10:00:01 INFO  line 1',
+          '10:00:02 ERROR line 2',
+          '10:00:03 INFO  line 3',
+        ],
+        0, 1, // visible: lines 0-1
+      );
+      mockActiveEditor = editor;
+      provider.activate();
+
+      // After first pass: 1 ERROR visible (line 0)
+      expect(provider.getVisibleCounts().get('error')).toBe(1);
+
+      // Simulate scroll: now lines 2-3 are visible
+      editor.visibleRanges = [{ start: { line: 2 }, end: { line: 3 } }];
+      jest.clearAllMocks();
+
+      // Trigger the visible range change handler
+      const vrHandler = mockOnDidChangeTextEditorVisibleRanges.mock.calls[0]?.[0];
+      if (vrHandler) {
+        vrHandler({ textEditor: editor });
+      }
+
+      // After second pass: 1 ERROR visible (line 2)
+      expect(provider.getVisibleCounts().get('error')).toBe(1);
+    });
+
+    it('hidden lens does not appear in visible counts', () => {
+      const editor = mockEditor(['10:00:00 ERROR failure']);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      // Hide the error lens
+      provider.setLensVisible('error', false);
+
+      const counts = provider.getVisibleCounts();
+      // 'error' should be absent since it was skipped in the loop
+      expect(counts.has('error')).toBe(false);
+    });
+  });
+
+  // ── Per-lens visibility toggle (setLensVisible / getLensVisible) ──────────
+
+  describe('per-lens visibility', () => {
+    it('getLensVisible returns true for a known key with no override', () => {
+      provider.activate();
+      expect(provider.getLensVisible('error')).toBe(true);
+    });
+
+    it('getLensVisible returns true for an unknown key', () => {
+      provider.activate();
+      expect(provider.getLensVisible('nonexistent')).toBe(true);
+    });
+
+    it('setLensVisible(key, false) suppresses decorations for that lens', () => {
+      const editor = mockEditor(['10:00:00 ERROR fail']);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      jest.clearAllMocks();
+      provider.setLensVisible('error', false);
+
+      // After hiding: the error decoration type should receive empty ranges
+      const errorDecorationIndex = mockCreateDecorationType.mock.calls
+        .findIndex((c: any[]) => c[0].color === '#ff4d4f');
+
+      const errorDecorationType =
+        mockCreateDecorationType.mock.results[errorDecorationIndex]?.value;
+
+      if (errorDecorationType) {
+        const clearCall = mockSetDecorations.mock.calls.find(
+          (c: any[]) => c[0] === errorDecorationType && c[1].length === 0
+        );
+        expect(clearCall).toBeDefined();
+      }
+    });
+
+    it('getLensVisible returns false after setLensVisible(key, false)', () => {
+      provider.activate();
+      provider.setLensVisible('error', false);
+      expect(provider.getLensVisible('error')).toBe(false);
+    });
+
+    it('setLensVisible(key, true) re-enables a hidden lens', () => {
+      const editor = mockEditor(['10:00:00 ERROR fail']);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      provider.setLensVisible('error', false);
+      jest.clearAllMocks();
+      provider.setLensVisible('error', true);
+
+      expect(provider.getLensVisible('error')).toBe(true);
+
+      // Non-empty decoration call expected after re-enable
+      const nonEmptyCalls = mockSetDecorations.mock.calls.filter(
+        (c: any[]) => c[1].length > 0
+      );
+      expect(nonEmptyCalls.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('setLensVisible(key, undefined) removes the override', () => {
+      provider.activate();
+      provider.setLensVisible('error', false);
+      expect(provider.getLensVisible('error')).toBe(false);
+
+      provider.setLensVisible('error', undefined);
+      // Should revert to the pattern's lensEnabled=true from JSON
+      expect(provider.getLensVisible('error')).toBe(true);
+    });
+
+    it('hiding one lens does not affect other lenses', () => {
+      const editor = mockEditor([
+        '10:00:00 ERROR fail',
+        '10:00:01 WARN  slow',
+      ]);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      jest.clearAllMocks();
+      provider.setLensVisible('error', false);
+
+      // WARN decorations should still fire with non-empty ranges
+      const nonEmptyCalls = mockSetDecorations.mock.calls.filter(
+        (c: any[]) => c[1].length > 0
+      );
+      expect(nonEmptyCalls.length).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  // ── onDidUpdateCounts event ───────────────────────────────────────────────
+
+  describe('onDidUpdateCounts', () => {
+    it('fires after each decoration pass', () => {
+      const editor = mockEditor(['10:00:00 ERROR fail']);
+      mockActiveEditor = editor;
+      provider.activate();
+
+      // The EventEmitter mock's fire() should have been called at least once
+      const vscode = require('vscode');
+      const emitterInstance = vscode.EventEmitter.mock.results[0]?.value;
+      if (emitterInstance) {
+        expect(emitterInstance.fire).toHaveBeenCalled();
+      }
+    });
+
+    it('EventEmitter is disposed on provider.dispose()', () => {
+      provider.activate();
+
+      const vscode = require('vscode');
+      const emitterInstance = vscode.EventEmitter.mock.results[0]?.value;
+
+      provider.dispose();
+
+      if (emitterInstance) {
+        expect(emitterInstance.dispose).toHaveBeenCalled();
+      }
     });
   });
 });

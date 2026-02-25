@@ -4,6 +4,20 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.8.7] - 2026-02-25
+
+### Fixed
+- **Stale status-bar after toggle** — `acacia-log.toggleLensDecorations` now calls `lensStatusBar.refresh()` immediately after `logLensDecorationProvider.toggle()`, so item colours and counts are always up-to-date whether decorations are switched on or off.
+- **External `lensVisibility` edits ignored** — A new `onDidChangeConfiguration` subscription (Phase 1 of `activate`) re-syncs the decoration provider's internal visibility map and refreshes the status bar whenever `acacia-log.lensVisibility` is changed externally (e.g. by editing `.vscode/settings.json` directly or via another extension).
+
+### Added
+- 🧪 **Wiring tests** (`src/test/extension.wiring.test.ts`) — 11 tests covering both wiring fixes:
+  - **Suite A** (3 tests) — `toggleLensDecorations` calls `toggle()` then `refresh()`, in order, for every invocation.
+  - **Suite B** (6 tests) — `onDidChangeConfiguration` syncs each `lensVisibility` key into the decoration provider via `setLensVisible()` and calls `refresh()` exactly once; no-ops when the setting is unaffected or the map is empty; handles `null`/`undefined` gracefully.
+  - **Suite C** (2 tests) — Phase 2 restore block calls `setLensVisible()` for every persisted key before the `activate()` timer fires; `logLensDecorationProvider.activate()` is called during Phase 2 when `visibleTextEditors` is non-empty.
+
+---
+
 ## [3.8.6] - 2026-02-24
 
 ### Changed

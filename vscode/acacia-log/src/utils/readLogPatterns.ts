@@ -14,6 +14,7 @@ export interface LogPattern {
   lensLabel?: string;
   lensColor?: string;
   lensPriority?: number;
+  lensShowInStatusBar?: boolean;
 }
 
 interface LogPatterns {
@@ -35,6 +36,7 @@ export interface LogPatternEntry {
   lensLabel: string;
   lensColor: string | undefined;
   lensPriority: number;
+  lensShowInStatusBar: boolean;
 }
 
 /** Default colour palette used when lensColor is absent, keyed by lensCategory. */
@@ -90,6 +92,7 @@ export function readLogPatterns(filePath: string): LogPatternEntry[] {
         lensLabel:    pattern.lensLabel    ?? key,
         lensColor:    pattern.lensColor    ?? DEFAULT_LENS_COLORS[lensCategory],
         lensPriority: pattern.lensPriority ?? 0,
+        lensShowInStatusBar: pattern.lensShowInStatusBar ?? true,
       };
     })
     .sort((a, b) => b.lensPriority - a.lensPriority);
