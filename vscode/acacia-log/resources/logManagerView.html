@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; font-src {{CSP_SOURCE}}; style-src {{CSP_SOURCE}} 'unsafe-inline'; script-src 'unsafe-inline';">
+  <title>Log Manager</title>
+  <link href="{{CODICONS_URI}}" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--vscode-font-family);
+      font-size: var(--vscode-font-size);
+      color: var(--vscode-foreground);
+      background-color: var(--vscode-sideBar-background);
+      padding: 0;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 10px 8px;
+      border-bottom: 1px solid var(--vscode-panel-border);
+    }
+
+    .header-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .header-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+    }
+
+    /* Active File Card */
+    .active-file-card {
+      margin: 8px;
+      padding: 8px 10px;
+      background-color: var(--vscode-editor-background);
+      border: 1px solid var(--vscode-panel-border);
+      border-radius: 4px;
+    }
+
+    .card-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 6px;
+    }
+
+    .file-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--vscode-foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .file-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      color: var(--vscode-descriptionForeground);
+      flex-wrap: wrap;
+    }
+
+    .timestamp-status {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .status-dot {
+      font-size: 10px;
+      line-height: 1;
+    }
+
+    .status-dot.detected {
+      color: var(--vscode-testing-iconPassed, #73c991);
+    }
+
+    .status-dot.not-detected {
+      color: var(--vscode-testing-iconFailed, #f14c4c);
+    }
+
+    .file-stats {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .placeholder {
+      font-size: 11px;
+      color: var(--vscode-descriptionForeground);
+      font-style: italic;
+      padding: 4px 0;
+    }
+
+    /* Open Log Manager Button */
+    .open-panel-section {
+      padding: 4px 8px 8px;
+    }
+
+    .primary-btn {
+      width: 100%;
+      padding: 7px 10px;
+      background-color: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: var(--vscode-font-family);
+      font-weight: 600;
+      transition: background-color 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .primary-btn:hover {
+      background-color: var(--vscode-button-hoverBackground);
+    }
+
+    .primary-btn:active {
+      opacity: 0.9;
+    }
+
+    /* Quick Actions */
+    .quick-actions-section {
+      padding: 0 8px 10px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--vscode-descriptionForeground);
+      margin-bottom: 6px;
+      padding-top: 8px;
+      border-top: 1px solid var(--vscode-panel-border);
+    }
+
+    .quick-actions-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .quick-action-btn {
+      flex: 1;
+      padding: 5px 4px;
+      font-size: 10px;
+      font-family: var(--vscode-font-family);
+      font-weight: 500;
+      background-color: var(--vscode-button-secondaryBackground);
+      color: var(--vscode-button-secondaryForeground);
+      border: none;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background-color 0.15s;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .quick-action-btn:hover {
+      background-color: var(--vscode-button-secondaryHoverBackground);
+    }
+
+    .quick-action-btn:active {
+      opacity: 0.9;
+    }
+
+    .codicon {
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    button:focus-visible,
+    .primary-btn:focus-visible,
+    .quick-action-btn:focus-visible {
+      outline: 2px solid var(--vscode-focusBorder);
+      outline-offset: 1px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body role="region" aria-label="Log Manager Dashboard">
+
+  <!-- Header -->
+  <div class="header" role="banner">
+    <span class="header-icon"><span class="codicon codicon-list-tree"></span></span>
+    <span class="header-title">Log Manager</span>
+  </div>
+
+  <!-- Active File Card -->
+  <div class="active-file-card" id="activeFileCard">
+    <div class="card-label">Active File</div>
+    <div id="activeFileContent" role="status" aria-live="polite" aria-atomic="true">
+      <div class="placeholder">No active file</div>
+    </div>
+  </div>
+
+  <!-- Open Log Manager Button -->
+  <div class="open-panel-section">
+    <button class="primary-btn" id="openPanelBtn" aria-label="Open the full Log Manager panel in the editor area" title="Open the full Log Manager panel in the editor area">
+      <span class="codicon codicon-open-preview"></span>
+      <span>Open Log Manager</span>
+    </button>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions-section">
+    <div class="section-label">Quick Actions</div>
+    <div class="quick-actions-row">
+      <button class="quick-action-btn" id="patternSearchBtn" aria-label="Run Pattern Search on the active file" title="Run Pattern Search on the active file"><span class="codicon codicon-search"></span> Pattern</button>
+      <button class="quick-action-btn" id="gapReportBtn" aria-label="Generate Gap Report for the active file" title="Generate Gap Report for the active file"><span class="codicon codicon-watch"></span> Gaps</button>
+      <button class="quick-action-btn" id="chunkStatsBtn" aria-label="Show Chunk Stats for the active file" title="Show Chunk Stats for the active file"><span class="codicon codicon-graph"></span> Chunks</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const vscode = acquireVsCodeApi();
+
+      // Elements
+      const activeFileContent = document.getElementById('activeFileContent');
+      const openPanelBtn = document.getElementById('openPanelBtn');
+      const patternSearchBtn = document.getElementById('patternSearchBtn');
+      const gapReportBtn = document.getElementById('gapReportBtn');
+      const chunkStatsBtn = document.getElementById('chunkStatsBtn');
+
+      // Button handlers
+      openPanelBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'openLogManagerPanel' });
+      });
+
+      patternSearchBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'quickPatternSearch' });
+      });
+
+      gapReportBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'quickGapReport' });
+      });
+
+      chunkStatsBtn.addEventListener('click', () => {
+        vscode.postMessage({ command: 'quickChunkStats' });
+      });
+
+      // Render active file info
+      function renderActiveFile(data) {
+        const { fileName, filePath, fileSize, lineCount, timestampDetected, timestampFormat } = data;
+
+        const truncatedName = fileName.length > 30 ? fileName.substring(0, 27) + '...' : fileName;
+
+        const dotClass = timestampDetected ? 'detected' : 'not-detected';
+        const dotChar = '●';
+        const tsLabel = timestampDetected
+          ? (timestampFormat || 'Detected')
+          : 'Not detected';
+
+        let statsHtml = '';
+        const statParts = [];
+        if (fileSize !== undefined && fileSize !== null) {
+          statParts.push(formatFileSize(fileSize));
+        }
+        if (lineCount !== undefined && lineCount !== null) {
+          statParts.push(lineCount.toLocaleString() + ' lines');
+        }
+        if (statParts.length > 0) {
+          statsHtml = '<div class="file-stats">' + statParts.join(' · ') + '</div>';
+        }
+
+        activeFileContent.innerHTML =
+          '<div class="file-name" title="' + escapeAttr(filePath || fileName) + '">' + escapeHtml(truncatedName) + '</div>' +
+          '<div class="file-meta">' +
+            '<div class="timestamp-status">' +
+              '<span class="status-dot ' + dotClass + '">' + dotChar + '</span>' +
+              '<span>' + escapeHtml(tsLabel) + '</span>' +
+            '</div>' +
+            statsHtml +
+          '</div>';
+      }
+
+      // Clear active file
+      function clearActiveFile() {
+        activeFileContent.innerHTML = '<div class="placeholder">No active file</div>';
+      }
+
+      // Helpers
+      function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+        return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+      }
+
+      function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      function escapeAttr(str) {
+        return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      // Listen for messages from the extension
+      window.addEventListener('message', (event) => {
+        const msg = event.data;
+        switch (msg.command) {
+          case 'updateActiveFile':
+            renderActiveFile(msg);
+            break;
+          case 'clearActiveFile':
+            clearActiveFile();
+            break;
+        }
+      });
+    })();
+  </script>
+
+</body>
+</html>

@@ -88,13 +88,7 @@ suite('Acacia Log E2E Tests', () => {
         'acacia-log.logExplorer.filter',
         'acacia-log.logExplorer.clearFilter',
         'acacia-log.convertToJsonl',
-        'acacia-log.unifiedView.switchToLogAnalysis',
-        'acacia-log.unifiedView.switchToSimilarLines',
-        'acacia-log.unifiedView.switchToTimeline',
-        'acacia-log.unifiedView.switchToPatternSearch',
-        'acacia-log.unifiedView.switchToFileInfo',
-        'acacia-log.editorTools.switchToSimilarLines',
-        'acacia-log.editorTools.switchToTimeline',
+        'acacia-log.openLogManagerPanel',
       ];
 
       for (const cmd of expectedCommands) {

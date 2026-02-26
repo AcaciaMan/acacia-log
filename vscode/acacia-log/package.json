@@ -6,7 +6,7 @@
     "type": "git",
     "url": "https://github.com/AcaciaMan/acacia-log"
   },
-  "version": "3.8.7",
+  "version": "3.9.0",
   "publisher": "manacacia",
   "engines": {
     "vscode": "^1.109.0"
@@ -15,15 +15,15 @@
     "Other"
   ],
   "keywords": [
-    "log", 
-    "log viewer", 
-    "log analysis", 
-    "log parser", 
-    "timestamp", 
-    "log gaps", 
-    "log statistics", 
-    "log file", 
-    "log monitoring", 
+    "log",
+    "log viewer",
+    "log analysis",
+    "log parser",
+    "timestamp",
+    "log gaps",
+    "log statistics",
+    "log file",
+    "log monitoring",
     "log tools"
   ],
   "activationEvents": [],
@@ -139,46 +139,10 @@
         "icon": "$(filter-filled)"
       },
       {
-        "command": "acacia-log.unifiedView.switchToLogAnalysis",
-        "title": "Log Analysis",
+        "command": "acacia-log.openLogManagerPanel",
+        "title": "Open Log Manager Panel",
         "category": "Acacia Log",
-        "icon": "$(search)"
-      },
-      {
-        "command": "acacia-log.editorTools.switchToSimilarLines",
-        "title": "Similar Lines",
-        "category": "Acacia Log",
-        "icon": "$(graph)"
-      },
-      {
-        "command": "acacia-log.editorTools.switchToTimeline",
-        "title": "Timeline",
-        "category": "Acacia Log",
-        "icon": "$(graph-line)"
-      },
-      {
-        "command": "acacia-log.unifiedView.switchToSimilarLines",
-        "title": "Similar Lines",
-        "category": "Acacia Log",
-        "icon": "$(graph)"
-      },
-      {
-        "command": "acacia-log.unifiedView.switchToTimeline",
-        "title": "Timeline",
-        "category": "Acacia Log",
-        "icon": "$(graph-line)"
-      },
-      {
-        "command": "acacia-log.unifiedView.switchToPatternSearch",
-        "title": "Pattern Search",
-        "category": "Acacia Log",
-        "icon": "$(search-fuzzy)"
-      },
-      {
-        "command": "acacia-log.unifiedView.switchToFileInfo",
-        "title": "File Info",
-        "category": "Acacia Log",
-        "icon": "$(info)"
+        "icon": "$(preview)"
       },
       {
         "command": "acacia-log.loadMoreAbove",
@@ -243,20 +207,14 @@
     "views": {
       "myExtensionContainer": [
         {
+          "type": "webview",
+          "id": "acacia-log.logManager",
+          "name": "Log Manager",
+          "icon": "resources/log_icon.svg"
+        },
+        {
           "id": "acacia-log.logExplorer",
           "name": "Log Files",
-          "icon": "resources/log_icon.svg"
-        },
-        {
-          "type": "webview",
-          "id": "acacia-log.editorTools",
-          "name": "Editor Tools",
-          "icon": "resources/log_icon.svg"
-        },
-        {
-          "type": "webview",
-          "id": "acacia-log.unifiedView",
-          "name": "Log Analysis",
           "icon": "resources/log_icon.svg"
         }
       ]
@@ -284,44 +242,19 @@
           "group": "navigation"
         },
         {
-          "command": "acacia-log.unifiedView.switchToLogAnalysis",
-          "when": "view == acacia-log.editorTools",
+          "command": "acacia-log.openLogManagerPanel",
+          "when": "view == acacia-log.logManager",
           "group": "navigation@1"
         },
         {
-          "command": "acacia-log.editorTools.switchToSimilarLines",
-          "when": "view == acacia-log.editorTools",
+          "command": "acacia-log.logExplorer.generateGapReport",
+          "when": "view == acacia-log.logManager",
           "group": "navigation@2"
         },
         {
-          "command": "acacia-log.editorTools.switchToTimeline",
-          "when": "view == acacia-log.editorTools",
-          "group": "navigation@3"
-        },
-        {
-          "command": "acacia-log.unifiedView.switchToPatternSearch",
-          "when": "view == acacia-log.unifiedView",
-          "group": "navigation@4"
-        },
-        {
-          "command": "acacia-log.unifiedView.switchToFileInfo",
-          "when": "view == acacia-log.unifiedView",
-          "group": "navigation@5"
-        },
-        {
-          "command": "acacia-log.logExplorer.generateGapReport",
-          "when": "view == acacia-log.unifiedView",
-          "group": "navigation@6"
-        },
-        {
           "command": "acacia-log.logExplorer.generateChunkStatsReport",
-          "when": "view == acacia-log.unifiedView",
-          "group": "navigation@7"
-        },
-        {
-          "command": "acacia-log.logExplorer.convertJsonlToLog",
-          "when": "view == acacia-log.unifiedView",
-          "group": "navigation@8"
+          "when": "view == acacia-log.logManager",
+          "group": "navigation@3"
         },
         {
           "command": "acacia-log.logExplorer.compareChunkStats",
@@ -438,7 +371,10 @@
         },
         "acacia-log.jsonl.messageMode": {
           "type": "string",
-          "enum": ["firstLineMinusTimestamp", "firstLineAsIs"],
+          "enum": [
+            "firstLineMinusTimestamp",
+            "firstLineAsIs"
+          ],
           "default": "firstLineMinusTimestamp",
           "description": "How the 'message' field is derived. 'firstLineMinusTimestamp' strips the detected timestamp from the first line; 'firstLineAsIs' uses the full line."
         },
@@ -491,6 +427,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@vscode/codicons": "^0.0.44",
     "luxon": "^3.7.2"
   },
   "icon": "log_icon.png"

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { LogTreeProvider } from './logManagement/logTreeProvider';
-import { UnifiedLogViewProvider } from './logSearch/unifiedLogViewProvider';
-import { EditorToolsViewProvider } from './logSearch/editorToolsViewProvider';
+import { LogManagerViewProvider } from './logSearch/logManagerViewProvider';
+import { LogManagerPanelProvider } from './logSearch/logManagerPanelProvider';
 import { ResultDocumentProvider } from './utils/resultDocumentProvider';
 import { LogLensDecorationProvider } from './logSearch/logLensDecorationProvider';
 import { registerConfigCommands } from './commands/configCommands';
@@ -30,9 +30,18 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	// ── Providers ──────────────────────────────────────────────────────
 
-	const unifiedLogViewProvider = new UnifiedLogViewProvider(context);
+	const logManagerViewProvider = new LogManagerViewProvider(context);
 	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(UnifiedLogViewProvider.viewType, unifiedLogViewProvider)
+		vscode.window.registerWebviewViewProvider(LogManagerViewProvider.viewType, logManagerViewProvider)
+	);
+
+	const logManagerPanelProvider = new LogManagerPanelProvider(context);
+	context.subscriptions.push({ dispose: () => logManagerPanelProvider.dispose() });
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand('acacia-log.openLogManagerPanel', (args?: { tab?: string }) => {
+			logManagerPanelProvider.openPanel(args?.tab);
+		})
 	);
 
 	const resultProvider = ResultDocumentProvider.getInstance(context.extensionPath);
@@ -48,11 +57,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		canSelectMany: true
 	});
 	context.subscriptions.push(treeView);
-
-	const editorToolsViewProvider = new EditorToolsViewProvider(context);
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(EditorToolsViewProvider.viewType, editorToolsViewProvider)
-	);
 
 	const logLensDecorationProvider = new LogLensDecorationProvider(context);
 	context.subscriptions.push({ dispose: () => logLensDecorationProvider.dispose() });
@@ -194,10 +198,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	registerConfigCommands(context);
 	registerAnalysisCommands(context);
-	registerTreeCommands(context, logTreeProvider, unifiedLogViewProvider, logContext);
+	registerTreeCommands(context, logTreeProvider, logContext);
 	registerReportCommands(context, treeView, logContext);
 	registerConversionCommands(context, treeView, logContext);
-	registerViewCommands(context, unifiedLogViewProvider, editorToolsViewProvider, resultProvider);
+	registerViewCommands(context, resultProvider);
 
 	// ── Cleanup ────────────────────────────────────────────────────────
 

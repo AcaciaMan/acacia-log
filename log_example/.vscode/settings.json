@@ -1,6 +1,6 @@
 {
     "acacia-log.logSearchDate": "2015-02-09",
-    "acacia-log.logSearchTime": "12:53:04",
+    "acacia-log.logSearchTime": "12:53:03",
     "acacia-log.logDateRegex": "\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2}\\.\\d{3}",
     "acacia-log.logDateFormat": "yyyy-MM-dd HH:mm:ss.SSS",
     "acacia-log.logFilePath": "c:\\work\\GitHub\\acacia-log\\log_example\\example.log",

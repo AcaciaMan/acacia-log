@@ -4,7 +4,7 @@
 
 Navigate massive log files by timestamp, detect time gaps, visualize activity timelines, search with regex patterns, analyze similar lines, compare multiple files, convert JSONL/NDJSON, and highlight log levels with live colour decorations — all without leaving the editor.
 
-[![Version](https://img.shields.io/badge/version-3.8.5-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-3.9.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
 
 <img alt="Acacia Log - Log Search Screenshot" src="https://github.com/user-attachments/assets/eca1bc9d-12a2-4833-9c98-1ec56417a859" />
@@ -61,15 +61,16 @@ ext install manacacia.acacia-log
 ### First Use
 
 1. Click the **Acacia Log icon** in the Activity Bar (left sidebar)
-2. Add a log folder using the **+** button in the **Log Files** panel, or open a log file directly in the editor
-3. Use the **Editor Tools** panel to run analysis on the active file:
+2. The **Log Manager** dashboard shows the active file status and quick-access buttons
+3. Add a log folder using the **+** button in the **Log Files** panel, or open a log file directly in the editor
+4. Click **Open Log Manager** (or use the toolbar icons) to open the full **Log Manager Panel** in the editor area:
    - **Log Search** — navigate to a date/time position in the open log file
+   - **Pattern Search** — search multiple regex patterns in parallel
    - **Similar Lines** — count and rank repeated log lines
    - **Timeline** — generate an interactive activity chart
-4. Use the **Log Analysis** panel for file-tree-based operations:
-   - **Pattern Search** — search multiple regex patterns
-   - **File Info** — view metadata and statistics
-   - **Gap Report**, **Chunk Stats**, **Convert JSONL**
+   - **File Info** — view metadata and timestamp detection status
+   - **Compare Stats** — compare chunk statistics across multiple files
+   - **JSONL Conversion** — convert between Log and JSONL formats
 
 All result views open as editor tabs for full-screen reading.
 

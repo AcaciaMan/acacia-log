@@ -146,20 +146,17 @@ jest.mock('../logSearch/logLensDecorationProvider', () => ({
         dispose: jest.fn(),
     })),
 }));
-jest.mock('../logSearch/unifiedLogViewProvider', () => {
-    const ctor = jest.fn().mockImplementation(() => ({
-        switchTab: jest.fn(),
-        showFileInfo: jest.fn(),
-    }));
-    (ctor as any).viewType = 'acacia-log.unifiedView';
-    return { UnifiedLogViewProvider: ctor };
+jest.mock('../logSearch/logManagerViewProvider', () => {
+    const ctor = jest.fn().mockImplementation(() => ({}));
+    (ctor as any).viewType = 'acacia-log.logManager';
+    return { LogManagerViewProvider: ctor };
 });
-jest.mock('../logSearch/editorToolsViewProvider', () => {
+jest.mock('../logSearch/logManagerPanelProvider', () => {
     const ctor = jest.fn().mockImplementation(() => ({
-        switchTab: jest.fn(),
+        openPanel: jest.fn(),
+        dispose: jest.fn(),
     }));
-    (ctor as any).viewType = 'acacia-log.editorTools';
-    return { EditorToolsViewProvider: ctor };
+    return { LogManagerPanelProvider: ctor };
 });
 jest.mock('../logSearch/logGapReportProvider', () => ({
     LogGapReportProvider: jest.fn().mockImplementation(() => ({
@@ -281,8 +278,8 @@ describe('Activation Benchmark', () => {
         console.log(`  subscriptions: ${context.subscriptions.length}`);
 
         // These counts should remain stable. Update if commands are added/removed.
-        expect(commandCount).toBe(35);
-        expect(webviewProviderCount).toBe(2);
+        expect(commandCount).toBe(29);
+        expect(webviewProviderCount).toBe(1);
         expect(contentProviderCount).toBe(1);
         expect(treeViewCount).toBe(1);
     });

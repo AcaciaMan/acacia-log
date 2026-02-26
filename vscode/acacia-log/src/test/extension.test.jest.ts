@@ -143,20 +143,17 @@ jest.mock('../logSearch/logLensDecorationProvider', () => ({
     dispose: jest.fn(),
   })),
 }));
-jest.mock('../logSearch/unifiedLogViewProvider', () => {
-  const ctor = jest.fn().mockImplementation(() => ({
-    switchTab: jest.fn(),
-    showFileInfo: jest.fn(),
-  }));
-  (ctor as any).viewType = 'acacia-log.unifiedView';
-  return { UnifiedLogViewProvider: ctor };
+jest.mock('../logSearch/logManagerViewProvider', () => {
+  const ctor = jest.fn().mockImplementation(() => ({}));
+  (ctor as any).viewType = 'acacia-log.logManager';
+  return { LogManagerViewProvider: ctor };
 });
-jest.mock('../logSearch/editorToolsViewProvider', () => {
+jest.mock('../logSearch/logManagerPanelProvider', () => {
   const ctor = jest.fn().mockImplementation(() => ({
-    switchTab: jest.fn(),
+    openPanel: jest.fn(),
+    dispose: jest.fn(),
   }));
-  (ctor as any).viewType = 'acacia-log.editorTools';
-  return { EditorToolsViewProvider: ctor };
+  return { LogManagerPanelProvider: ctor };
 });
 jest.mock('../logSearch/logGapReportProvider', () => ({
   LogGapReportProvider: jest.fn().mockImplementation(() => ({
@@ -181,8 +178,7 @@ jest.mock('luxon', () => ({
 // ── Import under test ─────────────────────────────────────────────────────────
 
 import { activate, deactivate } from '../extension';
-import { UnifiedLogViewProvider } from '../logSearch/unifiedLogViewProvider';
-import { EditorToolsViewProvider } from '../logSearch/editorToolsViewProvider';
+import { LogManagerViewProvider } from '../logSearch/logManagerViewProvider';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -219,24 +215,17 @@ describe('Extension activation', () => {
       expect(context.subscriptions.length).toBeGreaterThan(0);
     });
 
-    it('registers the expected number of commands (≥ 30)', () => {
-      expect(mockRegisterCommand.mock.calls.length).toBeGreaterThanOrEqual(30);
+    it('registers the expected number of commands (≥ 25)', () => {
+      expect(mockRegisterCommand.mock.calls.length).toBeGreaterThanOrEqual(25);
     });
   });
 
   // ── Provider registration ───────────────────────────────────────────────
 
   describe('provider registration', () => {
-    it('registers UnifiedLogViewProvider webview', () => {
+    it('registers LogManagerViewProvider webview', () => {
       expect(mockRegisterWebviewViewProvider).toHaveBeenCalledWith(
-        'acacia-log.unifiedView',
-        expect.any(Object),
-      );
-    });
-
-    it('registers EditorToolsViewProvider webview', () => {
-      expect(mockRegisterWebviewViewProvider).toHaveBeenCalledWith(
-        'acacia-log.editorTools',
+        'acacia-log.logManager',
         expect.any(Object),
       );
     });
@@ -258,8 +247,8 @@ describe('Extension activation', () => {
       );
     });
 
-    it('registers exactly 2 webview view providers', () => {
-      expect(mockRegisterWebviewViewProvider).toHaveBeenCalledTimes(2);
+    it('registers exactly 1 webview view provider', () => {
+      expect(mockRegisterWebviewViewProvider).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -304,15 +293,8 @@ describe('Extension activation', () => {
       'acacia-log.convertToJsonl',
       'acacia-log.logExplorer.convertToJsonl',
       'acacia-log.logExplorer.convertJsonlToLog',
-      // Unified view tab switching
-      'acacia-log.unifiedView.switchToLogAnalysis',
-      'acacia-log.unifiedView.switchToSimilarLines',
-      'acacia-log.unifiedView.switchToTimeline',
-      'acacia-log.unifiedView.switchToPatternSearch',
-      'acacia-log.unifiedView.switchToFileInfo',
-      // Editor tools tab switching
-      'acacia-log.editorTools.switchToSimilarLines',
-      'acacia-log.editorTools.switchToTimeline',
+      // Log Manager
+      'acacia-log.openLogManagerPanel',
     ];
 
     it.each(expectedCommands)('registers command "%s"', (commandId) => {
@@ -635,12 +617,10 @@ describe('Command handler execution', () => {
 
   // ── showFileInfo ──
 
-  it('showFileInfo calls unifiedLogView when resourceUri exists', async () => {
+  it('showFileInfo is a placeholder (no-op)', async () => {
     const handler = getHandler('acacia-log.logExplorer.showFileInfo');
     await handler({ resourceUri: { fsPath: '/test.log' }, metadata: {} });
-    const { UnifiedLogViewProvider: ULP } = require('../logSearch/unifiedLogViewProvider');
-    const instance = ULP.mock.results[0].value;
-    expect(instance.showFileInfo).toHaveBeenCalled();
+    // Placeholder — no provider interaction expected
   });
 
   it('showFileInfo does nothing when no resourceUri', async () => {
@@ -669,47 +649,22 @@ describe('Command handler execution', () => {
     expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Please select a JSONL file first.');
   });
 
-  // ── tab switching commands ──
+  // ── openLogManagerPanel ──
 
-  it('switchToLogAnalysis focuses editor tools and switches tab', () => {
-    const handler = getHandler('acacia-log.unifiedView.switchToLogAnalysis');
+  it('openLogManagerPanel calls panelProvider.openPanel()', () => {
+    const handler = getHandler('acacia-log.openLogManagerPanel');
     handler();
-    const vscode = require('vscode');
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith('acacia-log.editorTools.focus');
+    const { LogManagerPanelProvider } = require('../logSearch/logManagerPanelProvider');
+    const instance = LogManagerPanelProvider.mock.results[0].value;
+    expect(instance.openPanel).toHaveBeenCalled();
   });
 
-  it('switchToSimilarLines switches tab on unified view', () => {
-    const handler = getHandler('acacia-log.unifiedView.switchToSimilarLines');
-    handler();
-  });
-
-  it('switchToTimeline switches tab on unified view', () => {
-    const handler = getHandler('acacia-log.unifiedView.switchToTimeline');
-    handler();
-  });
-
-  it('switchToPatternSearch switches tab on unified view', () => {
-    const handler = getHandler('acacia-log.unifiedView.switchToPatternSearch');
-    handler();
-  });
-
-  it('switchToFileInfo switches tab on unified view', () => {
-    const handler = getHandler('acacia-log.unifiedView.switchToFileInfo');
-    handler();
-  });
-
-  it('editorTools switchToSimilarLines focuses and switches', () => {
-    const handler = getHandler('acacia-log.editorTools.switchToSimilarLines');
-    handler();
-    const vscode = require('vscode');
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith('acacia-log.editorTools.focus');
-  });
-
-  it('editorTools switchToTimeline focuses and switches', () => {
-    const handler = getHandler('acacia-log.editorTools.switchToTimeline');
-    handler();
-    const vscode = require('vscode');
-    expect(vscode.commands.executeCommand).toHaveBeenCalledWith('acacia-log.editorTools.focus');
+  it('openLogManagerPanel passes tab argument', () => {
+    const handler = getHandler('acacia-log.openLogManagerPanel');
+    handler({ tab: 'patternSearch' });
+    const { LogManagerPanelProvider } = require('../logSearch/logManagerPanelProvider');
+    const instance = LogManagerPanelProvider.mock.results[0].value;
+    expect(instance.openPanel).toHaveBeenCalledWith('patternSearch');
   });
 
   // ── refresh, addFolder, removeFolder, openFile, revealInExplorer ──

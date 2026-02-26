@@ -148,20 +148,17 @@ jest.mock('../logSearch/logLensDecorationProvider', () => ({
         dispose: jest.fn(),
     })),
 }));
-jest.mock('../logSearch/unifiedLogViewProvider', () => {
-    const ctor = jest.fn().mockImplementation(() => ({
-        switchTab: jest.fn(),
-        showFileInfo: jest.fn(),
-    }));
-    (ctor as any).viewType = 'acacia-log.unifiedView';
-    return { UnifiedLogViewProvider: ctor };
+jest.mock('../logSearch/logManagerViewProvider', () => {
+    const ctor = jest.fn().mockImplementation(() => ({}));
+    (ctor as any).viewType = 'acacia-log.logManager';
+    return { LogManagerViewProvider: ctor };
 });
-jest.mock('../logSearch/editorToolsViewProvider', () => {
+jest.mock('../logSearch/logManagerPanelProvider', () => {
     const ctor = jest.fn().mockImplementation(() => ({
-        switchTab: jest.fn(),
+        openPanel: jest.fn(),
+        dispose: jest.fn(),
     }));
-    (ctor as any).viewType = 'acacia-log.editorTools';
-    return { EditorToolsViewProvider: ctor };
+    return { LogManagerPanelProvider: ctor };
 });
 jest.mock('../logSearch/logGapReportProvider', () => ({
     LogGapReportProvider: jest.fn().mockImplementation(() => ({
@@ -262,13 +259,7 @@ describe('Activation Performance Tests', () => {
                 'acacia-log.convertToJsonl',
                 'acacia-log.logExplorer.convertToJsonl',
                 'acacia-log.logExplorer.convertJsonlToLog',
-                'acacia-log.unifiedView.switchToLogAnalysis',
-                'acacia-log.unifiedView.switchToSimilarLines',
-                'acacia-log.unifiedView.switchToTimeline',
-                'acacia-log.unifiedView.switchToPatternSearch',
-                'acacia-log.unifiedView.switchToFileInfo',
-                'acacia-log.editorTools.switchToSimilarLines',
-                'acacia-log.editorTools.switchToTimeline',
+                'acacia-log.openLogManagerPanel',
             ];
 
             const registeredIds = getRegisteredCommandIds();
@@ -279,7 +270,7 @@ describe('Activation Performance Tests', () => {
 
         it('registers providers (webview, tree, content)', async () => {
             await activate(context);
-            expect(mockRegisterWebviewViewProvider).toHaveBeenCalledTimes(2);
+            expect(mockRegisterWebviewViewProvider).toHaveBeenCalledTimes(1);
             expect(mockRegisterTextDocumentContentProvider).toHaveBeenCalledTimes(1);
             expect(mockCreateTreeView).toHaveBeenCalledTimes(1);
         });
@@ -376,7 +367,7 @@ describe('Activation Performance Tests', () => {
 
             // Phase 1 should already have registered everything
             expect(mockRegisterCommand.mock.calls.length).toBeGreaterThan(0);
-            expect(mockRegisterWebviewViewProvider.mock.calls.length).toBe(2);
+            expect(mockRegisterWebviewViewProvider.mock.calls.length).toBe(1);
             expect(mockCreateTreeView.mock.calls.length).toBe(1);
 
             await activatePromise;
@@ -425,13 +416,13 @@ describe('Activation Performance Tests', () => {
             // Verify all provider constructors were called exactly once
             const { LogTreeProvider } = require('../logManagement/logTreeProvider');
             const { LogLensDecorationProvider } = require('../logSearch/logLensDecorationProvider');
-            const { UnifiedLogViewProvider } = require('../logSearch/unifiedLogViewProvider');
-            const { EditorToolsViewProvider } = require('../logSearch/editorToolsViewProvider');
+            const { LogManagerViewProvider } = require('../logSearch/logManagerViewProvider');
+            const { LogManagerPanelProvider } = require('../logSearch/logManagerPanelProvider');
 
             expect(LogTreeProvider).toHaveBeenCalledTimes(1);
             expect(LogLensDecorationProvider).toHaveBeenCalledTimes(1);
-            expect(UnifiedLogViewProvider).toHaveBeenCalledTimes(1);
-            expect(EditorToolsViewProvider).toHaveBeenCalledTimes(1);
+            expect(LogManagerViewProvider).toHaveBeenCalledTimes(1);
+            expect(LogManagerPanelProvider).toHaveBeenCalledTimes(1);
         });
     });
 
@@ -501,8 +492,8 @@ describe('Activation Performance Tests', () => {
             const allowedPatterns = [
                 'vscode',
                 './logManagement/logTreeProvider',
-                './logSearch/unifiedLogViewProvider',
-                './logSearch/editorToolsViewProvider',
+                './logSearch/logManagerViewProvider',
+                './logSearch/logManagerPanelProvider',
                 './utils/resultDocumentProvider',
                 './logSearch/logLensDecorationProvider',
                 './logSearch/lensStatusBar',

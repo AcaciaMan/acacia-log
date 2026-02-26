@@ -91,15 +91,17 @@ jest.mock('../logManagement/logTreeProvider', () => ({
     })),
     LogTreeItem: jest.fn(),
 }));
-jest.mock('../logSearch/unifiedLogViewProvider', () => {
-    const ctor = jest.fn().mockImplementation(() => ({ switchTab: jest.fn(), showFileInfo: jest.fn() }));
-    (ctor as any).viewType = 'acacia-log.unifiedView';
-    return { UnifiedLogViewProvider: ctor };
+jest.mock('../logSearch/logManagerViewProvider', () => {
+    const ctor = jest.fn().mockImplementation(() => ({}));
+    (ctor as any).viewType = 'acacia-log.logManager';
+    return { LogManagerViewProvider: ctor };
 });
-jest.mock('../logSearch/editorToolsViewProvider', () => {
-    const ctor = jest.fn().mockImplementation(() => ({ switchTab: jest.fn() }));
-    (ctor as any).viewType = 'acacia-log.editorTools';
-    return { EditorToolsViewProvider: ctor };
+jest.mock('../logSearch/logManagerPanelProvider', () => {
+    const ctor = jest.fn().mockImplementation(() => ({
+        openPanel: jest.fn(),
+        dispose: jest.fn(),
+    }));
+    return { LogManagerPanelProvider: ctor };
 });
 jest.mock('../logSearch/logGapReportProvider', () => ({
     LogGapReportProvider: jest.fn().mockImplementation(() => ({ generateReport: jest.fn() })),

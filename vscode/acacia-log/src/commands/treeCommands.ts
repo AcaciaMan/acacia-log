@@ -1,12 +1,10 @@
 import * as vscode from 'vscode';
 import { LogTreeProvider, LogTreeItem, FilterOptions } from '../logManagement/logTreeProvider';
-import { UnifiedLogViewProvider } from '../logSearch/unifiedLogViewProvider';
 import { ILogContext } from '../utils/log-context';
 
 export function registerTreeCommands(
     context: vscode.ExtensionContext,
     logTreeProvider: LogTreeProvider,
-    unifiedLogViewProvider: UnifiedLogViewProvider,
     logContext: ILogContext
 ): void {
     // Double-click detection for tree view clicks
@@ -53,10 +51,9 @@ export function registerTreeCommands(
                 // First click - wait to see if there's a second click
                 console.log('[Extension] First click detected, waiting for potential double-click');
                 clickTimer = setTimeout(async () => {
-                    // Single click confirmed - ensure full metadata is loaded first
-                    console.log('[Extension] Single-click confirmed - showing file info');
+                    // Single click confirmed - just set active file (metadata already loaded)
+                    console.log('[Extension] Single-click confirmed - setting active file');
                     await logTreeProvider.loadMetadata(item);
-                    await unifiedLogViewProvider.showFileInfo(item.resourceUri!, item.metadata);
                     clickCount = 0;
                     lastClickedPath = undefined;
                 }, DOUBLE_CLICK_TIME);
@@ -110,8 +107,13 @@ export function registerTreeCommands(
     context.subscriptions.push(
         vscode.commands.registerCommand('acacia-log.logExplorer.showFileInfo', async (item: LogTreeItem) => {
             if (item.resourceUri) {
-                await unifiedLogViewProvider.showFileInfo(item.resourceUri, item.metadata);
+                // Set file as active so the panel's File Info tab can read it
+                logContext.setActiveFile(item.resourceUri.fsPath);
+                // Load metadata for the tree item
+                await logTreeProvider.loadMetadata(item);
             }
+            // Open Log Manager Panel at the File Info tab
+            vscode.commands.executeCommand('acacia-log.openLogManagerPanel', { tab: 'fileInfo' });
         })
     );
 

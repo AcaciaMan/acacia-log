@@ -1,12 +1,8 @@
 import * as vscode from 'vscode';
-import { UnifiedLogViewProvider } from '../logSearch/unifiedLogViewProvider';
-import { EditorToolsViewProvider } from '../logSearch/editorToolsViewProvider';
 import { ResultDocumentProvider } from '../utils/resultDocumentProvider';
 
 export function registerViewCommands(
     context: vscode.ExtensionContext,
-    unifiedLogViewProvider: UnifiedLogViewProvider,
-    editorToolsViewProvider: EditorToolsViewProvider,
     resultProvider: ResultDocumentProvider
 ): void {
     // ── Load more context above current chunk ──────────────────────────
@@ -100,52 +96,6 @@ export function registerViewCommands(
             resultEditor.revealRange(new vscode.Range(pos, pos), vscode.TextEditorRevealType.InCenter);
 
             resultProvider.setChunkState({ ...state, ctxEnd: newCtxEnd });
-        })
-    );
-
-    // Register unified view tab switching commands
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.unifiedView.switchToLogAnalysis', () => {
-            vscode.commands.executeCommand('acacia-log.editorTools.focus');
-            editorToolsViewProvider.switchTab('logSearch');
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.unifiedView.switchToSimilarLines', () => {
-            unifiedLogViewProvider.switchTab('similarLines');
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.unifiedView.switchToTimeline', () => {
-            unifiedLogViewProvider.switchTab('timeline');
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.editorTools.switchToSimilarLines', () => {
-            vscode.commands.executeCommand('acacia-log.editorTools.focus');
-            editorToolsViewProvider.switchTab('similarLines');
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.editorTools.switchToTimeline', () => {
-            vscode.commands.executeCommand('acacia-log.editorTools.focus');
-            editorToolsViewProvider.switchTab('timeline');
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.unifiedView.switchToPatternSearch', () => {
-            unifiedLogViewProvider.switchTab('patternSearch');
-        })
-    );
-
-    context.subscriptions.push(
-        vscode.commands.registerCommand('acacia-log.unifiedView.switchToFileInfo', () => {
-            unifiedLogViewProvider.switchTab('fileInfo');
         })
     );
 }

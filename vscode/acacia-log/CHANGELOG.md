@@ -4,6 +4,24 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [3.9.0] — 2026-02-26
+
+### Added
+- **Log Manager sidebar** — new compact dashboard showing active file status, timestamp detection, and quick-access buttons for Gap Report, Chunk Stats, and Pattern Search
+- **Log Manager Panel** — full-featured editor panel consolidating all analysis tools into 8 tabs: Dashboard, Log Search, Pattern Search, Similar Lines, Timeline, File Info, Compare Chunk Stats, and JSONL Conversion
+
+### Changed
+- Sidebar reorganized: replaced Editor Tools and Log Analysis webviews with the unified Log Manager dashboard
+- All analysis features now accessible from a single Log Manager Panel in the editor area
+- Tree view single-click now sets the active file without switching views
+
+### Removed
+- **Editor Tools** sidebar webview (functionality moved to Log Manager Panel)
+- **Log Analysis** sidebar webview (functionality moved to Log Manager Panel)
+- View-switching commands between old sidebar webviews
+
+---
+
 ## [3.8.7] - 2026-02-25
 
 ### Fixed

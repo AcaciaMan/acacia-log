@@ -3,10 +3,10 @@
 ## Table of Contents
 - [Convert Log to JSONL](#convert-log-to-jsonl) _(New in 3.8.5)_
 - [Lens Decorations](#lens-decorations) _(New in 3.8.4)_
-- [Editor Tools](#editor-tools) _(New in 3.7.0, Enhanced in 3.8.0)_
+- [Log Manager](#log-manager) _(New in 3.9.0)_
 - [Large-File Optimisations](#large-file-optimisations) _(New in 3.8.0)_
 - [Log Tree View](#log-tree-view) _(New in 3.2.0)_
-- [Unified Tabbed Interface](#unified-tabbed-interface) _(New in 3.2.0)_
+- [Log Manager Panel](#log-manager-panel) _(New in 3.9.0)_
 - [Date/Time Navigation](#datetime-navigation)
 - [Timeline Visualization](#timeline-visualization)
 - [Pattern Search](#pattern-search)
@@ -105,45 +105,27 @@ The setting persists across reloads.  Changing it in Settings takes effect immed
 
 ---
 
-## Editor Tools
+## Log Manager
 
-### Overview _(New in 3.7.0, Enhanced in 3.8.0)_
-The **Editor Tools** sidebar view provides a focused workspace for running analysis directly on the log file currently open in the editor. Instead of an in-view tab bar, navigation is driven entirely by three **VS Code toolbar icons** at the top of the view — clicking an icon focuses the view and switches to the corresponding tool.
+### Overview _(New in 3.9.0)_
+The **Log Manager** sidebar view is a compact dashboard that shows the active file status, timestamp detection result, and quick-access buttons. It replaces the old Editor Tools and Log Analysis sidebar webviews with a single unified entry point.
 
-### Toolbar Icons
+### Sidebar Dashboard
 
-| Icon | Command | Tab shown |
-|------|---------|----------|
-| `$(search)` | Log Search | Date/time navigation form |
-| `$(graph)` | Similar Lines | Similar-line analysis form |
-| `$(graph-line)` | Timeline | Timeline drawing form |
+| Element | Description |
+|---------|-------------|
+| Active file indicator | Shows the currently selected log file name and path |
+| Timestamp status | Visual indicator of whether a timestamp format was detected |
+| **Open Log Manager** button | Opens the full Log Manager Panel in the editor area |
+| Quick-action buttons | One-click access to Gap Report, Chunk Stats, and Pattern Search |
 
-### File Resolution _(New in 3.8.0)_
-All five message handlers (Log Search, Similar Lines, Timeline, Test Regex, Auto-Detect) resolve the target file via a two-step priority chain without requiring an active text editor:
+### File Resolution
+All analysis operations resolve the target file via a two-step priority chain without requiring an active text editor:
 
 1. **Active text editor** — used when a real log file (not a virtual `acacia-log:` result document) is open and focused.
 2. **Log Explorer selection** — falls back to the file most recently clicked in the Log Explorer tree, opening it on demand as a text document.
 
 A clear error message — *"No log file available. Open a log file or select one in the Log Explorer."* — is displayed only when neither source can be resolved. Selecting a file in the Log Explorer updates the shared `LogContext` singleton, which all views and commands automatically use to resolve the active log file.
-
-### Log Search Tab
-- **Date/time regex** — configure or auto-detect the timestamp pattern in the active file
-- **Format string** — Luxon-compatible format for parsing matched timestamps
-- **Preset selector** — 8 built-in format presets (Standard, ISO 8601, Apache, Syslog, …)
-- **Auto-Detect** button — one-click detection from the first 1 000 lines of the active file
-- **Test Regex** — verify the pattern against the active file and see match count
-- **Date & time pickers** — calendar + time input with Today / Now / Clear shortcuts
-- Click **Navigate to Date & Time** (or press Enter) to jump to the matching line
-
-### Similar Lines Tab
-- Same format-configuration section as Log Search (regex, format string, presets, auto-detect)
-- Click **Calculate Similar Lines** (or press Enter) to group and rank repeated log lines
-- Results open in a new editor tab sorted by occurrence count
-
-### Timeline Tab
-- Same format-configuration section as Log Search
-- Click **Draw Timeline** (or press Enter) to produce an interactive HTML timeline chart
-- Chart opens in a new editor tab showing log-entry density over time
 
 ---
 
@@ -257,26 +239,20 @@ A filter icon in the Log Files view title bar lets you narrow down which files a
 
 ---
 
-## Unified Tabbed Interface
+## Log Manager Panel
 
-### Overview
-Version 3.6.1 introduces native VS Code toolbar navigation for all tabs. Buttons are integrated into the view title bar for quick access to all analysis tools with standard VS Code icons.
+### Overview _(New in 3.9.0)_
+The **Log Manager Panel** opens in the editor area and consolidates all analysis tools into a single tabbed interface with 8 tabs. It replaces the old Log Analysis sidebar webview.
 
 ### Key Features
 
-#### 1. **Native Toolbar Navigation** _(New in 3.6.1)_
-- Five toolbar buttons in the Log Analysis view title bar:
-  - 🔍 **Log Analysis** (Search icon) - Navigate to date/time in log files
-  - 📊 **Similar Lines** (Graph icon) - Analyze and count similar log lines
-  - 📈 **Timeline** (Graph-line icon) - Generate visual timeline of log events
-  - 🔎 **Pattern Search** (Search-fuzzy icon) - Search log files using regex patterns
-  - ℹ️ **File Info** (Info icon) - View file metadata and statistics
-- Standard VS Code icons for familiar navigation
-- Integrated with native view title bar
-- Clean, professional interface without duplicate controls
-- One-click switching between analysis modes
+#### 1. **Full Editor-Area Panel**
+- Opens as an editor tab for maximum screen space
+- 8 tabs accessible via a tab bar at the top of the panel
+- Can be opened from the Log Manager sidebar dashboard or via command
+- Supports opening directly to a specific tab (e.g., File Info from tree view)
 
-#### 2. **Compact View Layout** _(New in 3.6.1)_
+#### 2. **Compact View Layout**
 - Optimized spacing and padding throughout
 - 30-40% space savings for more visible data
 - Reduced section padding (16px → 10px)
@@ -284,14 +260,17 @@ Version 3.6.1 introduces native VS Code toolbar navigation for all tabs. Buttons
 - Tighter margins and gaps
 - More information density without clutter
 
-#### 3. **Tab 1: Log Analysis**
+#### 3. **Tab 1: Dashboard**
+Overview of the active file with quick-access buttons to all analysis tools.
+
+#### 4. **Tab 2: Log Search**
 Tools for navigating to specific dates/times in the currently open log file:
 - Date/Time Navigation with calendar picker
 - Format Configuration (11 preset formats)
 - Quick actions: Today, Now, Clear
 - Keyboard shortcuts (Press Enter to search)
 
-#### 4. **Tab 2: Pattern Search**
+#### 5. **Tab 3: Pattern Search**
 Tools for searching patterns across log files:
 - Log file selection with file browser
 - Pattern file (JSON) configuration
@@ -301,26 +280,26 @@ Tools for searching patterns across log files:
 - Comprehensive statistics dashboard
 - Sortable detailed results with expandable line matches
 
-#### 5. **Tab 3: Similar Lines**
+#### 6. **Tab 4: Similar Lines**
 Dedicated tab for analyzing repetitive log patterns:
 - Format Configuration (11 preset formats)
-- Auto-detect button for timestamp format _(New in 3.6.0)_
+- Auto-detect button for timestamp format
 - Calculate similar line counts for current file
 - **Results open in editor result tab**
 - Groups similar patterns with occurrence counts
 - Full editor features for results analysis
 
-#### 6. **Tab 4: Timeline**
+#### 7. **Tab 5: Timeline**
 Dedicated tab for generating visual timelines:
 - Format Configuration (11 preset formats)
-- Auto-detect button for timestamp format _(New in 3.6.0)_
+- Auto-detect button for timestamp format
 - Generate interactive timeline for current file
 - Multiple chart types: Bar, Area, Line
 - Automatic log level detection (ERROR, WARN, INFO, DEBUG)
 - Click-to-navigate to specific log entries
 - CSV export functionality
 
-#### 7. **Tab 5: File Info** _(New in 3.5.0)_
+#### 8. **Tab 6: File Info**
 View comprehensive file metadata:
 - File name, path, and size
 - Total line count
@@ -329,19 +308,28 @@ View comprehensive file metadata:
 - Created, modified, and accessed dates
 - Quick action buttons to open or reveal file
 
-#### 8. **Space-Efficient Design**
-- Single compact webview with 5 organized tabs
-- Native toolbar buttons for quick access
+#### 9. **Tab 7: Compare Chunk Stats**
+Compare chunk statistics across multiple selected log files.
+
+#### 10. **Tab 8: JSONL Conversion**
+Convert between Log and JSONL formats directly from the panel.
+
+#### 11. **Space-Efficient Design**
+- Single panel with 8 organized tabs in the editor area
 - Results display in editor tabs (not in sidebar)
-- More room for the Log Files tree view
-- Optimized spacing for maximum data visibility _(Enhanced in 3.6.1)_
-- Better organization: sidebar for controls, editor for results
+- More room for the Log Files tree view in the sidebar
+- Optimized spacing for maximum data visibility
+- Better organization: sidebar for status, editor for analysis
 
 ### Usage
 
+**Open the panel:**
+- Click **Open Log Manager** in the Log Manager sidebar dashboard
+- Use the Command Palette: `Acacia Log: Open Log Manager Panel`
+- Click the File Info icon on a tree item to open directly to the File Info tab
+
 **Switch between tabs:**
-- Click on the toolbar buttons at the top of the Log Analysis view
-- Standard VS Code icons for familiar navigation
+- Click on the tab labels at the top of the panel
 - Tabs remember your settings when switching
 
 **Tab persistence:**
@@ -823,10 +811,9 @@ Together, these features help identify delays, timeouts, processing bottlenecks,
 
 ### Accessing the Report
 
-**Method 1: From Log Analysis View**
+**Method 1: From Log Manager Sidebar**
 1. Select a log file in the Log Files tree view (single-click)
-2. Navigate to the Log Analysis view
-3. Click the **HTML Report** button (📊 graph-scatter icon) in the view toolbar
+2. Click the **Gap Report** button in the Log Manager sidebar dashboard
 4. Wait for analysis (progress notifications displayed)
 5. Report opens in a webview panel
 
@@ -1042,8 +1029,7 @@ Computes full descriptive statistics over every inter-entry time gap in the spar
 
 ### How to Use
 1. Select a log file in the **Log Files** tree view (single-click), or have one open in the editor
-2. Navigate to the **Log Analysis** view
-3. Click the **Chunk Stats** (`$(pulse)`) icon in the Log Analysis view toolbar
+2. Click the **Chunk Stats** button in the **Log Manager** sidebar dashboard
 4. Wait for analysis to complete
 5. The report opens in a new webview panel
 6. Click **Export HTML** to save as a standalone file
@@ -1145,7 +1131,7 @@ Acacia Log recognises `.jsonl` and `.ndjson` files (JSON Lines / Newline-Delimit
 ### Convert JSONL → Log Command
 
 **Access:**
-- `$(file-code)` icon in the **Log Analysis** panel toolbar (`navigation@8`)
+- **JSONL Conversion** tab in the **Log Manager Panel**
 - Right-click any file in the **Log Files** tree → **Convert JSONL to Log**
 
 ### Convert Log → JSONL Command _(New in 3.8.5)_

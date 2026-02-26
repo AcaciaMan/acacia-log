@@ -3,17 +3,23 @@
     "error": {
       "regexp": "BITS",
       "regexpoptions": "ig",
-      "bSearch": true
+      "bSearch": true,
+      "lensColor": "#ff4d4f",
+      "lensPriority": 100
     },
     "warn": {
       "regexp": "SID",
       "regexpoptions": "ig",
-      "bSearch": true
+      "bSearch": true,
+      "lensColor": "#faad14",
+      "lensPriority": 90
     },
     "info": {
       "regexp": "DnldMgr",
       "regexpoptions": "ig",
-      "bSearch": true
+      "bSearch": true,
+      "lensColor": "#1890ff",
+      "lensPriority": 80
     }
   }
 }

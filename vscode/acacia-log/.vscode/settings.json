@@ -14,6 +14,10 @@
         "npx jest": true,
         "Test-Path": true,
         "npx tsc": true,
-        "test": true
+        "test": true,
+        "/^node esbuild\\.js 2>&1$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }
