@@ -4,8 +4,12 @@
 
 Navigate massive log files by timestamp, detect time gaps, visualize activity timelines, search with regex patterns, analyze similar lines, compare multiple files, convert JSONL/NDJSON, and highlight log levels with live colour decorations — all without leaving the editor.
 
-[![Version](https://img.shields.io/badge/version-3.9.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
+[![Version](https://img.shields.io/badge/version-4.0.0-blue.svg)](https://marketplace.visualstudio.com/items?itemName=manacacia.acacia-log)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE.md)
+
+### Introduction Video
+
+https://github.com/user-attachments/assets/1d55ac15-f1cf-4fa5-b95f-dac1eb5614d0
 
 <img alt="Acacia Log - Log Search Screenshot" src="https://github.com/user-attachments/assets/eca1bc9d-12a2-4833-9c98-1ec56417a859" />
 

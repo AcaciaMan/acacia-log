@@ -4,6 +4,21 @@ All notable changes to the "acacia-log" extension will be documented in this fil
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [4.0.0] — 2026-02-26
+
+### Added
+- 🎬 **Introduction video** — short walkthrough video added to the README for quick onboarding
+
+### 3.x.x Series — Three Major Accomplishments
+
+1. **Unified Log Manager** — Evolved from separate sidebar webviews (3.2.0) through a 4-tab interface (3.4.0), Editor Tools view (3.7.0), to the final consolidated **Log Manager Panel** (3.9.0) with 8 tabs (Dashboard, Log Search, Pattern Search, Similar Lines, Timeline, File Info, Compare Chunk Stats, JSONL Conversion) and a compact sidebar dashboard — providing a single, coherent workspace for all log analysis tasks.
+
+2. **Advanced Analytics & Interactive Reports** — Introduced automatic timestamp detection across 20+ formats (3.6.0), interactive HTML gap reports with export (3.6.2), similar-lines analysis with ripgrep acceleration (3.6.3), full descriptive statistics with IQR-based outlier detection (3.6.5), multi-file chunk comparison with rankings and natural-language summaries (3.6.5), clickable timestamps and line numbers across all reports (3.8.2), and bidirectional JSONL/NDJSON conversion (3.6.7, 3.8.5).
+
+3. **Large-File Support & Live Lens Decorations** — Added streaming architecture for files of any size (3.8.0) with sparse byte-offset line indexing, virtual-document navigation for files over 50 MB, progress notifications for files over 200 MB, and colour-coded live lens decorations (3.8.4) highlighting ERROR/WARN/INFO and custom patterns in the visible editor range only — keeping the extension fast and responsive regardless of file size.
+
+---
+
 ## [3.9.0] — 2026-02-26
 
 ### Added
@@ -566,7 +581,8 @@ See [GitHub Issues](https://github.com/AcaciaMan/acacia-log/issues) for feature 
 
 | Version | Release Date | Highlights |
 |---------|--------------|------------|
-| 3.6.5 | 2026-02-21 | Chunk duration statistics report, multi-file chunk comparison |
+| 4.0.0 | 2026-02-26 | Introduction video, 3.x.x accomplishments summary |
+| 3.9.0 | 2026-02-26 | Unified Log Manager sidebar + editor panel |
 | 3.6.4 | 2026-02-19 | Lazy tree initialization, log file filter by date & type |
 | 3.6.3 | 2026-02-18 | Similar lines analysis in HTML gap report |
 | 3.6.2 | 2026-02-18 | Interactive HTML gap report with export |
